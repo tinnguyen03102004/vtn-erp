@@ -1,0 +1,394 @@
+// VTN Architecture ERP - Prisma Schema
+// Odoo-inspired data model
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?
+  name          String?
+  role          UserRole  @default(ARCHITECT)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  employee      Employee?
+  accounts      Account[]
+  sessions      Session[]
+
+  assignedLeads    CrmLead[]      @relation("LeadAssignee")
+  createdOrders    SaleOrder[]    @relation("OrderCreator")
+  managedProjects  Project[]      @relation("ProjectManager")
+  assignedTasks    ProjectTask[]  @relation("TaskAssignee")
+  timesheets       Timesheet[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  DIRECTOR
+  PROJECT_MANAGER
+  ARCHITECT
+  FINANCE
+  SALES
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// HR MODULE
+// ============================================================
+
+model Employee {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  department String?
+  position   String?
+  phone      String?
+  joinDate   DateTime?
+  salary     Decimal? @db.Decimal(15, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id])
+  timesheets Timesheet[]
+
+  @@map("employees")
+}
+
+// ============================================================
+// CRM MODULE
+// ============================================================
+
+model CrmStage {
+  id          String    @id @default(cuid())
+  name        String
+  sequence    Int       @default(0)
+  probability Float     @default(0)
+  createdAt   DateTime  @default(now())
+
+  leads CrmLead[]
+
+  @@map("crm_stages")
+}
+
+model CrmLead {
+  id            String      @id @default(cuid())
+  name          String
+  partnerName   String
+  email         String?
+  phone         String?
+  source        String?
+  stageId       String
+  probability   Float       @default(0)
+  expectedValue Decimal?    @db.Decimal(15, 2)
+  assignedToId  String?
+  notes         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  stage      CrmStage   @relation(fields: [stageId], references: [id])
+  assignedTo User?      @relation("LeadAssignee", fields: [assignedToId], references: [id])
+  orders     SaleOrder[]
+
+  @@map("crm_leads")
+}
+
+// ============================================================
+// SALE MODULE
+// ============================================================
+
+model SaleOrder {
+  id           String          @id @default(cuid())
+  name         String          @unique // SO-2024-001
+  leadId       String?
+  partnerName  String
+  partnerEmail String?
+  partnerPhone String?
+  state        SaleOrderState  @default(DRAFT)
+  validityDate DateTime?
+  totalAmount  Decimal         @db.Decimal(15, 2) @default(0)
+  notes        String?         @db.Text
+  signedAt     DateTime?
+  createdById  String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  lead      CrmLead?         @relation(fields: [leadId], references: [id])
+  createdBy User?            @relation("OrderCreator", fields: [createdById], references: [id])
+  lines     SaleOrderLine[]
+  milestones SaleMilestone[]
+  projects  Project[]
+
+  @@map("sale_orders")
+}
+
+enum SaleOrderState {
+  DRAFT
+  SENT
+  SALE
+  DONE
+  CANCEL
+}
+
+model SaleOrderLine {
+  id          String      @id @default(cuid())
+  orderId     String
+  description String
+  qty         Decimal     @db.Decimal(10, 2) @default(1)
+  unitPrice   Decimal     @db.Decimal(15, 2)
+  subtotal    Decimal     @db.Decimal(15, 2)
+  sequence    Int         @default(0)
+
+  order SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("sale_order_lines")
+}
+
+model SaleMilestone {
+  id        String          @id @default(cuid())
+  orderId   String
+  name      String
+  percent   Float
+  amount    Decimal         @db.Decimal(15, 2)
+  dueDate   DateTime?
+  state     MilestoneState  @default(PENDING)
+  sequence  Int             @default(0)
+
+  order    SaleOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+  phases   ProjectPhase[]
+
+  @@map("sale_milestones")
+}
+
+enum MilestoneState {
+  PENDING
+  INVOICED
+  PAID
+}
+
+// ============================================================
+// PROJECT MODULE
+// ============================================================
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  code        String?       @unique // PRJ-2024-001
+  saleOrderId String?
+  partnerName String?
+  managerId   String?
+  state       ProjectState  @default(DRAFT)
+  startDate   DateTime?
+  endDate     DateTime?
+  budget      Decimal?      @db.Decimal(15, 2)
+  description String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  saleOrder  SaleOrder?     @relation(fields: [saleOrderId], references: [id])
+  manager    User?          @relation("ProjectManager", fields: [managerId], references: [id])
+  phases     ProjectPhase[]
+  tasks      ProjectTask[]
+  timesheets Timesheet[]
+  invoices   Invoice[]
+
+  @@map("projects")
+}
+
+enum ProjectState {
+  DRAFT
+  ACTIVE
+  PAUSED
+  DONE
+  CANCELLED
+}
+
+model ProjectPhase {
+  id          String      @id @default(cuid())
+  projectId   String
+  name        String
+  sequence    Int         @default(0)
+  state       PhaseState  @default(TODO)
+  startDate   DateTime?
+  endDate     DateTime?
+  milestoneId String?
+  createdAt   DateTime    @default(now())
+
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone SaleMilestone? @relation(fields: [milestoneId], references: [id])
+  tasks     ProjectTask[]
+
+  @@map("project_phases")
+}
+
+enum PhaseState {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+model ProjectTask {
+  id          String     @id @default(cuid())
+  projectId   String
+  phaseId     String?
+  name        String
+  assignedToId String?
+  deadline    DateTime?
+  priority    Priority   @default(NORMAL)
+  state       TaskState  @default(TODO)
+  description String?    @db.Text
+  estimatedHours Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase      ProjectPhase? @relation(fields: [phaseId], references: [id])
+  assignedTo User?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  timesheets Timesheet[]
+
+  @@map("project_tasks")
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TaskState {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+// ============================================================
+// ACCOUNTING MODULE
+// ============================================================
+
+model Invoice {
+  id            String        @id @default(cuid())
+  name          String        @unique // INV-2024-001
+  type          InvoiceType   @default(OUT_INVOICE)
+  partnerName   String
+  partnerEmail  String?
+  state         InvoiceState  @default(DRAFT)
+  invoiceDate   DateTime?
+  dueDate       DateTime?
+  amountUntaxed Decimal       @db.Decimal(15, 2) @default(0)
+  amountTax     Decimal       @db.Decimal(15, 2) @default(0)
+  amountTotal   Decimal       @db.Decimal(15, 2) @default(0)
+  projectId     String?
+  milestoneId   String?
+  notes         String?       @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  project   Project?       @relation(fields: [projectId], references: [id])
+  milestone SaleMilestone? @relation(fields: [milestoneId], references: [id])
+  payments  Payment[]
+
+  @@map("invoices")
+}
+
+enum InvoiceType {
+  OUT_INVOICE
+  OUT_REFUND
+}
+
+enum InvoiceState {
+  DRAFT
+  POSTED
+  PAID
+  CANCELLED
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  amount      Decimal  @db.Decimal(15, 2)
+  paymentDate DateTime
+  method      String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// ============================================================
+// TIMESHEET MODULE
+// ============================================================
+
+model Timesheet {
+  id          String   @id @default(cuid())
+  userId      String
+  employeeId  String?
+  projectId   String
+  taskId      String?
+  date        DateTime @db.Date
+  hours       Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User         @relation(fields: [userId], references: [id])
+  employee Employee?    @relation(fields: [employeeId], references: [id])
+  project  Project      @relation(fields: [projectId], references: [id])
+  task     ProjectTask? @relation(fields: [taskId], references: [id])
+
+  @@map("timesheets")
+}
