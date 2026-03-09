@@ -51,6 +51,7 @@ export async function saveWeekTimesheets(employeeId: string, entries: TimesheetE
     }))
 
     if (rows.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await supabase.from('timesheets').insert(rows as any)
         if (error) return fail(error.message)
     }
@@ -92,6 +93,7 @@ export async function createTimesheet(formData: unknown): Promise<ActionResult<R
     const parsed = parseInput(timesheetEntrySchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase.from('timesheets').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 

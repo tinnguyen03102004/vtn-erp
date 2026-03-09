@@ -37,6 +37,7 @@ export async function createEmployee(formData: unknown): Promise<ActionResult<Re
         email: parsed.data.email,
         role: parsed.data.role || 'ARCHITECT',
         password: parsed.data.password || null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).select().single()
     if (userErr) return fail(userErr.message)
 
@@ -47,6 +48,7 @@ export async function createEmployee(formData: unknown): Promise<ActionResult<Re
         position: parsed.data.position || null,
         phone: parsed.data.phone || null,
         joinDate: parsed.data.joinDate || new Date().toISOString(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).select().single()
     if (empErr) {
         // Compensating rollback: delete orphaned user
@@ -71,6 +73,7 @@ export async function updateEmployee(id: string, formData: unknown): Promise<Act
         name: parsed.data.name,
         email: parsed.data.email,
         role: parsed.data.role,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).eq('id', emp.userId)
 
     // Update employee

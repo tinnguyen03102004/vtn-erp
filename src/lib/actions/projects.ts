@@ -48,6 +48,7 @@ export async function getProject(id: string) {
 export async function updateProjectState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
     const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from('projects').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
@@ -61,6 +62,7 @@ export async function createPhase(formData: unknown): Promise<ActionResult<Recor
     const parsed = parseInput(createPhaseSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase.from('project_phases').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
@@ -93,6 +95,7 @@ export async function createTask(formData: unknown): Promise<ActionResult<Record
     const parsed = parseInput(createTaskSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase.from('project_tasks').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 

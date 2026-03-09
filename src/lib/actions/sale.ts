@@ -79,6 +79,7 @@ export async function createOrder(formData: unknown): Promise<ActionResult<Recor
     const { data, error } = await supabase.from('sale_orders').insert({ ...parsed.data,
         docType: 'QUOTATION',
         state: 'DRAFT',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).select().single()
     if (error) return fail(error.message)
 
@@ -165,6 +166,7 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
         totalAmount: quotation.totalAmount,
         notes: quotation.notes,
         createdById: quotation.createdById,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).select().single()
     if (error) return fail(error.message)
 
@@ -179,6 +181,7 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
             subtotal: l.subtotal,
             sequence: l.sequence,
         }))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: lineErr } = await supabase.from('sale_order_lines').insert(newLines as any)
         if (lineErr) {
             // Compensating rollback: delete orphaned contract
@@ -236,6 +239,7 @@ export async function saveOrderLines(orderId: string, lines: OrderLineInput[]): 
             subtotal: (l.qty || 1) * (l.unitPrice || 0),
             sequence: i,
         }))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await supabase.from('sale_order_lines').insert(rows as any)
         if (error) return fail(error.message)
     }
@@ -252,6 +256,7 @@ export async function addMilestone(formData: unknown): Promise<ActionResult<Reco
     const parsed = parseInput(milestoneSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase.from('sale_milestones').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
@@ -281,6 +286,7 @@ export async function saveMilestones(orderId: string, milestones: MilestoneInput
             state: m.state || 'PENDING',
             sequence: i,
         }))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await supabase.from('sale_milestones').insert(rows as any)
         if (error) return fail(error.message)
     }
@@ -320,6 +326,7 @@ export async function convertOrderToProject(orderId: string): Promise<ActionResu
             state: 'TODO',
             milestoneId: m.id,
         }))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabase.from('project_phases').insert(phases as any)
     }
 

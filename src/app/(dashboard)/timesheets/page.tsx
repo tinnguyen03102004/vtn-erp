@@ -36,6 +36,7 @@ export default async function TimesheetPage() {
         .filter(p => p.state === 'ACTIVE' || p.state === 'DRAFT')
         .map(p => ({ id: p.id, name: p.name, code: p.code }))
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serializedTimesheets = timesheets.map((t: any) => ({
         id: t.id,
         projectId: t.projectId,
@@ -46,6 +47,7 @@ export default async function TimesheetPage() {
     }))
 
     // Find the employee record linked to the logged-in user
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const currentEmployee = employees.find((e: any) => e.userId === user.id)
     const currentEmployeeId = currentEmployee?.id
 

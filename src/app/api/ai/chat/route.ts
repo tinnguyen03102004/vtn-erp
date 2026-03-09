@@ -33,6 +33,7 @@ function fmtVND(n: number): string {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatSuccessMessage(toolName: string, args: Record<string, any>, result: any): string {
     switch (toolName) {
         case 'create_lead':
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
 
         const openai = new OpenAI({ apiKey })
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let body: any
         try {
             body = await req.json()
@@ -135,6 +137,7 @@ export async function POST(req: NextRequest) {
         // If the model wants to call tools, execute them and feed results back
         const maxIterations = 5
         let iteration = 0
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let pendingAction: { toolName: string; args: Record<string, any>; preview: string } | null = null
 
         while (message.tool_calls && message.tool_calls.length > 0 && iteration < maxIterations) {
@@ -147,6 +150,7 @@ export async function POST(req: NextRequest) {
             for (const toolCall of message.tool_calls) {
                 if (toolCall.type !== 'function') continue
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 let args: Record<string, any>
                 try {
                     args = JSON.parse(toolCall.function.arguments)
@@ -218,6 +222,7 @@ export async function POST(req: NextRequest) {
             toolCalls: message.tool_calls || null,
             pendingAction: pendingAction || null,
         })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
         console.error('AI Chat Error:', err)
         return Response.json(

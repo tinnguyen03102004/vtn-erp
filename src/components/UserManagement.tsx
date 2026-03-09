@@ -14,11 +14,13 @@ const roleLabels: Record<string, { label: string; badge: string }> = {
     SALES: { label: 'Kinh doanh', badge: 'warning' },
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function UserManagement({ initialUsers }: { initialUsers: any[] }) {
     const router = useRouter()
     const { toasts, addToast } = useToast()
     const [users, setUsers] = useState(initialUsers)
     const [showModal, setShowModal] = useState(false)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [editUser, setEditUser] = useState<any>(null)
 
     async function handleSubmit(fd: FormData) {
@@ -44,6 +46,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: any[] }
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async function handleToggle(user: any) {
         const action = user.isActive ? 'khoá' : 'mở khoá'
         if (!confirm(`${action} tài khoản "${user.name}"?`)) return

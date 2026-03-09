@@ -74,6 +74,7 @@ export default async function ProjectsPage() {
                         </thead>
                         <tbody>
                             {projects.map(project => {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 const donePhases = project.phases.filter((p: any) => p.state === 'DONE').length
                                 const totalPhases = project.phases.length
                                 const progress = totalPhases > 0 ? Math.round(donePhases / totalPhases * 100) : 0

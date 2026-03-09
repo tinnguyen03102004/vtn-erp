@@ -7,6 +7,17 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import { updateProjectState, createPhase, updatePhase, deletePhase, createTask, updateTask, deleteTask } from '@/lib/actions/projects'
 import { useToast, ToastContainer } from '@/components/Toast'
 
+interface ProjectPhase { id: string; name: string; state: string; sequence: number; projectId: string }
+interface ProjectTask { id: string; name: string; state: string; priority: string; phaseId: string | null; projectId: string }
+interface ProjectTimesheet { hours: number | string }
+interface ProjectInvoice { id: string; name: string; state: string; amountTotal: number | string; invoiceDate?: string }
+interface ProjectData {
+    id: string; name: string; code?: string | null; state: string; budget?: number | string | null
+    partnerName?: string | null; manager?: { name: string | null } | null; managerId?: string | null
+    phases?: ProjectPhase[]; tasks?: ProjectTask[]; timesheets?: ProjectTimesheet[]; invoices?: ProjectInvoice[]
+    [key: string]: unknown
+}
+
 const stateColors: Record<string, string> = { DRAFT: 'muted', ACTIVE: 'success', PAUSED: 'warning', DONE: 'primary', CANCELLED: 'danger' }
 const stateLabels: Record<string, string> = { DRAFT: 'Nháp', ACTIVE: 'Đang thực hiện', PAUSED: 'Tạm dừng', DONE: 'Hoàn thành', CANCELLED: 'Đã huỷ' }
 const stateFlow: Record<string, { next: string; label: string }[]> = {
@@ -18,7 +29,7 @@ const stateFlow: Record<string, { next: string; label: string }[]> = {
 const phaseLabels: Record<string, string> = { TODO: 'Chờ', IN_PROGRESS: 'Đang làm', DONE: 'Xong' }
 const taskLabels: Record<string, string> = { TODO: 'Chờ', IN_PROGRESS: 'Đang làm', REVIEW: 'Review', DONE: 'Xong' }
 
-export default function ProjectDetail({ project: initProject }: { project: any }) {
+export default function ProjectDetail({ project: initProject }: { project: ProjectData }) {
     const router = useRouter()
     const { toasts, addToast } = useToast()
     const [project, setProject] = useState(initProject)
@@ -29,12 +40,12 @@ export default function ProjectDetail({ project: initProject }: { project: any }
     const [saving, setSaving] = useState(false)
 
     const transitions = stateFlow[project.state] || []
-    const totalHours = (project.timesheets || []).reduce((s: number, t: any) => s + Number(t.hours || 0), 0)
+    const totalHours = (project.timesheets || []).reduce((s: number, t: ProjectTimesheet) => s + Number(t.hours || 0), 0)
 
     async function handleState(nextState: string) {
         try {
             const updated = await updateProjectState(project.id, nextState)
-            setProject((p: any) => ({ ...p, ...updated }))
+            setProject((p: ProjectData) => ({ ...p, ...updated }))
             addToast(`Đã chuyển sang "${stateLabels[nextState]}"`)
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
@@ -44,7 +55,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
         if (!name) return
         try {
             const ph = await createPhase({ projectId: project.id, name, sequence: phases.length, state: 'TODO' })
-            setPhases((prev: any[]) => [...prev, ph])
+            setPhases((prev: ProjectPhase[]) => [...prev, ph as unknown as ProjectPhase])
             setShowAddPhase(false)
             addToast(`Đã thêm phase "${name}"`)
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
@@ -53,7 +64,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
     async function handlePhaseState(phaseId: string, state: string) {
         try {
             const updated = await updatePhase(phaseId, { state })
-            setPhases((prev: any[]) => prev.map(p => p.id === phaseId ? { ...p, ...updated } : p))
+            setPhases((prev: ProjectPhase[]) => prev.map(p => p.id === phaseId ? { ...p, ...updated } : p))
             addToast(`Phase → ${phaseLabels[state]}`)
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
@@ -62,8 +73,8 @@ export default function ProjectDetail({ project: initProject }: { project: any }
         if (!confirm('Xóa phase và tất cả tasks trong đó?')) return
         try {
             await deletePhase(phaseId)
-            setPhases((prev: any[]) => prev.filter(p => p.id !== phaseId))
-            setTasks((prev: any[]) => prev.filter(t => t.phaseId !== phaseId))
+            setPhases((prev: ProjectPhase[]) => prev.filter(p => p.id !== phaseId))
+            setTasks((prev: ProjectTask[]) => prev.filter(t => t.phaseId !== phaseId))
             addToast('Đã xóa phase')
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
@@ -74,7 +85,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
         if (!name) return
         try {
             const task = await createTask({ projectId: project.id, phaseId, name, state: 'TODO', priority: 'NORMAL' })
-            setTasks((prev: any[]) => [...prev, task])
+            setTasks((prev: ProjectTask[]) => [...prev, task as unknown as ProjectTask])
             setShowAddTask(null)
             addToast(`Đã thêm task "${name}"`)
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
@@ -83,19 +94,19 @@ export default function ProjectDetail({ project: initProject }: { project: any }
     async function handleTaskState(taskId: string, state: string) {
         try {
             const updated = await updateTask(taskId, { state })
-            setTasks((prev: any[]) => prev.map(t => t.id === taskId ? { ...t, ...updated } : t))
+            setTasks((prev: ProjectTask[]) => prev.map(t => t.id === taskId ? { ...t, ...updated } : t))
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handleDeleteTask(taskId: string) {
         try {
             await deleteTask(taskId)
-            setTasks((prev: any[]) => prev.filter(t => t.id !== taskId))
+            setTasks((prev: ProjectTask[]) => prev.filter(t => t.id !== taskId))
             addToast('Đã xóa task')
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
-    const doneCount = tasks.filter((t: any) => t.state === 'DONE').length
+    const doneCount = tasks.filter((t: ProjectTask) => t.state === 'DONE').length
     const progress = tasks.length > 0 ? Math.round(doneCount / tasks.length * 100) : 0
 
     return (
@@ -155,8 +166,8 @@ export default function ProjectDetail({ project: initProject }: { project: any }
                     <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>Chưa có phase. Nhấn "+ Phase" để thêm.</div>
                 )}
 
-                {phases.map((phase: any) => {
-                    const phaseTasks = tasks.filter((t: any) => t.phaseId === phase.id)
+                {phases.map((phase: ProjectPhase) => {
+                    const phaseTasks = tasks.filter((t: ProjectTask) => t.phaseId === phase.id)
                     return (
                         <div key={phase.id} style={{ border: '1.5px solid #E2E8F0', borderRadius: 12, marginBottom: 12, overflow: 'hidden' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#F8F9FB' }}>
@@ -177,7 +188,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
                             </div>
 
                             <div style={{ padding: phaseTasks.length > 0 || showAddTask === phase.id ? '8px 16px 12px' : 0 }}>
-                                {phaseTasks.map((task: any) => (
+                                {phaseTasks.map((task: ProjectTask) => (
                                     <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F0F2F5' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             <input type="checkbox" checked={task.state === 'DONE'}
@@ -232,7 +243,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
                     <table className="data-table" style={{ fontSize: 13 }}>
                         <thead><tr><th>Mã</th><th>Trạng thái</th><th style={{ textAlign: 'right' }}>Số tiền</th><th>Ngày</th></tr></thead>
                         <tbody>
-                            {(project.invoices || []).map((inv: any) => (
+                            {(project.invoices || []).map((inv: ProjectInvoice) => (
                                 <tr key={inv.id}>
                                     <td><Link href={`/finance/invoices/${inv.id}`} style={{ color: '#3B82F6', fontWeight: 600, textDecoration: 'none' }}>{inv.name}</Link></td>
                                     <td><span className={`badge badge-${inv.state === 'PAID' ? 'success' : 'muted'}`}>{inv.state}</span></td>

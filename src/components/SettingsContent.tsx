@@ -16,6 +16,7 @@ const settingsFields = [
     { key: 'website', label: 'Website' },
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function SettingsContent({ initialSettings, initialUsers }: { initialSettings: Record<string, string>; initialUsers: any[] }) {
     const [tab, setTab] = useState<Tab>('company')
     const { toasts, addToast } = useToast()

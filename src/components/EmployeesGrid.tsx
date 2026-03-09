@@ -17,6 +17,7 @@ const avatarColors = ['#1F3A5F', '#2A4D7F', '#C9A84C', '#22C55E', '#8B5CF6', '#E
 
 function getInitials(name: string) { return name.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase() }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function EmployeesGrid({ initialEmployees }: { initialEmployees: any[] }) {
     const router = useRouter()
     const { toasts, addToast } = useToast()
@@ -98,6 +99,7 @@ export default function EmployeesGrid({ initialEmployees }: { initialEmployees: 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
                 {employees.map((emp, idx) => {
                     const roleInfo = roleLabels[emp.user?.role] || { label: emp.user?.role || '—', badge: 'muted' }
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const hoursThisMonth = (emp.timesheets || []).reduce((s: number, t: any) => s + t.hours, 0)
                     const utilizationRate = Math.round(hoursThisMonth / 168 * 100)
                     const color = avatarColors[idx % avatarColors.length]

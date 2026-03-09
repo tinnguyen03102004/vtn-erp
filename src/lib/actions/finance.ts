@@ -57,6 +57,7 @@ export async function createInvoice(formData: unknown): Promise<ActionResult<Rec
 export async function updateInvoiceState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('finance.edit')
     const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from('invoices').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
@@ -70,6 +71,7 @@ export async function createPayment(formData: unknown): Promise<ActionResult<Rec
     const parsed = parseInput(createPaymentSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: payment, error } = await supabase.from('payments').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
@@ -78,6 +80,7 @@ export async function createPayment(formData: unknown): Promise<ActionResult<Rec
     const { data: invoice } = await supabase.from('invoices').select('amountTotal').eq('id', parsed.data.invoiceId).single()
     const totalPaid = (payments || []).reduce((s: number, p: Record<string, unknown>) => s + Number(p.amount), 0)
     if (invoice && totalPaid >= Number(invoice.amountTotal)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabase.from('invoices').update({ state: 'PAID', updatedAt: new Date().toISOString() } as any).eq('id', parsed.data.invoiceId)
     }
 

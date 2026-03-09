@@ -25,7 +25,9 @@ export default async function ReportsPage() {
         .reduce((s, i) => s + Number(i.amountTotal), 0)
 
     const totalEmployees = employees.length
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalHoursMonth = employees.reduce((s: number, e: any) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         s + e.timesheets.reduce((ts: number, t: any) => ts + t.hours, 0), 0)
     const avgUtil = totalEmployees > 0 ? Math.round(totalHoursMonth / (totalEmployees * 168) * 100) : 0
 
@@ -34,7 +36,9 @@ export default async function ReportsPage() {
     const conversionRate = allLeads.length > 0 ? Math.round(wonLeads / allLeads.length * 100) : 0
 
     // Utilization data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const utilizationData = employees.map((e: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const hours = e.timesheets.reduce((s: number, t: any) => s + t.hours, 0)
         return {
             name: e.user.name ?? '—',
@@ -49,6 +53,7 @@ export default async function ReportsPage() {
         budget: Number(p.budget ?? 0),
         state: p.state,
         phasesTotal: p.phases.length,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         phasesDone: p.phases.filter((ph: any) => ph.state === 'DONE').length,
     }))
 

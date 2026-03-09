@@ -18,6 +18,7 @@ const contractStateLabels: Record<string, string> = {
     NEGOTIATING: 'Đang đàm phán', SIGNED: 'Đã ký HĐ', DONE: 'Hoàn thành', CANCEL: 'Huỷ',
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function SalePageTabs({ quotations, contracts }: { quotations: any[]; contracts: any[] }) {
     const [tab, setTab] = useState<'quotation' | 'contract'>('quotation')
 

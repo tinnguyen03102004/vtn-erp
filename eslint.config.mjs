@@ -16,11 +16,10 @@ const eslintConfig = defineConfig([
     "tmp/**",
   ]),
   // Project-specific overrides.
-  // Supabase does not generate TS types; Prisma schema is the source of truth.
-  // Downgrade `no-explicit-any` to warning until we add type generation.
+  // Supabase types generated; files with intentional `any` have eslint-disable comments.
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": ["warn", {
         argsIgnorePattern: "^_",
         varsIgnorePattern: "^_",

@@ -1,3 +1,4 @@
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer'
 

@@ -36,6 +36,7 @@ export async function createLead(formData: unknown): Promise<ActionResult<Record
     const parsed = parseInput(createLeadSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase.from('crm_leads').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 

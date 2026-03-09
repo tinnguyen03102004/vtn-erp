@@ -17,6 +17,7 @@ export async function GET(
     const { renderToBuffer } = await import('@react-pdf/renderer')
     const { default: SaleOrderPDF } = await import('@/components/pdf/SaleOrderPDF')
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const buffer = await renderToBuffer(React.createElement(SaleOrderPDF, { order }) as any)
 
     const isQuotation = order.docType === 'QUOTATION'

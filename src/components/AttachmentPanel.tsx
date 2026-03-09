@@ -34,11 +34,13 @@ function formatTime(dateStr: string) {
 type Props = {
     entityType: string
     entityId: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialFiles?: any[]
 }
 
 export default function AttachmentPanel({ entityType, entityId, initialFiles = [] }: Props) {
     const { toasts, addToast } = useToast()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [files, setFiles] = useState<any[]>(initialFiles)
     const [uploading, setUploading] = useState(false)
     const [dragOver, setDragOver] = useState(false)
@@ -67,6 +69,7 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                 if (!res.ok) throw new Error(data.error || 'Upload failed')
                 setFiles(prev => [data, ...prev])
                 addToast(`Đã upload "${file.name}"`)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 addToast(err.message, 'error')
             }
@@ -75,23 +78,27 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
         if (inputRef.current) inputRef.current.value = ''
     }, [entityType, entityId, addToast])
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async function handleDelete(attachment: any) {
         if (!confirm(`Xóa file "${attachment.fileName}"?`)) return
         try {
             await deleteAttachment(attachment.id)
             setFiles(prev => prev.filter(f => f.id !== attachment.id))
             addToast('Đã xóa file')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             addToast(err.message, 'error')
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function handlePreview(attachment: any) {
         const url = getPublicUrl(attachment.storagePath)
         setPreviewUrl(url)
         setPreviewType(attachment.fileType)
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function handleDownload(attachment: any) {
         const url = getPublicUrl(attachment.storagePath)
         const a = document.createElement('a')

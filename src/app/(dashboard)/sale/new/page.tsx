@@ -76,6 +76,7 @@ export default function NewSalePage() {
             }
 
             router.push('/sale')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'Lỗi khi lưu')
         } finally {

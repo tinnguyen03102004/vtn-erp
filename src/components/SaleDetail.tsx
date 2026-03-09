@@ -25,6 +25,7 @@ const msStateLabels: Record<string, string> = { PAID: 'Đã thanh toán', INVOIC
 type Line = { id?: string; description: string; qty: number; unitPrice: number }
 type Milestone = { id?: string; name: string; percent: number; dueDate: string; state: string; amount?: number }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function SaleDetail({ order: initOrder, initialAttachments = [] }: { order: any; initialAttachments?: any[] }) {
     const router = useRouter()
     const { toasts, addToast } = useToast()
@@ -46,6 +47,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
         if (!confirm(`Gửi báo giá "${order.name}" cho CĐT?`)) return
         const result = await sendQuotation(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
         addToast(`Đã gửi báo giá ${order.name} cho CĐT`)
     }
@@ -54,6 +56,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
         if (!confirm(`CĐT đã duyệt báo giá "${order.name}"?`)) return
         const result = await approveQuotation(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
         addToast(`CĐT đã duyệt báo giá ${order.name}`)
     }
@@ -61,6 +64,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
     async function handleReject() {
         const result = await rejectQuotation(order.id, rejectReason)
         if (!result.success) { addToast(result.error, 'error'); return }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
         setShowRejectDialog(false)
         addToast(`Báo giá ${order.name} đã bị từ chối`)
@@ -79,6 +83,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
         if (!confirm(`Ký hợp đồng "${order.name}"?`)) return
         const result = await signContract(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
         addToast(`Đã ký hợp đồng ${order.name}`)
     }
@@ -86,6 +91,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
     async function handleDone() {
         const result = await updateOrderState(order.id, 'DONE')
         if (!result.success) { addToast(result.error, 'error'); return }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
         addToast(`Đã hoàn thành ${order.name}`)
     }
@@ -94,15 +100,18 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
     async function handleStateChange(nextState: string) {
         const result = await updateOrderState(order.id, nextState)
         if (!result.success) { addToast(result.error, 'error'); return }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
         addToast(`Đã cập nhật trạng thái`)
     }
 
     async function handleSaveLines() {
         setSaving(true)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = await saveOrderLines(order.id, lines as any)
         setSaving(false)
         if (!result.success) { addToast(result.error, 'error'); return }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, totalAmount }))
         setEditingLines(false)
         addToast('Đã cập nhật dịch vụ')
@@ -110,6 +119,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
 
     async function handleSaveMS() {
         setSaving(true)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = await saveMilestones(order.id, milestones as any)
         setSaving(false)
         if (!result.success) { addToast(result.error, 'error'); return }
@@ -328,6 +338,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                                 <tbody>
                                     {(order.lines || []).length === 0 ? (
                                         <tr><td colSpan={4} style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>Chưa có dịch vụ</td></tr>
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     ) : (order.lines || []).map((l: any) => (
                                         <tr key={l.id}>
                                             <td style={{ fontWeight: 500 }}>{l.description}</td>
@@ -387,6 +398,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                                 <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>
                                     {isQuotation ? 'Milestones sẽ được cấu hình sau khi chuyển sang Hợp đồng' : 'Chưa có milestones'}
                                 </div>
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             ) : (order.milestones || []).map((ms: any, i: number) => (
                                 <div key={ms.id} style={{
                                     border: '1.5px solid', borderRadius: 10, padding: '14px 16px',

@@ -1,4 +1,5 @@
 ﻿'use server'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from '@/lib/supabase'
 import { formatCurrency, escapeHtml } from '@/lib/utils'

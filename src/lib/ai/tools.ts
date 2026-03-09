@@ -404,10 +404,13 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
                 const order = await getOrder(String(args.quotationId))
                 if (!order) return JSON.stringify({ error: 'Không tìm thấy báo giá' })
                 const analysis = analyzeQuotation({
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     items: (order as any).items || [],
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     total: (order as any).totalAmount || 0,
                 })
                 return JSON.stringify({
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     quotation: { id: order.id, name: (order as any).name, client: (order as any).partnerName },
                     ...analysis,
                     totalFormatted: formatVND(analysis.totalValue),

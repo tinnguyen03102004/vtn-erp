@@ -9,5 +9,5 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     const project = await getProject(id)
     if (!project) notFound()
 
-    return <ProjectDetail project={project} />
+    return <ProjectDetail project={project as React.ComponentProps<typeof ProjectDetail>['project']} />
 }

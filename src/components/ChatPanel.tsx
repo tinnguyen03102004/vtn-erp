@@ -14,6 +14,7 @@ interface Message {
 
 interface PendingAction {
     toolName: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args: Record<string, any>
     preview: string
 }
@@ -94,6 +95,7 @@ const FIELD_LABELS: Record<string, string> = {
     query: 'Từ khóa',
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatArgValue(key: string, val: any): string {
     if (val === null || val === undefined) return '—'
     if (typeof val === 'number' && ['expectedValue', 'totalAmount', 'salary', 'amount'].includes(key)) {
@@ -343,6 +345,7 @@ export default function ChatPanel() {
                 }])
                 if (data.pendingAction) setPendingAction(data.pendingAction)
             }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const errorMsg = err?.name === 'AbortError'
                 ? '⏱️ Hết thời gian chờ (30s). Vui lòng thử lại.'
