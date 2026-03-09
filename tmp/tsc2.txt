@@ -1,0 +1,8 @@
+﻿src/app/(dashboard)/sale/new/page.tsx(81,23): error TS1196: Catch clause variable type annotation must be 'any' or 'unknown' if specified.
+src/app/api/ai/chat/route.ts(222,19): error TS1196: Catch clause variable type annotation must be 'any' or 'unknown' if specified.
+src/components/AttachmentPanel.tsx(72,27): error TS1196: Catch clause variable type annotation must be 'any' or 'unknown' if specified.
+src/components/AttachmentPanel.tsx(86,23): error TS1196: Catch clause variable type annotation must be 'any' or 'unknown' if specified.
+src/components/ChatPanel.tsx(348,23): error TS1196: Catch clause variable type annotation must be 'any' or 'unknown' if specified.
+src/components/LeadDetail.tsx(34,39): error TS2345: Argument of type 'DbRow | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/LeadDetail.tsx(51,23): error TS1196: Catch clause variable type annotation must be 'any' or 'unknown' if specified.
