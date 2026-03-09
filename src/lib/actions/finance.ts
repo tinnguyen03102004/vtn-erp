@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -25,7 +25,7 @@ export async function getInvoice(id: string) {
     if (!invoice) return null
 
     const [projectRes, paymentsRes] = await Promise.all([
-        supabase.from('projects').select('id, name, code').eq('id', invoice.projectId).single(),
+        supabase.from('projects').select('id, name, code').eq('id', invoice.projectId ?? '').single(),
         supabase.from('payments').select('*').eq('invoiceId', id).order('paymentDate', { ascending: false }),
     ])
 
@@ -57,7 +57,7 @@ export async function createInvoice(formData: unknown): Promise<ActionResult<Rec
 export async function updateInvoiceState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('finance.edit')
     const { data, error } = await supabase
-        .from('invoices').update({ state, updatedAt: new Date().toISOString() }).eq('id', id).select().single()
+        .from('invoices').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'invoice', entityId: id, details: `Chuyển trạng thái → ${state}` })
@@ -70,7 +70,7 @@ export async function createPayment(formData: unknown): Promise<ActionResult<Rec
     const parsed = parseInput(createPaymentSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data: payment, error } = await supabase.from('payments').insert(parsed.data).select().single()
+    const { data: payment, error } = await supabase.from('payments').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
     // Check if invoice is fully paid
@@ -78,7 +78,7 @@ export async function createPayment(formData: unknown): Promise<ActionResult<Rec
     const { data: invoice } = await supabase.from('invoices').select('amountTotal').eq('id', parsed.data.invoiceId).single()
     const totalPaid = (payments || []).reduce((s: number, p: Record<string, unknown>) => s + Number(p.amount), 0)
     if (invoice && totalPaid >= Number(invoice.amountTotal)) {
-        await supabase.from('invoices').update({ state: 'PAID', updatedAt: new Date().toISOString() }).eq('id', parsed.data.invoiceId)
+        await supabase.from('invoices').update({ state: 'PAID', updatedAt: new Date().toISOString() } as any).eq('id', parsed.data.invoiceId)
     }
 
     await logAudit({ userId: user.id, action: 'create', entity: 'payment', entityId: payment.id, details: `Thanh toán ${parsed.data.amount}` })

@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -37,7 +37,7 @@ export async function createEmployee(formData: unknown): Promise<ActionResult<Re
         email: parsed.data.email,
         role: parsed.data.role || 'ARCHITECT',
         password: parsed.data.password || null,
-    }).select().single()
+    } as any).select().single()
     if (userErr) return fail(userErr.message)
 
     // Step 2: Create employee record (rollback user on failure)
@@ -47,7 +47,7 @@ export async function createEmployee(formData: unknown): Promise<ActionResult<Re
         position: parsed.data.position || null,
         phone: parsed.data.phone || null,
         joinDate: parsed.data.joinDate || new Date().toISOString(),
-    }).select().single()
+    } as any).select().single()
     if (empErr) {
         // Compensating rollback: delete orphaned user
         await supabase.from('users').delete().eq('id', newUser.id)
@@ -71,7 +71,7 @@ export async function updateEmployee(id: string, formData: unknown): Promise<Act
         name: parsed.data.name,
         email: parsed.data.email,
         role: parsed.data.role,
-    }).eq('id', emp.userId)
+    } as any).eq('id', emp.userId)
 
     // Update employee
     const { data, error } = await supabase.from('employees').update({

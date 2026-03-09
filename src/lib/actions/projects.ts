@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -31,7 +31,7 @@ export async function getProject(id: string) {
         supabase.from('project_tasks').select('*').eq('projectId', id),
         supabase.from('invoices').select('*').eq('projectId', id),
         supabase.from('timesheets').select('*').eq('projectId', id),
-        supabase.from('users').select('id, name, email').eq('id', project.managerId).single(),
+        supabase.from('users').select('id, name, email').eq('id', project.managerId ?? '').single(),
     ])
 
     return {
@@ -48,7 +48,7 @@ export async function getProject(id: string) {
 export async function updateProjectState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
     const { data, error } = await supabase
-        .from('projects').update({ state, updatedAt: new Date().toISOString() }).eq('id', id).select().single()
+        .from('projects').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'project', entityId: id, details: `Trạng thái → ${state}` })
@@ -61,7 +61,7 @@ export async function createPhase(formData: unknown): Promise<ActionResult<Recor
     const parsed = parseInput(createPhaseSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('project_phases').insert(parsed.data).select().single()
+    const { data, error } = await supabase.from('project_phases').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'project_phase', entityId: data.id, details: `Tạo giai đoạn: ${data.name}` })
@@ -93,7 +93,7 @@ export async function createTask(formData: unknown): Promise<ActionResult<Record
     const parsed = parseInput(createTaskSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('project_tasks').insert(parsed.data).select().single()
+    const { data, error } = await supabase.from('project_tasks').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'project_task', entityId: data.id, details: `Tạo task: ${data.name}` })

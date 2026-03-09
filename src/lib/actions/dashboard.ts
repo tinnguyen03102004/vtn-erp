@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
@@ -50,7 +50,7 @@ export async function getRecentProjects(): Promise<ActionResult<RecentProject[]>
         .order('createdAt', { ascending: false })
         .limit(5)
     if (error) return fail(error.message)
-    return ok(data || [])
+    return ok((data || []) as RecentProject[])
 }
 
 interface RecentLead {
@@ -69,7 +69,7 @@ export async function getRecentLeads(): Promise<ActionResult<RecentLead[]>> {
         .order('createdAt', { ascending: false })
         .limit(5)
     if (error) return fail(error.message)
-    return ok(data || [])
+    return ok((data || []) as RecentLead[])
 }
 
 interface RevenuePoint {

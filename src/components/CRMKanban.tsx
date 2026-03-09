@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/utils'
 import { createLead, moveLeadStage } from '@/lib/actions/crm'
 import { useToast, ToastContainer } from '@/components/Toast'
+import type { Tables } from '@/lib/supabase'
 
-type Lead = { id: string; name: string; partnerName: string; expectedValue: any; probability: number; source: string; stageId: string; email?: string; phone?: string }
+type Lead = Tables<'crm_leads'>
 type Stage = { id: string; name: string; sequence: number; probability: number; leads: Lead[] }
 
 const stageColors: Record<string, string> = {

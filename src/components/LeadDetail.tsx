@@ -6,11 +6,9 @@ import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { updateLead, deleteLead, convertLeadToOrder } from '@/lib/actions/crm'
 import { useToast, ToastContainer } from '@/components/Toast'
+import type { Tables } from '@/lib/supabase'
 
-type Lead = {
-    id: string; name: string; partnerName: string; email?: string; phone?: string
-    source?: string; expectedValue?: any; probability?: number; notes?: string; createdAt?: string
-}
+type Lead = Tables<'crm_leads'>
 
 export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
     const router = useRouter()
@@ -29,7 +27,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
             email: form.email || null,
             phone: form.phone || null,
             source: form.source || null,
-            expectedValue: parseFloat(form.expectedValue) || 0,
+            expectedValue: Number(form.expectedValue) || 0,
             notes: form.notes || null,
             updatedAt: new Date().toISOString(),
         })

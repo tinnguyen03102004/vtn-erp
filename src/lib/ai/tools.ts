@@ -332,7 +332,7 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
             case 'get_employees': {
                 const emps = await getEmployees()
                 return JSON.stringify(emps.slice(0, 30).map((e) => ({
-                    id: e.id, name: e.name, position: e.position, department: e.department,
+                    id: e.id, name: e.user.name, position: e.position, department: e.department,
                 })))
             }
             case 'create_employee': {
@@ -360,14 +360,14 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
             case 'get_invoices': {
                 const invoices = await getInvoices()
                 return JSON.stringify(invoices.slice(0, 20).map((i) => ({
-                    id: i.id, number: i.invoiceNumber, client: i.clientName,
-                    amount: i.amount, state: i.state,
+                    id: i.id, number: i.name, client: i.partnerName,
+                    amount: i.amountTotal, state: i.state,
                 })))
             }
             case 'get_projects': {
                 const projects = await getProjects()
                 return JSON.stringify(projects.slice(0, 20).map((p) => ({
-                    id: p.id, name: p.name, client: p.clientName, state: p.state,
+                    id: p.id, name: p.name, client: p.partnerName, state: p.state,
                 })))
             }
             case 'create_task': {

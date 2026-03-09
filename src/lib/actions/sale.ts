@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -76,11 +76,10 @@ export async function createOrder(formData: unknown): Promise<ActionResult<Recor
     const parsed = parseInput(createOrderSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('sale_orders').insert({
-        ...parsed.data,
+    const { data, error } = await supabase.from('sale_orders').insert({ ...parsed.data,
         docType: 'QUOTATION',
         state: 'DRAFT',
-    }).select().single()
+    } as any).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'sale_order', entityId: data.id, details: `Tạo báo giá: ${data.name}` })
@@ -166,7 +165,7 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
         totalAmount: quotation.totalAmount,
         notes: quotation.notes,
         createdById: quotation.createdById,
-    }).select().single()
+    } as any).select().single()
     if (error) return fail(error.message)
 
     // Copy order lines (rollback contract on failure)
@@ -180,7 +179,7 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
             subtotal: l.subtotal,
             sequence: l.sequence,
         }))
-        const { error: lineErr } = await supabase.from('sale_order_lines').insert(newLines)
+        const { error: lineErr } = await supabase.from('sale_order_lines').insert(newLines as any)
         if (lineErr) {
             // Compensating rollback: delete orphaned contract
             await supabase.from('sale_orders').delete().eq('id', contract.id)
@@ -237,7 +236,7 @@ export async function saveOrderLines(orderId: string, lines: OrderLineInput[]): 
             subtotal: (l.qty || 1) * (l.unitPrice || 0),
             sequence: i,
         }))
-        const { error } = await supabase.from('sale_order_lines').insert(rows)
+        const { error } = await supabase.from('sale_order_lines').insert(rows as any)
         if (error) return fail(error.message)
     }
     const total = lines.reduce((s, l) => s + (l.qty || 1) * (l.unitPrice || 0), 0)
@@ -253,7 +252,7 @@ export async function addMilestone(formData: unknown): Promise<ActionResult<Reco
     const parsed = parseInput(milestoneSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('sale_milestones').insert(parsed.data).select().single()
+    const { data, error } = await supabase.from('sale_milestones').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'sale_milestone', entityId: data.id, details: `Thêm mốc: ${data.name}` })
@@ -282,7 +281,7 @@ export async function saveMilestones(orderId: string, milestones: MilestoneInput
             state: m.state || 'PENDING',
             sequence: i,
         }))
-        const { error } = await supabase.from('sale_milestones').insert(rows)
+        const { error } = await supabase.from('sale_milestones').insert(rows as any)
         if (error) return fail(error.message)
     }
 
@@ -321,7 +320,7 @@ export async function convertOrderToProject(orderId: string): Promise<ActionResu
             state: 'TODO',
             milestoneId: m.id,
         }))
-        await supabase.from('project_phases').insert(phases)
+        await supabase.from('project_phases').insert(phases as any)
     }
 
     await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: orderId, details: `Order → Project ${project.id}` })

@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { formatCurrency, escapeHtml } from '@/lib/utils'
@@ -100,8 +100,8 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
     <div class="partner-box">
       <div class="partner-name">${e(invoice.partnerName || '—')}</div>
       <div class="partner-info">
-        ${e(invoice.partnerAddress || '')}<br>
-        MST: ${e(invoice.partnerTaxId || '—')}
+        ${e((invoice as any).partnerAddress || '')}<br>
+        MST: ${e((invoice as any).partnerTaxId || '—')}
       </div>
     </div>
   </div>
@@ -117,7 +117,7 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
       </thead>
       <tbody>
         <tr>
-          <td>${e(invoice.description || invoice.name)}</td>
+          <td>${e((invoice as any).description || invoice.name)}</td>
           <td class="amount-col">${formatCurrency(Number(invoice.amountTotal || 0))}</td>
         </tr>
         <tr class="total-row">

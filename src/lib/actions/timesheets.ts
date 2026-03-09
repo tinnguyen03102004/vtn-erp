@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requireAuth } from '@/lib/auth-guard'
@@ -51,7 +51,7 @@ export async function saveWeekTimesheets(employeeId: string, entries: TimesheetE
     }))
 
     if (rows.length > 0) {
-        const { error } = await supabase.from('timesheets').insert(rows)
+        const { error } = await supabase.from('timesheets').insert(rows as any)
         if (error) return fail(error.message)
     }
 
@@ -92,7 +92,7 @@ export async function createTimesheet(formData: unknown): Promise<ActionResult<R
     const parsed = parseInput(timesheetEntrySchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('timesheets').insert(parsed.data).select().single()
+    const { data, error } = await supabase.from('timesheets').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'timesheet', entityId: data.id })

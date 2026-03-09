@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission, requireAuth } from '@/lib/auth-guard'
@@ -36,7 +36,7 @@ export async function createLead(formData: unknown): Promise<ActionResult<Record
     const parsed = parseInput(createLeadSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('crm_leads').insert(parsed.data).select().single()
+    const { data, error } = await supabase.from('crm_leads').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'lead', entityId: data.id, details: `Tạo lead: ${data.name}` })
