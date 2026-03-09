@@ -1,9 +1,8 @@
 'use server'
 
-import { getSessionFromCookies, type SessionUser } from '@/lib/session'
+import { getSessionFromCookies } from '@/lib/session'
+import type { SessionUser } from '@/lib/session'
 import { hasPermission, canAccess, type Permission } from '@/lib/rbac'
-
-export type { SessionUser }
 
 /**
  * Get current session user from server-side session.
