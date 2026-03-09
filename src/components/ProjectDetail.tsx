@@ -36,7 +36,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
             const updated = await updateProjectState(project.id, nextState)
             setProject((p: any) => ({ ...p, ...updated }))
             addToast(`Đã chuyển sang "${stateLabels[nextState]}"`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handleAddPhase(fd: FormData) {
@@ -47,7 +47,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
             setPhases((prev: any[]) => [...prev, ph])
             setShowAddPhase(false)
             addToast(`Đã thêm phase "${name}"`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handlePhaseState(phaseId: string, state: string) {
@@ -55,7 +55,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
             const updated = await updatePhase(phaseId, { state })
             setPhases((prev: any[]) => prev.map(p => p.id === phaseId ? { ...p, ...updated } : p))
             addToast(`Phase → ${phaseLabels[state]}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handleDeletePhase(phaseId: string) {
@@ -65,7 +65,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
             setPhases((prev: any[]) => prev.filter(p => p.id !== phaseId))
             setTasks((prev: any[]) => prev.filter(t => t.phaseId !== phaseId))
             addToast('Đã xóa phase')
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handleAddTask(fd: FormData) {
@@ -77,14 +77,14 @@ export default function ProjectDetail({ project: initProject }: { project: any }
             setTasks((prev: any[]) => [...prev, task])
             setShowAddTask(null)
             addToast(`Đã thêm task "${name}"`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handleTaskState(taskId: string, state: string) {
         try {
             const updated = await updateTask(taskId, { state })
             setTasks((prev: any[]) => prev.map(t => t.id === taskId ? { ...t, ...updated } : t))
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handleDeleteTask(taskId: string) {
@@ -92,7 +92,7 @@ export default function ProjectDetail({ project: initProject }: { project: any }
             await deleteTask(taskId)
             setTasks((prev: any[]) => prev.filter(t => t.id !== taskId))
             addToast('Đã xóa task')
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     const doneCount = tasks.filter((t: any) => t.state === 'DONE').length

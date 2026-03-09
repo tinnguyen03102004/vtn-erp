@@ -18,12 +18,17 @@ const stageBadgeMap: Record<string, string> = {
 }
 
 export default async function DashboardPage() {
-    const [kpis, recentProjects, recentLeads, chartData] = await Promise.all([
+    const [kpisResult, projectsResult, leadsResult, chartResult] = await Promise.all([
         getDashboardKPIs(),
         getRecentProjects(),
         getRecentLeads(),
         getChartData(),
     ])
+
+    const kpis = kpisResult.success ? kpisResult.data : { activeProjects: 0, pendingInvoices: 0, totalEmployees: 0, totalLeads: 0 }
+    const recentProjects = projectsResult.success ? projectsResult.data : []
+    const recentLeads = leadsResult.success ? leadsResult.data : []
+    const chartData = chartResult.success ? chartResult.data : { revenueData: [], projectStatusData: [] }
 
     return (
         <>

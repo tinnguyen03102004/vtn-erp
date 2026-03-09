@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { getSessionFromRequest } from '@/lib/session'
 
 export async function POST(req: NextRequest) {
-    // Auth check
-    const cookieStore = await cookies()
-    const session = cookieStore.get('vtn-session')?.value
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    let user: any
-    try {
-        user = JSON.parse(Buffer.from(session, 'base64').toString())
-    } catch {
-        return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    // Auth check via server-side session
+    const user = await getSessionFromRequest(req)
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const formData = await req.formData()
@@ -30,7 +24,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload to Supabase Storage
-    const ext = file.name.split('.').pop() || 'bin'
     const storagePath = `${entityType}/${entityId}/${Date.now()}-${file.name}`
     const buffer = Buffer.from(await file.arrayBuffer())
 

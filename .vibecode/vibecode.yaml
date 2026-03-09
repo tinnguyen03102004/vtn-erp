@@ -1,0 +1,22 @@
+version: 4.0
+project:
+  name: "vtn-erp"
+  created: "2026-03-09T12:22:12"
+
+settings:
+  max_iterations: 3
+  auto_backup: true
+  require_tests: true
+
+lifecycle:
+  phases: [VISION, CONTEXT, BLUEPRINT, CONTRACT, BUILD, REFINE]
+  current: BUILD
+
+stack:
+  framework: next.js-16
+  language: typescript
+  database: supabase
+  orm: prisma
+  styling: tailwind-v4
+  testing: vitest
+  ui: radix-ui

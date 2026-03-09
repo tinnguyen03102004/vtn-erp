@@ -50,7 +50,7 @@ export default function EmployeesGrid({ initialEmployees }: { initialEmployees: 
             setShowModal(false)
             setEditId(null)
             router.refresh()
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
         finally { setSaving(false) }
     }
 

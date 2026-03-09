@@ -240,7 +240,7 @@ export const toolDefinitions = [
 // Maps function name → actual server action execution
 
 // BUG-03 FIX: Validate required args before execution
-function validateArgs(args: Record<string, any>, required: string[]): string | null {
+function validateArgs(args: Record<string, unknown>, required: string[]): string | null {
     for (const key of required) {
         if (args[key] === undefined || args[key] === null || args[key] === '') {
             return `Thiếu trường bắt buộc: ${key}`
@@ -249,22 +249,24 @@ function validateArgs(args: Record<string, any>, required: string[]): string | n
     return null
 }
 
-export async function executeTool(name: string, args: Record<string, any>): Promise<string> {
+export async function executeTool(name: string, args: Record<string, unknown>): Promise<string> {
     try {
         switch (name) {
             case 'search_everything': {
                 const err = validateArgs(args, ['query'])
                 if (err) return JSON.stringify({ error: err })
-                const results = await globalSearch(args.query)
-                return JSON.stringify(results.slice(0, 10))
+                const result = await globalSearch(String(args.query))
+                if (!result.success) return JSON.stringify({ error: result.error })
+                return JSON.stringify(result.data.slice(0, 10))
             }
             case 'get_dashboard': {
-                const data = await getDashboardKPIs()
-                return JSON.stringify(data)
+                const result = await getDashboardKPIs()
+                if (!result.success) return JSON.stringify({ error: result.error })
+                return JSON.stringify(result.data)
             }
             case 'get_leads': {
                 const leads = await getLeads()
-                return JSON.stringify(leads.slice(0, 20).map((l: any) => ({
+                return JSON.stringify(leads.slice(0, 20).map((l) => ({
                     id: l.id, name: l.partnerName, email: l.email,
                     phone: l.phone, value: l.expectedValue, stage: l.stageId,
                 })))
@@ -275,7 +277,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
                 // Lookup default stage (first stage in pipeline)
                 const stages = await getStages()
                 const defaultStageId = stages[0]?.id || null
-                const lead = await createLead({
+                const result = await createLead({
                     name: args.partnerName,
                     partnerName: args.partnerName,
                     email: args.email || null,
@@ -285,24 +287,26 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
                     stageId: defaultStageId,
                     probability: 10,
                 })
-                return JSON.stringify({ success: true, lead: { id: lead.id, name: lead.partnerName } })
+                if (!result.success) return JSON.stringify({ error: result.error })
+                return JSON.stringify({ success: true, lead: { id: result.data.id, name: result.data.partnerName } })
             }
             case 'convert_lead_to_quotation': {
                 const err = validateArgs(args, ['leadId'])
                 if (err) return JSON.stringify({ error: err })
-                const order = await convertLeadToOrder(args.leadId)
-                return JSON.stringify({ success: true, orderId: order.id, name: order.name })
+                const result = await convertLeadToOrder(String(args.leadId))
+                if (!result.success) return JSON.stringify({ error: result.error })
+                return JSON.stringify({ success: true, orderId: result.data.id, name: result.data.name })
             }
             case 'get_quotations': {
                 const quotes = await getQuotations()
-                return JSON.stringify(quotes.slice(0, 20).map((q: any) => ({
+                return JSON.stringify(quotes.slice(0, 20).map((q) => ({
                     id: q.id, name: q.name, client: q.partnerName,
                     amount: q.totalAmount, state: q.state,
                 })))
             }
             case 'get_contracts': {
                 const contracts = await getContracts()
-                return JSON.stringify(contracts.slice(0, 20).map((c: any) => ({
+                return JSON.stringify(contracts.slice(0, 20).map((c) => ({
                     id: c.id, name: c.name, client: c.partnerName,
                     amount: c.totalAmount, state: c.state,
                 })))
@@ -310,78 +314,78 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
             case 'create_quotation': {
                 const err = validateArgs(args, ['partnerName', 'totalAmount'])
                 if (err) return JSON.stringify({ error: err })
-                const order = await createOrder({
-                    name: `SO-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
+                const result = await createOrder({
                     partnerName: args.partnerName,
                     partnerEmail: args.partnerEmail || null,
                     partnerPhone: args.partnerPhone || null,
-                    totalAmount: args.totalAmount,
                     notes: args.notes || null,
-                    state: 'DRAFT',
                 })
-                return JSON.stringify({ success: true, order: { id: order.id, name: order.name } })
+                if (!result.success) return JSON.stringify({ error: result.error })
+                return JSON.stringify({ success: true, order: { id: result.data.id, name: result.data.name } })
             }
             case 'send_quotation': {
                 const err = validateArgs(args, ['orderId'])
                 if (err) return JSON.stringify({ error: err })
-                await sendQuotation(args.orderId)
+                await sendQuotation(String(args.orderId))
                 return JSON.stringify({ success: true, message: 'Đã gửi báo giá cho khách hàng' })
             }
             case 'get_employees': {
                 const emps = await getEmployees()
-                return JSON.stringify(emps.slice(0, 30).map((e: any) => ({
+                return JSON.stringify(emps.slice(0, 30).map((e) => ({
                     id: e.id, name: e.name, position: e.position, department: e.department,
                 })))
             }
             case 'create_employee': {
                 const err = validateArgs(args, ['name'])
                 if (err) return JSON.stringify({ error: err })
-                const emp = await createEmployee({
+                const result = await createEmployee({
                     name: args.name,
                     email: args.email || null,
                     phone: args.phone || null,
                     position: args.position || null,
                     department: args.department || null,
                 })
-                return JSON.stringify({ success: true, employee: { id: emp.id, name: emp.name } })
+                if (!result.success) return JSON.stringify({ error: result.error })
+                return JSON.stringify({ success: true, employee: { id: result.data.id, name: result.data.name } })
             }
             case 'log_timesheet': {
                 const err = validateArgs(args, ['employeeId', 'projectId', 'date', 'hours'])
                 if (err) return JSON.stringify({ error: err })
-                await saveWeekTimesheets(args.employeeId, [
-                    { projectId: args.projectId, date: args.date, hours: args.hours },
+                const result = await saveWeekTimesheets(String(args.employeeId), [
+                    { projectId: String(args.projectId), date: String(args.date), hours: Number(args.hours) },
                 ])
+                if (!result.success) return JSON.stringify({ error: result.error })
                 return JSON.stringify({ success: true, message: `Đã log ${args.hours}h cho ngày ${args.date}` })
             }
             case 'get_invoices': {
                 const invoices = await getInvoices()
-                return JSON.stringify(invoices.slice(0, 20).map((i: any) => ({
+                return JSON.stringify(invoices.slice(0, 20).map((i) => ({
                     id: i.id, number: i.invoiceNumber, client: i.clientName,
                     amount: i.amount, state: i.state,
                 })))
             }
             case 'get_projects': {
                 const projects = await getProjects()
-                return JSON.stringify(projects.slice(0, 20).map((p: any) => ({
+                return JSON.stringify(projects.slice(0, 20).map((p) => ({
                     id: p.id, name: p.name, client: p.clientName, state: p.state,
                 })))
             }
             case 'create_task': {
                 const err = validateArgs(args, ['phaseId', 'name'])
                 if (err) return JSON.stringify({ error: err })
-                const task = await createTask({
+                const result = await createTask({
                     phaseId: args.phaseId,
                     name: args.name,
-                    assignee: args.assignee || null,
-                    dueDate: args.dueDate || null,
-                    state: 'TODO',
+                    assigneeId: args.assignee || null,
+                    deadline: args.dueDate || null,
                 })
-                return JSON.stringify({ success: true, task: { id: task.id, name: task.name } })
+                if (!result.success) return JSON.stringify({ error: result.error })
+                return JSON.stringify({ success: true, task: { id: result.data.id, name: result.data.name } })
             }
             case 'estimate_price': {
                 const err = validateArgs(args, ['description'])
                 if (err) return JSON.stringify({ error: err })
-                const estimate = estimateFromDescription(args.description)
+                const estimate = estimateFromDescription(String(args.description))
                 return JSON.stringify({
                     ...estimate,
                     items: estimate.items.map(i => ({
@@ -397,7 +401,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
             case 'analyze_quotation': {
                 const err = validateArgs(args, ['quotationId'])
                 if (err) return JSON.stringify({ error: err })
-                const order = await getOrder(args.quotationId)
+                const order = await getOrder(String(args.quotationId))
                 if (!order) return JSON.stringify({ error: 'Không tìm thấy báo giá' })
                 const analysis = analyzeQuotation({
                     items: (order as any).items || [],
@@ -413,7 +417,8 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
             default:
                 return JSON.stringify({ error: `Unknown tool: ${name}` })
         }
-    } catch (err: any) {
-        return JSON.stringify({ error: err.message || 'Tool execution failed' })
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Tool execution failed'
+        return JSON.stringify({ error: message })
     }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import bcrypt from 'bcryptjs'
+import { createSession, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/session'
 
 export async function POST(req: NextRequest) {
     try {
@@ -32,21 +33,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ ok: false, error: 'Mật khẩu không đúng' }, { status: 401 })
         }
 
-        // Create response with session cookie
+        // Create server-side session
+        const { cookieValue, expiresAt } = await createSession(user.id, req)
+
+        // Create response
         const response = NextResponse.json({
             ok: true,
             user: { id: user.id, name: user.name, email: user.email, role: user.role },
         })
 
-        // Set session cookie
-        const sessionData = JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role })
-        response.cookies.set('vtn-session', Buffer.from(sessionData).toString('base64'), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7,
-        })
+        // Set signed session cookie
+        response.cookies.set(SESSION_COOKIE_NAME, cookieValue, getSessionCookieOptions(expiresAt))
 
         return response
     } catch (error) {

@@ -10,7 +10,7 @@ const typeLabels: Record<string, string> = { lead: 'Lead', order: 'Báo giá', p
 export default function GlobalSearch() {
     const router = useRouter()
     const [query, setQuery] = useState('')
-    const [results, setResults] = useState<any[]>([])
+    const [results, setResults] = useState<{ type: string; id: string; title: string; subtitle: string; url: string }[]>([])
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [selected, setSelected] = useState(-1)
@@ -21,8 +21,8 @@ export default function GlobalSearch() {
         if (q.length < 2) { setResults([]); return }
         setLoading(true)
         try {
-            const res = await globalSearch(q)
-            setResults(res)
+            const result = await globalSearch(q)
+            setResults(result.success ? result.data : [])
             setSelected(-1)
         } finally { setLoading(false) }
     }, [])

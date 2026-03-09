@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+  # Supabase URL/key needed for build (referenced at import time)
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+jobs:
+  ci:
+    name: Lint → Test → Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Gate 1: TypeScript ──
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      # ── Gate 2: Lint ──
+      - name: ESLint
+        run: npm run lint
+
+      # ── Gate 3: Unit Tests ──
+      - name: Vitest
+        run: npm test
+
+      # ── Gate 4: Build ──
+      - name: Next.js build
+        run: npm run build

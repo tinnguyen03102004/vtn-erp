@@ -1,30 +1,19 @@
 'use server'
 
-import { cookies } from 'next/headers'
+import { getSessionFromCookies, type SessionUser } from '@/lib/session'
 import { hasPermission, canAccess, type Permission } from '@/lib/rbac'
 
-type SessionUser = {
-    id: string
-    name: string
-    email: string
-    role: string
-}
+export type { SessionUser }
 
 /**
- * Get current session user from vtn-session cookie. Throws if not authenticated.
+ * Get current session user from server-side session.
+ * Verifies HMAC signature → looks up session in DB → returns fresh user data.
+ * Throws if not authenticated.
  */
 export async function requireAuth(): Promise<SessionUser> {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('vtn-session')?.value
-    if (!sessionCookie) throw new Error('Unauthorized — vui lòng đăng nhập')
-
-    try {
-        const user = JSON.parse(Buffer.from(sessionCookie, 'base64').toString())
-        if (!user?.id) throw new Error('Invalid session')
-        return user as SessionUser
-    } catch {
-        throw new Error('Unauthorized — phiên đăng nhập không hợp lệ')
-    }
+    const user = await getSessionFromCookies()
+    if (!user) throw new Error('Unauthorized — vui lòng đăng nhập')
+    return user
 }
 
 /**

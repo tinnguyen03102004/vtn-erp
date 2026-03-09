@@ -41,7 +41,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: any[] }
             }
             setShowModal(false)
             setEditUser(null)
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     async function handleToggle(user: any) {
@@ -51,7 +51,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: any[] }
             const updated = await toggleUserActive(user.id, !user.isActive)
             setUsers(prev => prev.map(u => u.id === user.id ? updated : u))
             addToast(`Đã ${action} tài khoản`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
     }
 
     const activeCount = users.filter(u => u.isActive).length

@@ -81,7 +81,7 @@ export default function TimesheetGrid({ weekDates, monday, timesheets, projects,
             }
             await saveWeekTimesheets(employeeId, allEntries)
             addToast(`Đã lưu ${totalHours}h tuần này`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
         finally { setSaving(false) }
     }
 

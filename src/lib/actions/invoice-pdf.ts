@@ -2,8 +2,9 @@
 
 import { supabase } from '@/lib/supabase'
 import { formatCurrency, escapeHtml } from '@/lib/utils'
+import { ok, fail, type ActionResult } from '@/lib/action-result'
 
-export async function generateInvoicePDF(invoiceId: string) {
+export async function generateInvoicePDF(invoiceId: string): Promise<ActionResult<{ html: string; invoiceName: string }>> {
   // Fetch invoice + payments
   const { data: invoice } = await supabase
     .from('invoices')
@@ -11,7 +12,7 @@ export async function generateInvoicePDF(invoiceId: string) {
     .eq('id', invoiceId)
     .single()
 
-  if (!invoice) throw new Error('Invoice not found')
+  if (!invoice) return fail('Invoice not found')
 
   const { data: payments } = await supabase
     .from('payments')
@@ -28,11 +29,11 @@ export async function generateInvoicePDF(invoiceId: string) {
     DRAFT: 'Nháp', POSTED: 'Đã gửi', PAID: 'Đã thanh toán', CANCELLED: 'Đã huỷ'
   }
 
-  const totalPaid = (payments || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0)
+  const totalPaid = (payments || []).reduce((s: number, p: Record<string, unknown>) => s + Number(p.amount || 0), 0)
   const remaining = Number(invoice.amountTotal || 0) - totalPaid
 
   // Escape user inputs to prevent XSS
-  const e = (s: any) => escapeHtml(String(s ?? ''))
+  const e = (s: unknown) => escapeHtml(String(s ?? ''))
 
   // Generate HTML for PDF
   const html = `
@@ -76,11 +77,11 @@ export async function generateInvoicePDF(invoiceId: string) {
 <body>
   <div class="header">
     <div class="company">
-      <div class="company-name">${e(settingsMap['company_name'] || 'Công ty TNHH Võ Trọng Nghĩa')}</div>
+      <div class="company-name">${e(settingsMap['companyName'] || 'Công ty TNHH Võ Trọng Nghĩa')}</div>
       <div class="company-info">
-        ${e(settingsMap['company_address'] || '')}<br>
-        ${settingsMap['company_phone'] ? 'ĐT: ' + e(settingsMap['company_phone']) : ''}<br>
-        ${settingsMap['company_email'] ? 'Email: ' + e(settingsMap['company_email']) : ''}
+        ${e(settingsMap['address'] || '')}<br>
+        ${settingsMap['phone'] ? 'ĐT: ' + e(settingsMap['phone']) : ''}<br>
+        ${settingsMap['email'] ? 'Email: ' + e(settingsMap['email']) : ''}
       </div>
     </div>
     <div class="invoice-meta">
@@ -140,9 +141,9 @@ export async function generateInvoicePDF(invoiceId: string) {
         </tr>
       </thead>
       <tbody>
-        ${(payments || []).map((p: any) => `
+        ${(payments || []).map((p: Record<string, unknown>) => `
         <tr>
-          <td>${new Date(p.paymentDate).toLocaleDateString('vi-VN')}</td>
+          <td>${new Date(String(p.paymentDate)).toLocaleDateString('vi-VN')}</td>
           <td>${p.method === 'BANK' ? 'Chuyển khoản' : p.method === 'CASH' ? 'Tiền mặt' : e(p.method || '—')}</td>
           <td>${e(p.note || '—')}</td>
           <td class="amount-col">${formatCurrency(Number(p.amount || 0))}</td>
@@ -162,10 +163,10 @@ export async function generateInvoicePDF(invoiceId: string) {
   ` : ''}
 
   <div class="footer">
-    ${e(settingsMap['company_name'] || 'Cty TNHH Võ Trọng Nghĩa')} — Hoá đơn được tạo tự động bởi VTN ERP
+    ${e(settingsMap['companyName'] || 'Cty TNHH Võ Trọng Nghĩa')} — Hoá đơn được tạo tự động bởi VTN ERP
   </div>
 </body>
 </html>`
 
-  return { html, invoiceName: invoice.name }
+  return ok({ html, invoiceName: invoice.name })
 }

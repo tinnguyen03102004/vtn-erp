@@ -23,23 +23,21 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
     async function handleSave() {
         if (!form.name || !form.partnerName) { addToast('Tên lead và khách hàng bắt buộc', 'error'); return }
         setSaving(true)
-        try {
-            const updated = await updateLead(lead.id, {
-                name: form.name,
-                partnerName: form.partnerName,
-                email: form.email || null,
-                phone: form.phone || null,
-                source: form.source || null,
-                expectedValue: parseFloat(form.expectedValue) || 0,
-                notes: form.notes || null,
-                updatedAt: new Date().toISOString(),
-            })
-            setLead(updated)
-            setEditing(false)
-            addToast('Đã cập nhật lead')
-        } catch (err: any) {
-            addToast(err.message || 'Lỗi', 'error')
-        } finally { setSaving(false) }
+        const result = await updateLead(lead.id, {
+            name: form.name,
+            partnerName: form.partnerName,
+            email: form.email || null,
+            phone: form.phone || null,
+            source: form.source || null,
+            expectedValue: parseFloat(form.expectedValue) || 0,
+            notes: form.notes || null,
+            updatedAt: new Date().toISOString(),
+        })
+        setSaving(false)
+        if (!result.success) { addToast(result.error || 'Lỗi', 'error'); return }
+        setLead(result.data as Lead)
+        setEditing(false)
+        addToast('Đã cập nhật lead')
     }
 
     async function handleDelete() {
@@ -55,13 +53,10 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
 
     async function handleConvert() {
         if (!confirm(`Chuyển lead "${lead.name}" thành Báo giá?`)) return
-        try {
-            const order = await convertLeadToOrder(lead.id)
-            addToast(`Đã tạo báo giá ${order.name}`)
-            router.push(`/sale/${order.id}`)
-        } catch (err: any) {
-            addToast(err.message || 'Lỗi', 'error')
-        }
+        const result = await convertLeadToOrder(lead.id)
+        if (!result.success) { addToast(result.error || 'Lỗi', 'error'); return }
+        addToast(`Đã tạo báo giá ${result.data.name}`)
+        router.push(`/sale/${result.data.id}`)
     }
 
     const fields = [

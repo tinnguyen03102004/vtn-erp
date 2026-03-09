@@ -1,11 +1,14 @@
 import { getTimesheets } from '@/lib/actions/timesheets'
 import { getProjects } from '@/lib/actions/projects'
 import { getEmployees } from '@/lib/actions/employees'
+import { requireAuth } from '@/lib/auth-guard'
 import TimesheetGrid from './grid'
 
 export const dynamic = 'force-dynamic'
 
 export default async function TimesheetPage() {
+    const user = await requireAuth()
+
     const today = new Date()
     const dayOfWeek = today.getDay()
     const monday = new Date(today)
@@ -42,8 +45,9 @@ export default async function TimesheetPage() {
         description: t.description,
     }))
 
-    // Use first employee as current user for now
-    const currentEmployeeId = employees.length > 0 ? employees[0].id : undefined
+    // Find the employee record linked to the logged-in user
+    const currentEmployee = employees.find((e: any) => e.userId === user.id)
+    const currentEmployeeId = currentEmployee?.id
 
     return (
         <TimesheetGrid

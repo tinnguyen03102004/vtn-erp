@@ -49,23 +49,21 @@ export default function NewSalePage() {
         setError('')
         setSaving(true)
         try {
-            const order = await createOrder({
-                name: `SO-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
+            const result = await createOrder({
                 partnerName: partnerName.trim(),
                 partnerEmail: partnerEmail || null,
                 partnerPhone: partnerPhone || null,
-                validityDate: validityDate || null,
                 totalAmount,
                 notes: notes || null,
-                state,
             })
+            if (!result.success) { setError(result.error); setSaving(false); return }
 
             // Add milestones
             for (let i = 0; i < milestones.length; i++) {
                 const ms = milestones[i]
                 if (ms.name.trim()) {
-                    await addMilestone({
-                        orderId: order.id,
+                    const msResult = await addMilestone({
+                        orderId: result.data.id as string,
                         name: ms.name,
                         percent: ms.percent,
                         amount: Math.round(totalAmount * ms.percent / 100),
@@ -73,6 +71,7 @@ export default function NewSalePage() {
                         sequence: i + 1,
                         state: 'PENDING',
                     })
+                    if (!msResult.success) { setError(msResult.error); setSaving(false); return }
                 }
             }
 

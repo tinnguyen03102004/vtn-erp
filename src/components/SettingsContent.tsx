@@ -26,7 +26,7 @@ export default function SettingsContent({ initialSettings, initialUsers }: { ini
     async function handleSave() {
         setSaving(true)
         try { await saveSettings({ ...form, invoiceNotes }); addToast('Đã lưu cài đặt') }
-        catch (err: any) { addToast(err.message || 'Lỗi', 'error') }
+        catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
         finally { setSaving(false) }
     }
 

@@ -28,11 +28,10 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
     const remaining = Number(invoice.amountTotal) - totalPaid
 
     async function handleState(nextState: string) {
-        try {
-            const updated = await updateInvoiceState(invoice.id, nextState)
-            setInvoice((prev: any) => ({ ...prev, ...updated }))
-            addToast(`Đã chuyển → ${stateLabels[nextState]}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await updateInvoiceState(invoice.id, nextState)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setInvoice((prev: any) => ({ ...prev, ...result.data }))
+        addToast(`Đã chuyển → ${stateLabels[nextState]}`)
     }
 
     async function handlePayment(fd: FormData) {
@@ -40,29 +39,27 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
         const method = fd.get('method') as string
         const note = fd.get('note') as string
         if (!amount || amount <= 0) { addToast('Nhập số tiền hợp lệ', 'error'); return }
-        try {
-            const payment = await createPayment({
-                invoiceId: invoice.id,
-                amount,
-                paymentDate: new Date().toISOString(),
-                method: method || null,
-                note: note || null,
-            })
-            setPayments((prev: any[]) => [payment, ...prev])
-            setShowPayment(false)
-            if (totalPaid + amount >= Number(invoice.amountTotal)) {
-                setInvoice((prev: any) => ({ ...prev, state: 'PAID' }))
-            }
-            addToast(`Đã ghi nhận ${formatCurrency(amount)}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await createPayment({
+            invoiceId: invoice.id,
+            amount,
+            paymentDate: new Date().toISOString(),
+            method: method || null,
+            note: note || null,
+        })
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setPayments((prev: any[]) => [result.data, ...prev])
+        setShowPayment(false)
+        if (totalPaid + amount >= Number(invoice.amountTotal)) {
+            setInvoice((prev: any) => ({ ...prev, state: 'PAID' }))
+        }
+        addToast(`Đã ghi nhận ${formatCurrency(amount)}`)
     }
 
     async function handleExportPDF() {
-        try {
-            const { html } = await generateInvoicePDF(invoice.id)
-            const win = window.open('', '_blank')
-            if (win) { win.document.write(html); win.document.close(); win.print() }
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await generateInvoicePDF(invoice.id)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        const win = window.open('', '_blank')
+        if (win) { win.document.write(result.data.html); win.document.close(); win.print() }
     }
 
     return (

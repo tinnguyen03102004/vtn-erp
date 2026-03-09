@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifySignature, SESSION_COOKIE_NAME } from '@/lib/session'
 
 export function proxy(req: NextRequest) {
     const path = req.nextUrl.pathname
@@ -13,9 +14,10 @@ export function proxy(req: NextRequest) {
         return NextResponse.next()
     }
 
-    // Check session cookie
-    const session = req.cookies.get('vtn-session')?.value
-    if (!session) {
+    // Check session cookie exists and has valid HMAC signature
+    // Note: We only verify signature here (fast), not DB lookup (that's in auth-guard)
+    const cookieValue = req.cookies.get(SESSION_COOKIE_NAME)?.value
+    if (!cookieValue || !verifySignature(cookieValue)) {
         return NextResponse.redirect(new URL('/login', req.url))
     }
 

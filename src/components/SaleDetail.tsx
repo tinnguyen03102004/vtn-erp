@@ -44,101 +44,92 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
     // ── Quotation actions ──
     async function handleSend() {
         if (!confirm(`Gửi báo giá "${order.name}" cho CĐT?`)) return
-        try {
-            const updated = await sendQuotation(order.id)
-            setOrder((prev: any) => ({ ...prev, ...updated }))
-            addToast(`Đã gửi báo giá ${order.name} cho CĐT`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await sendQuotation(order.id)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setOrder((prev: any) => ({ ...prev, ...result.data }))
+        addToast(`Đã gửi báo giá ${order.name} cho CĐT`)
     }
 
     async function handleApprove() {
         if (!confirm(`CĐT đã duyệt báo giá "${order.name}"?`)) return
-        try {
-            const updated = await approveQuotation(order.id)
-            setOrder((prev: any) => ({ ...prev, ...updated }))
-            addToast(`CĐT đã duyệt báo giá ${order.name}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await approveQuotation(order.id)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setOrder((prev: any) => ({ ...prev, ...result.data }))
+        addToast(`CĐT đã duyệt báo giá ${order.name}`)
     }
 
     async function handleReject() {
-        try {
-            const updated = await rejectQuotation(order.id, rejectReason)
-            setOrder((prev: any) => ({ ...prev, ...updated }))
-            setShowRejectDialog(false)
-            addToast(`Báo giá ${order.name} đã bị từ chối`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await rejectQuotation(order.id, rejectReason)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setOrder((prev: any) => ({ ...prev, ...result.data }))
+        setShowRejectDialog(false)
+        addToast(`Báo giá ${order.name} đã bị từ chối`)
     }
 
     async function handleConvertToContract() {
         if (!confirm(`Chuyển báo giá "${order.name}" thành Hợp đồng đàm phán?`)) return
-        try {
-            const contract = await convertToContract(order.id)
-            addToast(`Đã tạo hợp đồng ${contract.name}`)
-            router.push(`/sale/${contract.id}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await convertToContract(order.id)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        addToast(`Đã tạo hợp đồng ${result.data.name}`)
+        router.push(`/sale/${result.data.id}`)
     }
 
     // ── Contract actions ──
     async function handleSign() {
         if (!confirm(`Ký hợp đồng "${order.name}"?`)) return
-        try {
-            const updated = await signContract(order.id)
-            setOrder((prev: any) => ({ ...prev, ...updated }))
-            addToast(`Đã ký hợp đồng ${order.name}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await signContract(order.id)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setOrder((prev: any) => ({ ...prev, ...result.data }))
+        addToast(`Đã ký hợp đồng ${order.name}`)
     }
 
     async function handleDone() {
-        try {
-            const updated = await updateOrderState(order.id, 'DONE')
-            setOrder((prev: any) => ({ ...prev, ...updated }))
-            addToast(`Đã hoàn thành ${order.name}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await updateOrderState(order.id, 'DONE')
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setOrder((prev: any) => ({ ...prev, ...result.data }))
+        addToast(`Đã hoàn thành ${order.name}`)
     }
 
     // ── Generic actions ──
     async function handleStateChange(nextState: string) {
-        try {
-            const updated = await updateOrderState(order.id, nextState)
-            setOrder((prev: any) => ({ ...prev, ...updated }))
-            addToast(`Đã cập nhật trạng thái`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await updateOrderState(order.id, nextState)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setOrder((prev: any) => ({ ...prev, ...result.data }))
+        addToast(`Đã cập nhật trạng thái`)
     }
 
     async function handleSaveLines() {
         setSaving(true)
-        try {
-            await saveOrderLines(order.id, lines)
-            setOrder((prev: any) => ({ ...prev, totalAmount }))
-            setEditingLines(false)
-            addToast('Đã cập nhật dịch vụ')
-        } catch (err: any) { addToast(err.message, 'error') }
-        finally { setSaving(false) }
+        const result = await saveOrderLines(order.id, lines as any)
+        setSaving(false)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setOrder((prev: any) => ({ ...prev, totalAmount }))
+        setEditingLines(false)
+        addToast('Đã cập nhật dịch vụ')
     }
 
     async function handleSaveMS() {
         setSaving(true)
-        try {
-            await saveMilestones(order.id, milestones)
-            setEditingMS(false)
-            addToast('Đã cập nhật milestones')
-        } catch (err: any) { addToast(err.message, 'error') }
-        finally { setSaving(false) }
+        const result = await saveMilestones(order.id, milestones as any)
+        setSaving(false)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        setEditingMS(false)
+        addToast('Đã cập nhật milestones')
     }
 
     async function handleDelete() {
         if (!confirm(`Xóa "${order.name}"? Tất cả dịch vụ và milestones sẽ bị xóa.`)) return
-        try { await deleteOrder(order.id); addToast('Đã xóa'); router.push('/sale') }
-        catch (err: any) { addToast(err.message, 'error') }
+        const result = await deleteOrder(order.id)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        addToast('Đã xóa'); router.push('/sale')
     }
 
     async function handleConvertToProject() {
         if (!confirm(`Tạo dự án từ "${order.name}"?`)) return
-        try {
-            const proj = await convertOrderToProject(order.id)
-            addToast(`Đã tạo dự án ${proj.code}`)
-            router.push(`/projects/${proj.id}`)
-        } catch (err: any) { addToast(err.message, 'error') }
+        const result = await convertOrderToProject(order.id)
+        if (!result.success) { addToast(result.error, 'error'); return }
+        addToast(`Đã tạo dự án ${result.data.code}`)
+        router.push(`/projects/${result.data.id}`)
     }
 
     const totalPaid = milestones.filter(m => m.state === 'PAID').reduce((s, m) => s + Number(m.amount || 0), 0)

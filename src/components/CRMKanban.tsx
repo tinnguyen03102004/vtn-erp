@@ -84,16 +84,14 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
 
         if (!data.name || !data.partnerName) { addToast('Vui lòng nhập tên lead và khách hàng', 'error'); return }
 
-        try {
-            const newLead = await createLead(data)
-            setStages(prev => prev.map(s =>
-                s.id === modalStageId ? { ...s, leads: [...s.leads, newLead] } : s
-            ))
-            setShowModal(false)
-            addToast(`Đã tạo lead "${data.name}"`)
-        } catch (err: any) {
-            addToast(err.message || 'Lỗi khi tạo lead', 'error')
-        }
+        const result = await createLead(data)
+        if (!result.success) { addToast(result.error || 'Lỗi khi tạo lead', 'error'); return }
+        setStages(prev => prev.map(s =>
+            s.id === modalStageId ? { ...s, leads: [...s.leads, result.data as Lead] } : s
+        ))
+        setShowModal(false)
+        addToast(`Đã tạo lead "${data.name}"`)
+
     }
 
     const allLeads = stages.flatMap(s => s.leads)

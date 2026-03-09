@@ -26,12 +26,14 @@ model User {
   employee      Employee?
   accounts      Account[]
   sessions      Session[]
+  appSessions   AppSession[]
 
   assignedLeads    CrmLead[]      @relation("LeadAssignee")
   createdOrders    SaleOrder[]    @relation("OrderCreator")
   managedProjects  Project[]      @relation("ProjectManager")
   assignedTasks    ProjectTask[]  @relation("TaskAssignee")
   timesheets       Timesheet[]
+  attachments      Attachment[]
 
   @@map("users")
 }
@@ -148,26 +150,34 @@ model CrmLead {
 // ============================================================
 
 model SaleOrder {
-  id           String          @id @default(cuid())
-  name         String          @unique // SO-2024-001
-  leadId       String?
-  partnerName  String
-  partnerEmail String?
-  partnerPhone String?
-  state        SaleOrderState  @default(DRAFT)
-  validityDate DateTime?
-  totalAmount  Decimal         @db.Decimal(15, 2) @default(0)
-  notes        String?         @db.Text
-  signedAt     DateTime?
-  createdById  String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id             String          @id @default(cuid())
+  name           String          @unique // SO-2024-001
+  leadId         String?
+  partnerName    String
+  partnerEmail   String?
+  partnerPhone   String?
+  state          SaleOrderState  @default(DRAFT)
+  docType        String?         @default("QUOTATION") // QUOTATION | CONTRACT
+  quotationId    String?         // Self-ref: contract links to original quotation
+  revision       Int?            @default(1)
+  validityDate   DateTime?
+  totalAmount    Decimal         @db.Decimal(15, 2) @default(0)
+  notes          String?         @db.Text
+  signedAt       DateTime?
+  sentAt         DateTime?
+  approvedAt     DateTime?
+  rejectedReason String?
+  createdById    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  lead      CrmLead?         @relation(fields: [leadId], references: [id])
-  createdBy User?            @relation("OrderCreator", fields: [createdById], references: [id])
-  lines     SaleOrderLine[]
+  lead       CrmLead?         @relation(fields: [leadId], references: [id])
+  createdBy  User?            @relation("OrderCreator", fields: [createdById], references: [id])
+  quotation  SaleOrder?       @relation("ContractToQuotation", fields: [quotationId], references: [id])
+  contracts  SaleOrder[]      @relation("ContractToQuotation")
+  lines      SaleOrderLine[]
   milestones SaleMilestone[]
-  projects  Project[]
+  projects   Project[]
 
   @@map("sale_orders")
 }
@@ -178,6 +188,11 @@ enum SaleOrderState {
   SALE
   DONE
   CANCEL
+  APPROVED
+  REJECTED
+  EXPIRED
+  NEGOTIATING
+  SIGNED
 }
 
 model SaleOrderLine {
@@ -391,4 +406,58 @@ model Timesheet {
   task     ProjectTask? @relation(fields: [taskId], references: [id])
 
   @@map("timesheets")
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime? @default(now())
+
+  @@map("settings")
+}
+
+// ============================================================
+// ATTACHMENTS
+// ============================================================
+
+model Attachment {
+  id           String   @id @default(cuid())
+  entityType   String
+  entityId     String
+  fileName     String
+  fileSize     Int      @default(0)
+  fileType     String   @default("application/octet-stream")
+  storagePath  String
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  uploadedBy User? @relation(fields: [uploadedById], references: [id])
+
+  @@map("attachments")
+}
+
+// ============================================================
+// APP SESSIONS (Server-side, Odoo-style)
+// ============================================================
+
+model AppSession {
+  id           String   @id @default(cuid())
+  token        String   @unique
+  userId       String
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  lastActiveAt DateTime? @default(now())
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("app_sessions")
 }

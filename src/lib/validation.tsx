@@ -4,23 +4,23 @@
 // FORM VALIDATION UTILITY for VTN-ERP
 // ================================================================
 
-type ValidatorFn = (value: any) => string | null
+type ValidatorFn = (value: unknown) => string | null
 
 export const validators = {
     required: (label: string): ValidatorFn => (value) =>
         (!value && value !== 0 && value !== false) ? `${label} là bắt buộc` : null,
 
     email: (): ValidatorFn => (value) =>
-        value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? 'Email không hợp lệ' : null,
+        (typeof value === 'string' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) ? 'Email không hợp lệ' : null,
 
     phone: (): ValidatorFn => (value) =>
-        value && !/^[+]?[\d\s()-]{8,15}$/.test(value) ? 'Số điện thoại không hợp lệ' : null,
+        (typeof value === 'string' && value && !/^[+]?[\d\s()-]{8,15}$/.test(value)) ? 'Số điện thoại không hợp lệ' : null,
 
     minLength: (min: number, label: string): ValidatorFn => (value) =>
-        value && value.length < min ? `${label} phải có ít nhất ${min} ký tự` : null,
+        (typeof value === 'string' && value.length < min) ? `${label} phải có ít nhất ${min} ký tự` : null,
 
     maxLength: (max: number, label: string): ValidatorFn => (value) =>
-        value && value.length > max ? `${label} không được quá ${max} ký tự` : null,
+        (typeof value === 'string' && value.length > max) ? `${label} không được quá ${max} ký tự` : null,
 
     positiveNumber: (label: string): ValidatorFn => (value) =>
         value !== undefined && value !== '' && (isNaN(Number(value)) || Number(value) < 0) ? `${label} phải là số dương` : null,
@@ -31,7 +31,7 @@ export const validators = {
 
 export type FieldRules = Record<string, ValidatorFn[]>
 
-export function validateForm(data: Record<string, any>, rules: FieldRules): Record<string, string> {
+export function validateForm(data: Record<string, unknown>, rules: FieldRules): Record<string, string> {
     const errors: Record<string, string> = {}
     for (const [field, fieldValidators] of Object.entries(rules)) {
         for (const validate of fieldValidators) {
