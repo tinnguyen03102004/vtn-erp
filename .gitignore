@@ -50,3 +50,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+tmp/
+.agent/spawn_agent_tasks/output-*
