@@ -1,7 +1,7 @@
 import { getOrder } from '@/lib/actions/sale'
 import { getAttachments } from '@/lib/actions/attachments'
 import { notFound } from 'next/navigation'
-import SaleDetail from '@/components/SaleDetail'
+import SaleDetail from '@/components/sale/SaleDetail'
 
 export const dynamic = 'force-dynamic'
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
-    updateOrder, deleteOrder, updateOrderState, saveOrderLines, saveMilestones,
+    deleteOrder, updateOrderState, saveOrderLines, saveMilestones,
     convertOrderToProject, sendQuotation, approveQuotation, rejectQuotation,
     convertToContract, signContract,
 } from '@/lib/actions/sale'
@@ -17,10 +17,10 @@ const allStateColors: Record<string, string> = {
     NEGOTIATING: 'info', SIGNED: 'success', DONE: 'primary', CANCEL: 'danger',
 }
 const allStateLabels: Record<string, string> = {
-    DRAFT: 'Nháp', SENT: 'Đã gửi CĐT', APPROVED: 'CĐT duyệt', REJECTED: 'Từ chối', EXPIRED: 'Hết hạn',
-    NEGOTIATING: 'Đang đàm phán', SIGNED: 'Đã ký HĐ', DONE: 'Hoàn thành', CANCEL: 'Huỷ', SALE: 'Đã ký',
+    DRAFT: 'NhÃ¡p', SENT: 'ÄÃ£ gá»­i CÄT', APPROVED: 'CÄT duyá»t', REJECTED: 'Tá»« chá»i', EXPIRED: 'Háº¿t háº¡n',
+    NEGOTIATING: 'Äang ÄÃ m phÃ¡n', SIGNED: 'ÄÃ£ kÃ½ HÄ', DONE: 'HoÃ n thÃ nh', CANCEL: 'Huá»·', SALE: 'ÄÃ£ kÃ½',
 }
-const msStateLabels: Record<string, string> = { PAID: 'Đã thanh toán', INVOICED: 'Đã xuất HĐ', PENDING: 'Chưa đến hạn' }
+const msStateLabels: Record<string, string> = { PAID: 'ÄÃ£ thanh toÃ¡n', INVOICED: 'ÄÃ£ xuáº¥t HÄ', PENDING: 'ChÆ°a Äáº¿n háº¡n' }
 
 type Line = { id?: string; description: string; qty: number; unitPrice: number }
 type Milestone = { id?: string; name: string; percent: number; dueDate: string; state: string; amount?: number }
@@ -42,23 +42,23 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
     const isContract = order.docType === 'CONTRACT'
     const totalAmount = lines.reduce((s, l) => s + l.qty * l.unitPrice, 0)
 
-    // ── Quotation actions ──
+    // ââ Quotation actions ââ
     async function handleSend() {
-        if (!confirm(`Gửi báo giá "${order.name}" cho CĐT?`)) return
+        if (!confirm(`Gá»­i bÃ¡o giÃ¡ "${order.name}" cho CÄT?`)) return
         const result = await sendQuotation(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
-        addToast(`Đã gửi báo giá ${order.name} cho CĐT`)
+        addToast(`ÄÃ£ gá»­i bÃ¡o giÃ¡ ${order.name} cho CÄT`)
     }
 
     async function handleApprove() {
-        if (!confirm(`CĐT đã duyệt báo giá "${order.name}"?`)) return
+        if (!confirm(`CÄT ÄÃ£ duyá»t bÃ¡o giÃ¡ "${order.name}"?`)) return
         const result = await approveQuotation(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
-        addToast(`CĐT đã duyệt báo giá ${order.name}`)
+        addToast(`CÄT ÄÃ£ duyá»t bÃ¡o giÃ¡ ${order.name}`)
     }
 
     async function handleReject() {
@@ -67,25 +67,25 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
         setShowRejectDialog(false)
-        addToast(`Báo giá ${order.name} đã bị từ chối`)
+        addToast(`BÃ¡o giÃ¡ ${order.name} ÄÃ£ bá» tá»« chá»i`)
     }
 
     async function handleConvertToContract() {
-        if (!confirm(`Chuyển báo giá "${order.name}" thành Hợp đồng đàm phán?`)) return
+        if (!confirm(`Chuyá»n bÃ¡o giÃ¡ "${order.name}" thÃ nh Há»£p Äá»ng ÄÃ m phÃ¡n?`)) return
         const result = await convertToContract(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
-        addToast(`Đã tạo hợp đồng ${result.data.name}`)
+        addToast(`ÄÃ£ táº¡o há»£p Äá»ng ${result.data.name}`)
         router.push(`/sale/${result.data.id}`)
     }
 
-    // ── Contract actions ──
+    // ââ Contract actions ââ
     async function handleSign() {
-        if (!confirm(`Ký hợp đồng "${order.name}"?`)) return
+        if (!confirm(`KÃ½ há»£p Äá»ng "${order.name}"?`)) return
         const result = await signContract(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
-        addToast(`Đã ký hợp đồng ${order.name}`)
+        addToast(`ÄÃ£ kÃ½ há»£p Äá»ng ${order.name}`)
     }
 
     async function handleDone() {
@@ -93,16 +93,16 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
         if (!result.success) { addToast(result.error, 'error'); return }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
-        addToast(`Đã hoàn thành ${order.name}`)
+        addToast(`ÄÃ£ hoÃ n thÃ nh ${order.name}`)
     }
 
-    // ── Generic actions ──
+    // ââ Generic actions ââ
     async function handleStateChange(nextState: string) {
         const result = await updateOrderState(order.id, nextState)
         if (!result.success) { addToast(result.error, 'error'); return }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, ...result.data }))
-        addToast(`Đã cập nhật trạng thái`)
+        addToast(`ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i`)
     }
 
     async function handleSaveLines() {
@@ -114,7 +114,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrder((prev: any) => ({ ...prev, totalAmount }))
         setEditingLines(false)
-        addToast('Đã cập nhật dịch vụ')
+        addToast('ÄÃ£ cáº­p nháº­t dá»ch vá»¥')
     }
 
     async function handleSaveMS() {
@@ -124,53 +124,53 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
         setSaving(false)
         if (!result.success) { addToast(result.error, 'error'); return }
         setEditingMS(false)
-        addToast('Đã cập nhật milestones')
+        addToast('ÄÃ£ cáº­p nháº­t milestones')
     }
 
     async function handleDelete() {
-        if (!confirm(`Xóa "${order.name}"? Tất cả dịch vụ và milestones sẽ bị xóa.`)) return
+        if (!confirm(`XÃ³a "${order.name}"? Táº¥t cáº£ dá»ch vá»¥ vÃ  milestones sáº½ bá» xÃ³a.`)) return
         const result = await deleteOrder(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
-        addToast('Đã xóa'); router.push('/sale')
+        addToast('ÄÃ£ xÃ³a'); router.push('/sale')
     }
 
     async function handleConvertToProject() {
-        if (!confirm(`Tạo dự án từ "${order.name}"?`)) return
+        if (!confirm(`Táº¡o dá»± Ã¡n tá»« "${order.name}"?`)) return
         const result = await convertOrderToProject(order.id)
         if (!result.success) { addToast(result.error, 'error'); return }
-        addToast(`Đã tạo dự án ${result.data.code}`)
+        addToast(`ÄÃ£ táº¡o dá»± Ã¡n ${result.data.code}`)
         router.push(`/projects/${result.data.id}`)
     }
 
     const totalPaid = milestones.filter(m => m.state === 'PAID').reduce((s, m) => s + Number(m.amount || 0), 0)
     const paidPercent = Number(order.totalAmount) > 0 ? Math.round(totalPaid / Number(order.totalAmount) * 100) : 0
 
-    // ── Flow buttons based on docType + state ──
+    // ââ Flow buttons based on docType + state ââ
     function renderFlowButtons() {
         if (isQuotation) {
             switch (order.state) {
                 case 'DRAFT':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#3B82F6', color: '#fff', border: 'none' }} onClick={handleSend}>📤 Gửi CĐT</button>
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => handleStateChange('CANCEL')}>Huỷ</button>
+                            <button className="btn btn-sm" style={{ background: '#3B82F6', color: '#fff', border: 'none' }} onClick={handleSend}>ð¤ Gá»­i CÄT</button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => handleStateChange('CANCEL')}>Huá»·</button>
                         </>
                     )
                 case 'SENT':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={handleApprove}>✅ CĐT duyệt</button>
-                            <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={() => setShowRejectDialog(true)}>❌ Từ chối</button>
-                            <button className="btn btn-ghost btn-sm" onClick={() => handleStateChange('DRAFT')}>↩ Về nháp</button>
+                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={handleApprove}>â CÄT duyá»t</button>
+                            <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={() => setShowRejectDialog(true)}>â Tá»« chá»i</button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => handleStateChange('DRAFT')}>â© Vá» nhÃ¡p</button>
                         </>
                     )
                 case 'APPROVED':
                     return (
-                        <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={handleConvertToContract}>📝 Chuyển sang Hợp đồng</button>
+                        <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={handleConvertToContract}>ð Chuyá»n sang Há»£p Äá»ng</button>
                     )
                 case 'REJECTED': case 'EXPIRED': case 'CANCEL':
                     return (
-                        <button className="btn btn-ghost btn-sm" onClick={() => handleStateChange('DRAFT')}>↩ Mở lại</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => handleStateChange('DRAFT')}>â© Má» láº¡i</button>
                     )
                 default: return null
             }
@@ -181,19 +181,19 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                 case 'NEGOTIATING':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={handleSign}>✅ Ký hợp đồng</button>
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => handleStateChange('CANCEL')}>Huỷ</button>
+                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={handleSign}>â KÃ½ há»£p Äá»ng</button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => handleStateChange('CANCEL')}>Huá»·</button>
                         </>
                     )
                 case 'SIGNED':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={handleDone}>🏁 Hoàn thành</button>
-                            <button className="btn btn-accent btn-sm" onClick={handleConvertToProject}>🏗️ Tạo dự án</button>
+                            <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={handleDone}>ð HoÃ n thÃ nh</button>
+                            <button className="btn btn-accent btn-sm" onClick={handleConvertToProject}>ð-ï¸ Táº¡o dá»± Ã¡n</button>
                         </>
                     )
                 case 'CANCEL':
-                    return <button className="btn btn-ghost btn-sm" onClick={() => handleStateChange('NEGOTIATING')}>↩ Mở lại</button>
+                    return <button className="btn btn-ghost btn-sm" onClick={() => handleStateChange('NEGOTIATING')}>â© Má» láº¡i</button>
                 default: return null
             }
         }
@@ -209,20 +209,20 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
             {showRejectDialog && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
                     <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 420, maxWidth: '90vw' }}>
-                        <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>Lý do từ chối</h3>
+                        <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>LÃ½ do tá»« chá»i</h3>
                         <textarea className="form-input" value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                            rows={3} placeholder="Nhập lý do CĐT từ chối..." style={{ width: '100%', resize: 'vertical' }} />
+                            rows={3} placeholder="Nháº­p lÃ½ do CÄT tá»« chá»i..." style={{ width: '100%', resize: 'vertical' }} />
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => setShowRejectDialog(false)}>Huỷ</button>
-                            <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={handleReject}>Từ chối</button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setShowRejectDialog(false)}>Huá»·</button>
+                            <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={handleReject}>Tá»« chá»i</button>
                         </div>
                     </div>
                 </div>
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 13, color: '#8FA3BF' }}>
-                <Link href="/sale" style={{ color: '#8FA3BF', textDecoration: 'none' }}>Báo giá & HĐ</Link>
-                <span>›</span>
+                <Link href="/sale" style={{ color: '#8FA3BF', textDecoration: 'none' }}>BÃ¡o giÃ¡ & HÄ</Link>
+                <span>âº</span>
                 <span style={{ color: '#0F1C2E', fontWeight: 600 }}>{order.name}</span>
             </div>
 
@@ -233,15 +233,15 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                         <h1 className="page-title" style={{ marginBottom: 0 }}>{order.name}</h1>
                         <span className={`badge badge-${allStateColors[order.state] || 'muted'}`}>{allStateLabels[order.state] || order.state}</span>
                         <span style={{ fontSize: 11, background: isQuotation ? '#EFF6FF' : '#F5F3FF', color: isQuotation ? '#3B82F6' : '#6366F1', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
-                            {isQuotation ? '📋 Báo giá' : '📝 Hợp đồng'}
+                            {isQuotation ? 'ð BÃ¡o giÃ¡' : 'ð Há»£p Äá»ng'}
                         </span>
                     </div>
-                    <p className="page-subtitle">{order.partnerName} • Tổng: {formatCurrency(Number(order.totalAmount))}</p>
+                    <p className="page-subtitle">{order.partnerName} â¢ Tá»ng: {formatCurrency(Number(order.totalAmount))}</p>
                 </div>
                 <div className="page-actions" style={{ flexWrap: 'wrap' }}>
                     {renderFlowButtons()}
-                    <a href={`/api/pdf/${initOrder.id}`} target="_blank" className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>📄 Xuất PDF</a>
-                    <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={handleDelete}>Xóa</button>
+                    <a href={`/api/pdf/${initOrder.id}`} target="_blank" className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>ð Xuáº¥t PDF</a>
+                    <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={handleDelete}>XÃ³a</button>
                 </div>
             </div>
 
@@ -249,9 +249,9 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
             {isContract && order.quotation && (
                 <div className="card" style={{ padding: 16, marginBottom: 20, background: '#FAFBFC', border: '1.5px dashed #CBD5E1' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}>
-                        <span style={{ color: '#8FA3BF' }}>Từ báo giá:</span>
+                        <span style={{ color: '#8FA3BF' }}>Tá»« bÃ¡o giÃ¡:</span>
                         <Link href={`/sale/${order.quotation.id}`} style={{ fontWeight: 700, color: '#3B82F6' }}>{order.quotation.name}</Link>
-                        <span style={{ color: '#8FA3BF' }}>— {order.quotation.partnerName} — {formatCurrency(Number(order.quotation.totalAmount))}</span>
+                        <span style={{ color: '#8FA3BF' }}>â {order.quotation.partnerName} â {formatCurrency(Number(order.quotation.totalAmount))}</span>
                     </div>
                 </div>
             )}
@@ -260,15 +260,15 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
             {isContract && (
                 <div className="card" style={{ padding: 20, marginBottom: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>Tiến độ thanh toán</div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>Tiáº¿n Äá» thanh toÃ¡n</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#22C55E' }}>{formatCurrency(totalPaid)} / {formatCurrency(Number(order.totalAmount))}</div>
                     </div>
                     <div className="progress" style={{ height: 12, marginBottom: 8 }}>
                         <div className="progress-bar" style={{ width: `${paidPercent}%`, background: '#22C55E' }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#8FA3BF' }}>
-                        <span>Đã thu: {paidPercent}%</span>
-                        <span>Còn lại: {formatCurrency(Number(order.totalAmount) - totalPaid)}</span>
+                        <span>ÄÃ£ thu: {paidPercent}%</span>
+                        <span>CÃ²n láº¡i: {formatCurrency(Number(order.totalAmount) - totalPaid)}</span>
                     </div>
                 </div>
             )}
@@ -277,18 +277,18 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {/* Info */}
                     <div className="card" style={{ padding: 20 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>{isQuotation ? 'Thông tin báo giá' : 'Thông tin hợp đồng'}</div>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>{isQuotation ? 'ThÃ´ng tin bÃ¡o giÃ¡' : 'ThÃ´ng tin há»£p Äá»ng'}</div>
                         {[
-                            { label: 'Khách hàng', value: order.partnerName },
-                            { label: 'Email', value: order.partnerEmail ?? '—' },
-                            { label: 'SĐT', value: order.partnerPhone ?? '—' },
-                            { label: 'Ngày tạo', value: order.createdAt ? formatDate(String(order.createdAt).split('T')[0]) : '—' },
+                            { label: 'KhÃ¡ch hÃ ng', value: order.partnerName },
+                            { label: 'Email', value: order.partnerEmail ?? 'â' },
+                            { label: 'SÄT', value: order.partnerPhone ?? 'â' },
+                            { label: 'NgÃ y táº¡o', value: order.createdAt ? formatDate(String(order.createdAt).split('T')[0]) : 'â' },
                             ...(isQuotation ? [
-                                { label: 'Hiệu lực', value: order.validityDate ? formatDate(String(order.validityDate).split('T')[0]) : '—' },
-                                ...(order.sentAt ? [{ label: 'Ngày gửi', value: formatDate(String(order.sentAt).split('T')[0]) }] : []),
-                                ...(order.approvedAt ? [{ label: 'Ngày duyệt', value: formatDate(String(order.approvedAt).split('T')[0]) }] : []),
+                                { label: 'Hiá»u lá»±c', value: order.validityDate ? formatDate(String(order.validityDate).split('T')[0]) : 'â' },
+                                ...(order.sentAt ? [{ label: 'NgÃ y gá»­i', value: formatDate(String(order.sentAt).split('T')[0]) }] : []),
+                                ...(order.approvedAt ? [{ label: 'NgÃ y duyá»t', value: formatDate(String(order.approvedAt).split('T')[0]) }] : []),
                             ] : [
-                                ...(order.signedAt ? [{ label: 'Ngày ký', value: formatDate(String(order.signedAt).split('T')[0]) }] : []),
+                                ...(order.signedAt ? [{ label: 'NgÃ y kÃ½', value: formatDate(String(order.signedAt).split('T')[0]) }] : []),
                             ]),
                         ].map(({ label, value }) => (
                             <div key={label} style={{ display: 'flex', gap: 12, fontSize: 13, marginBottom: 8 }}>
@@ -298,7 +298,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                         ))}
                         {order.rejectedReason && (
                             <div style={{ marginTop: 8, padding: '8px 12px', background: '#FEF2F2', borderRadius: 8, fontSize: 13, color: '#DC2626' }}>
-                                <strong>Lý do từ chối:</strong> {order.rejectedReason}
+                                <strong>LÃ½ do tá»« chá»i:</strong> {order.rejectedReason}
                             </div>
                         )}
                     </div>
@@ -306,9 +306,9 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                     {/* Lines */}
                     <div className="card" style={{ padding: 20 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                            <div style={{ fontWeight: 700, fontSize: 14 }}>Chi tiết dịch vụ</div>
+                            <div style={{ fontWeight: 700, fontSize: 14 }}>Chi tiáº¿t dá»ch vá»¥</div>
                             <button className="btn btn-ghost btn-sm" onClick={() => { if (editingLines) handleSaveLines(); else setEditingLines(true) }}>
-                                {saving ? '⏳' : editingLines ? '💾 Lưu' : '✏️ Sửa'}
+                                {saving ? 'â³' : editingLines ? 'ð¾ LÆ°u' : 'âï¸ Sá»­a'}
                             </button>
                         </div>
 
@@ -316,29 +316,29 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {lines.map((line, i) => (
                                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 60px 100px 30px', gap: 6 }}>
-                                        <input className="form-input" value={line.description} placeholder="Mô tả..."
+                                        <input className="form-input" value={line.description} placeholder="MÃ´ táº£..."
                                             onChange={e => setLines(prev => prev.map((l, j) => j === i ? { ...l, description: e.target.value } : l))} />
                                         <input className="form-input" type="number" value={line.qty} style={{ textAlign: 'center' }}
                                             onChange={e => setLines(prev => prev.map((l, j) => j === i ? { ...l, qty: +e.target.value || 1 } : l))} />
                                         <input className="form-input" type="number" value={line.unitPrice || ''} placeholder="0" style={{ textAlign: 'right' }}
                                             onChange={e => setLines(prev => prev.map((l, j) => j === i ? { ...l, unitPrice: +e.target.value || 0 } : l))} />
                                         <button onClick={() => setLines(prev => prev.filter((_, j) => j !== i))}
-                                            style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#8FA3BF' }}>✕</button>
+                                            style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#8FA3BF' }}>â</button>
                                     </div>
                                 ))}
                                 <button onClick={() => setLines(prev => [...prev, { description: '', qty: 1, unitPrice: 0 }])}
-                                    className="btn btn-ghost btn-sm" style={{ border: '1.5px dashed #CBD5E1', width: 'fit-content' }}>+ Thêm dòng</button>
+                                    className="btn btn-ghost btn-sm" style={{ border: '1.5px dashed #CBD5E1', width: 'fit-content' }}>+ ThÃªm dÃ²ng</button>
                                 <div style={{ textAlign: 'right', fontWeight: 800, fontSize: 16, color: '#1F3A5F', marginTop: 8 }}>
-                                    Tổng: {formatCurrency(totalAmount)}
+                                    Tá»ng: {formatCurrency(totalAmount)}
                                 </div>
                             </div>
                         ) : (
                             <table className="data-table" style={{ fontSize: 13 }}>
-                                <thead><tr><th>Mô tả</th><th style={{ textAlign: 'center' }}>SL</th><th style={{ textAlign: 'right' }}>Đơn giá</th><th style={{ textAlign: 'right' }}>Thành tiền</th></tr></thead>
+                                <thead><tr><th>MÃ´ táº£</th><th style={{ textAlign: 'center' }}>SL</th><th style={{ textAlign: 'right' }}>ÄÆ¡n giÃ¡</th><th style={{ textAlign: 'right' }}>ThÃ nh tiá»n</th></tr></thead>
                                 <tbody>
                                     {(order.lines || []).length === 0 ? (
-                                        <tr><td colSpan={4} style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>Chưa có dịch vụ</td></tr>
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        <tr><td colSpan={4} style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>ChÆ°a cÃ³ dá»ch vá»¥</td></tr>
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     ) : (order.lines || []).map((l: any) => (
                                         <tr key={l.id}>
                                             <td style={{ fontWeight: 500 }}>{l.description}</td>
@@ -349,7 +349,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                                     ))}
                                 </tbody>
                                 <tfoot><tr style={{ background: '#F8F9FB' }}>
-                                    <td colSpan={3} style={{ fontWeight: 700, textAlign: 'right' }}>Tổng</td>
+                                    <td colSpan={3} style={{ fontWeight: 700, textAlign: 'right' }}>Tá»ng</td>
                                     <td style={{ fontWeight: 800, textAlign: 'right', color: '#1F3A5F' }}>{formatCurrency(Number(order.totalAmount))}</td>
                                 </tr></tfoot>
                             </table>
@@ -363,7 +363,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                         <div style={{ fontWeight: 700, fontSize: 14 }}>Milestones</div>
                         {isContract && (
                             <button className="btn btn-ghost btn-sm" onClick={() => { if (editingMS) handleSaveMS(); else setEditingMS(true) }}>
-                                {saving ? '⏳' : editingMS ? '💾 Lưu' : '✏️ Sửa'}
+                                {saving ? 'â³' : editingMS ? 'ð¾ LÆ°u' : 'âï¸ Sá»­a'}
                             </button>
                         )}
                     </div>
@@ -373,10 +373,10 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                             {milestones.map((ms, i) => (
                                 <div key={i} style={{ border: '1.5px solid #E2E8F0', borderRadius: 10, padding: 14 }}>
                                     <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                                        <input className="form-input" value={ms.name} placeholder="Tên milestone"
+                                        <input className="form-input" value={ms.name} placeholder="TÃªn milestone"
                                             onChange={e => setMilestones(prev => prev.map((m, j) => j === i ? { ...m, name: e.target.value } : m))} style={{ flex: 1 }} />
                                         <button onClick={() => setMilestones(prev => prev.filter((_, j) => j !== i))}
-                                            style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#EF4444' }}>✕</button>
+                                            style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#EF4444' }}>â</button>
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 8 }}>
                                         <input className="form-input" type="number" value={ms.percent} placeholder="%"
@@ -387,18 +387,18 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                                 </div>
                             ))}
                             <button onClick={() => setMilestones(prev => [...prev, { name: `Milestone ${prev.length + 1}`, percent: 0, dueDate: '', state: 'PENDING' }])}
-                                className="btn btn-ghost btn-sm" style={{ border: '1.5px dashed #CBD5E1' }}>+ Thêm milestone</button>
+                                className="btn btn-ghost btn-sm" style={{ border: '1.5px dashed #CBD5E1' }}>+ ThÃªm milestone</button>
                             <div style={{ fontSize: 12, color: milestones.reduce((s, m) => s + m.percent, 0) === 100 ? '#22C55E' : '#EF4444', fontWeight: 600 }}>
-                                Tổng: {milestones.reduce((s, m) => s + m.percent, 0)}% {milestones.reduce((s, m) => s + m.percent, 0) !== 100 && '(cần = 100%)'}
+                                Tá»ng: {milestones.reduce((s, m) => s + m.percent, 0)}% {milestones.reduce((s, m) => s + m.percent, 0) !== 100 && '(cáº§n = 100%)'}
                             </div>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             {(order.milestones || []).length === 0 ? (
                                 <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>
-                                    {isQuotation ? 'Milestones sẽ được cấu hình sau khi chuyển sang Hợp đồng' : 'Chưa có milestones'}
+                                    {isQuotation ? 'Milestones sáº½ ÄÆ°á»£c cáº¥u hÃ¬nh sau khi chuyá»n sang Há»£p Äá»ng' : 'ChÆ°a cÃ³ milestones'}
                                 </div>
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             ) : (order.milestones || []).map((ms: any, i: number) => (
                                 <div key={ms.id} style={{
                                     border: '1.5px solid', borderRadius: 10, padding: '14px 16px',
@@ -410,7 +410,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                                             <div style={{
                                                 width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 background: ms.state === 'PAID' ? '#22C55E' : '#CBD5E1', color: '#fff', fontSize: 11, fontWeight: 800,
-                                            }}>{ms.state === 'PAID' ? '✓' : i + 1}</div>
+                                            }}>{ms.state === 'PAID' ? 'â' : i + 1}</div>
                                             <span style={{ fontWeight: 700, fontSize: 13 }}>{ms.name}</span>
                                         </div>
                                         <span className={`badge badge-${ms.state === 'PAID' ? 'success' : 'muted'}`}>{msStateLabels[ms.state] || ms.state}</span>
@@ -419,7 +419,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                                         <div style={{ fontSize: 18, fontWeight: 800, color: ms.state === 'PAID' ? '#22C55E' : '#1F3A5F' }}>
                                             {formatCurrency(Number(ms.amount || 0))} <span style={{ fontSize: 12, color: '#8FA3BF' }}>({ms.percent}%)</span>
                                         </div>
-                                        <div style={{ fontSize: 12, color: '#8FA3BF' }}>{ms.dueDate ? formatDate(String(ms.dueDate).split('T')[0]) : '—'}</div>
+                                        <div style={{ fontSize: 12, color: '#8FA3BF' }}>{ms.dueDate ? formatDate(String(ms.dueDate).split('T')[0]) : 'â'}</div>
                                     </div>
                                 </div>
                             ))}

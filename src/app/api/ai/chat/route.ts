@@ -3,7 +3,7 @@ import OpenAI from 'openai'
 import { toolDefinitions, executeTool } from '@/lib/ai/tools'
 import { SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
 
-// ── BUG-07 FIX: Simple in-memory rate limiter ──
+// ââ BUG-07 FIX: Simple in-memory rate limiter ââ
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
 const RATE_LIMIT = 15 // max requests
 const RATE_WINDOW = 60_000 // per 1 minute
@@ -22,7 +22,7 @@ function checkRateLimit(ip: string): boolean {
     return true
 }
 
-// ── Write tools that need confirmation ──
+// ââ Write tools that need confirmation ââ
 const WRITE_TOOLS = new Set([
     'create_lead', 'create_quotation', 'send_quotation',
     'create_employee', 'log_timesheet', 'create_task',
@@ -37,38 +37,38 @@ function fmtVND(n: number): string {
 function formatSuccessMessage(toolName: string, args: Record<string, any>, result: any): string {
     switch (toolName) {
         case 'create_lead':
-            return `✅ Đã tạo lead **${args.partnerName}** thành công!` +
-                (args.email ? `\n• Email: ${args.email}` : '') +
-                (args.phone ? `\n• SĐT: ${args.phone}` : '') +
-                (args.expectedValue ? `\n• Giá trị dự kiến: ${fmtVND(args.expectedValue)}` : '') +
-                '\n\nBạn có thể xem lead mới trong **CRM & Leads**.'
+            return `â ÄÃ£ táº¡o lead **${args.partnerName}** thÃ nh cÃ´ng!` +
+                (args.email ? `\nâ¢ Email: ${args.email}` : '') +
+                (args.phone ? `\nâ¢ SÄT: ${args.phone}` : '') +
+                (args.expectedValue ? `\nâ¢ GiÃ¡ trá» dá»± kiáº¿n: ${fmtVND(args.expectedValue)}` : '') +
+                '\n\nBáº¡n cÃ³ thá» xem lead má»i trong **CRM & Leads**.'
 
         case 'create_quotation':
-            return `✅ Đã tạo báo giá **${result.order?.name || ''}** cho **${args.partnerName}**` +
-                (args.totalAmount ? ` với giá trị ${fmtVND(args.totalAmount)}` : '') +
-                '.\n\nBạn có thể xem trong **Báo giá & HĐ**.'
+            return `â ÄÃ£ táº¡o bÃ¡o giÃ¡ **${result.order?.name || ''}** cho **${args.partnerName}**` +
+                (args.totalAmount ? ` vá»i giÃ¡ trá» ${fmtVND(args.totalAmount)}` : '') +
+                '.\n\nBáº¡n cÃ³ thá» xem trong **BÃ¡o giÃ¡ & HÄ**.'
 
         case 'send_quotation':
-            return `✅ Đã gửi báo giá **${result.name || args.orderId || ''}** thành công!`
+            return `â ÄÃ£ gá»­i bÃ¡o giÃ¡ **${result.name || args.orderId || ''}** thÃ nh cÃ´ng!`
 
         case 'create_employee':
-            return `✅ Đã tạo nhân viên **${args.name || ''}** thành công!` +
-                (args.department ? `\n• Phòng ban: ${args.department}` : '') +
-                (args.position ? `\n• Chức vụ: ${args.position}` : '')
+            return `â ÄÃ£ táº¡o nhÃ¢n viÃªn **${args.name || ''}** thÃ nh cÃ´ng!` +
+                (args.department ? `\nâ¢ PhÃ²ng ban: ${args.department}` : '') +
+                (args.position ? `\nâ¢ Chá»©c vá»¥: ${args.position}` : '')
 
         case 'log_timesheet':
-            return `✅ Đã ghi nhận **${args.hours || 0} giờ** timesheet thành công!`
+            return `â ÄÃ£ ghi nháº­n **${args.hours || 0} giá»** timesheet thÃ nh cÃ´ng!`
 
         case 'create_task':
-            return `✅ Đã tạo task **${args.name || ''}** thành công!` +
-                (args.priority ? `\n• Ưu tiên: ${args.priority}` : '')
+            return `â ÄÃ£ táº¡o task **${args.name || ''}** thÃ nh cÃ´ng!` +
+                (args.priority ? `\nâ¢ Æ¯u tiÃªn: ${args.priority}` : '')
 
         case 'convert_lead_to_quotation':
-            return `✅ Đã chuyển lead thành báo giá **${result.name || ''}** thành công!` +
-                '\n\nBạn có thể xem trong **Báo giá & HĐ**.'
+            return `â ÄÃ£ chuyá»n lead thÃ nh bÃ¡o giÃ¡ **${result.name || ''}** thÃ nh cÃ´ng!` +
+                '\n\nBáº¡n cÃ³ thá» xem trong **BÃ¡o giÃ¡ & HÄ**.'
 
         default:
-            return `✅ Đã thực hiện **${toolName}** thành công!`
+            return `â ÄÃ£ thá»±c hiá»n **${toolName}** thÃ nh cÃ´ng!`
     }
 }
 
@@ -77,12 +77,12 @@ export async function POST(req: NextRequest) {
         // Rate limit check
         const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
         if (!checkRateLimit(ip)) {
-            return Response.json({ error: 'Quá nhiều yêu cầu. Vui lòng chờ 1 phút.' }, { status: 429 })
+            return Response.json({ error: 'QuÃ¡ nhiá»u yÃªu cáº§u. Vui lÃ²ng chá» 1 phÃºt.' }, { status: 429 })
         }
 
         const apiKey = process.env.OPENAI_API_KEY
         if (!apiKey || apiKey === 'sk-PASTE-YOUR-KEY-HERE') {
-            return Response.json({ error: 'OPENAI_API_KEY chưa được cấu hình trong .env. Hãy restart dev server sau khi thêm key.' }, { status: 500 })
+            return Response.json({ error: 'OPENAI_API_KEY chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh trong .env. HÃ£y restart dev server sau khi thÃªm key.' }, { status: 500 })
         }
 
         const openai = new OpenAI({ apiKey })
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
             return Response.json({ error: 'messages must be an array' }, { status: 400 })
         }
 
-        // ── BUG-05 FIX: If user confirmed a pending action, execute it ──
+        // ââ BUG-05 FIX: If user confirmed a pending action, execute it ââ
         if (confirmAction) {
             const { toolName, args } = confirmAction
             const result = await executeTool(toolName, args)
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
             if (parsed.error) {
                 return Response.json({
                     role: 'assistant',
-                    content: `❌ Lỗi: ${parsed.error}`,
+                    content: `â Lá»-i: ${parsed.error}`,
                 })
             }
 
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
             ...messages,
         ]
 
-        // First call — may include function calls
+        // First call â may include function calls
         let response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: chatMessages,
@@ -163,12 +163,12 @@ export async function POST(req: NextRequest) {
                     continue
                 }
 
-                // BUG-05: Write tools → return confirmation instead of executing
+                // BUG-05: Write tools â return confirmation instead of executing
                 if (WRITE_TOOLS.has(toolCall.function.name)) {
                     pendingAction = {
                         toolName: toolCall.function.name,
                         args,
-                        preview: `Tool: **${toolCall.function.name}**\nDữ liệu: ${JSON.stringify(args, null, 2)}`,
+                        preview: `Tool: **${toolCall.function.name}**\nDá»¯ liá»u: ${JSON.stringify(args, null, 2)}`,
                     }
                     // Tell AI the action needs confirmation
                     chatMessages.push({
@@ -176,13 +176,13 @@ export async function POST(req: NextRequest) {
                         tool_call_id: toolCall.id,
                         content: JSON.stringify({
                             status: 'PENDING_CONFIRMATION',
-                            message: 'Hành động này cần user xác nhận trước khi thực hiện.',
+                            message: 'HÃ nh Äá»ng nÃ y cáº§n user xÃ¡c nháº­n trÆ°á»c khi thá»±c hiá»n.',
                             action: toolCall.function.name,
                             args,
                         }),
                     })
                 } else {
-                    // Read-only tools → execute directly
+                    // Read-only tools â execute directly
                     const result = await executeTool(toolCall.function.name, args)
                     chatMessages.push({
                         role: 'tool',
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
                     model: 'gpt-4o-mini',
                     messages: chatMessages,
                     max_tokens: 2048,
-                    // No tools — force text response for confirmation message
+                    // No tools â force text response for confirmation message
                 })
                 message = response.choices[0].message
                 break

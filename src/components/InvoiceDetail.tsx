@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from 'react'
@@ -10,15 +10,15 @@ import { generateInvoicePDF } from '@/lib/actions/invoice-pdf'
 import { useToast, ToastContainer } from '@/components/Toast'
 
 const stateColors: Record<string, string> = { DRAFT: 'muted', POSTED: 'info', PAID: 'success', CANCELLED: 'danger' }
-const stateLabels: Record<string, string> = { DRAFT: 'Nháp', POSTED: 'Đã phát hành', PAID: 'Đã thanh toán', CANCELLED: 'Đã huỷ' }
+const stateLabels: Record<string, string> = { DRAFT: 'Nháp', POSTED: 'Ðã phát hành', PAID: 'Ðã thanh toán', CANCELLED: 'Ðã hu?' }
 const stateFlow: Record<string, { next: string; label: string }[]> = {
-    DRAFT: [{ next: 'POSTED', label: '📤 Phát hành' }],
-    POSTED: [{ next: 'PAID', label: '✅ Đã thanh toán' }, { next: 'CANCELLED', label: 'Huỷ' }],
-    PAID: [], CANCELLED: [{ next: 'DRAFT', label: '↩ Mở lại' }],
+    DRAFT: [{ next: 'POSTED', label: '?? Phát hành' }],
+    POSTED: [{ next: 'PAID', label: '? Ðã thanh toán' }, { next: 'CANCELLED', label: 'Hu?' }],
+    PAID: [], CANCELLED: [{ next: 'DRAFT', label: '? M? l?i' }],
 }
 
 export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }) {
-    const router = useRouter()
+    const _router = useRouter()
     const { toasts, addToast } = useToast()
     const [invoice, setInvoice] = useState(initInvoice)
     const [payments, setPayments] = useState(initInvoice.payments || [])
@@ -32,14 +32,14 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
         const result = await updateInvoiceState(invoice.id, nextState)
         if (!result.success) { addToast(result.error, 'error'); return }
         setInvoice((prev: any) => ({ ...prev, ...result.data }))
-        addToast(`Đã chuyển → ${stateLabels[nextState]}`)
+        addToast(`Ðã chuy?n ? ${stateLabels[nextState]}`)
     }
 
     async function handlePayment(fd: FormData) {
         const amount = parseFloat(fd.get('amount') as string)
         const method = fd.get('method') as string
         const note = fd.get('note') as string
-        if (!amount || amount <= 0) { addToast('Nhập số tiền hợp lệ', 'error'); return }
+        if (!amount || amount <= 0) { addToast('Nh?p s? ti?n h?p l?', 'error'); return }
         const result = await createPayment({
             invoiceId: invoice.id,
             amount,
@@ -53,7 +53,7 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
         if (totalPaid + amount >= Number(invoice.amountTotal)) {
             setInvoice((prev: any) => ({ ...prev, state: 'PAID' }))
         }
-        addToast(`Đã ghi nhận ${formatCurrency(amount)}`)
+        addToast(`Ðã ghi nh?n ${formatCurrency(amount)}`)
     }
 
     async function handleExportPDF() {
@@ -68,8 +68,8 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
             <ToastContainer toasts={toasts} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 13, color: '#8FA3BF' }}>
-                <Link href="/finance/invoices" style={{ color: '#8FA3BF', textDecoration: 'none' }}>Hoá đơn</Link>
-                <span>›</span>
+                <Link href="/finance/invoices" style={{ color: '#8FA3BF', textDecoration: 'none' }}>Hoá don</Link>
+                <span></span>
                 <span style={{ color: '#0F1C2E', fontWeight: 600 }}>{invoice.name}</span>
             </div>
 
@@ -79,7 +79,7 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
                         <h1 className="page-title" style={{ marginBottom: 0 }}>{invoice.name}</h1>
                         <span className={`badge badge-${stateColors[invoice.state]}`}>{stateLabels[invoice.state]}</span>
                     </div>
-                    <p className="page-subtitle">{invoice.partnerName} • {formatCurrency(Number(invoice.amountTotal))}</p>
+                    <p className="page-subtitle">{invoice.partnerName}  {formatCurrency(Number(invoice.amountTotal))}</p>
                 </div>
                 <div className="page-actions">
                     <button className="btn btn-outline btn-sm" onClick={handleExportPDF}>
@@ -87,13 +87,13 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
                             <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
                             <rect x="6" y="14" width="12" height="8" />
                         </svg>
-                        Xuất PDF
+                        Xu?t PDF
                     </button>
                     {transitions.map(t => (
                         <button key={t.next} className="btn btn-primary btn-sm" onClick={() => handleState(t.next)}>{t.label}</button>
                     ))}
                     {invoice.state === 'POSTED' && (
-                        <button className="btn btn-accent btn-sm" onClick={() => setShowPayment(true)}>💰 Ghi nhận thanh toán</button>
+                        <button className="btn btn-accent btn-sm" onClick={() => setShowPayment(true)}>?? Ghi nh?n thanh toán</button>
                     )}
                 </div>
             </div>
@@ -102,13 +102,13 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
                 {/* Left: Info */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div className="card" style={{ padding: 20 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Chi tiết hoá đơn</div>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Chi ti?t hoá don</div>
                         {[
                             { label: 'Khách hàng', value: invoice.partnerName },
-                            { label: 'Email', value: invoice.partnerEmail ?? '—' },
-                            { label: 'Dự án', value: invoice.project?.name ?? '—', link: invoice.projectId ? `/projects/${invoice.projectId}` : null },
-                            { label: 'Ngày phát hành', value: invoice.invoiceDate ? formatDate(String(invoice.invoiceDate).split('T')[0]) : '—' },
-                            { label: 'Hạn thanh toán', value: invoice.dueDate ? formatDate(String(invoice.dueDate).split('T')[0]) : '—' },
+                            { label: 'Email', value: invoice.partnerEmail ?? '-' },
+                            { label: 'D? án', value: invoice.project?.name ?? '-', link: invoice.projectId ? `/projects/${invoice.projectId}` : null },
+                            { label: 'Ngày phát hành', value: invoice.invoiceDate ? formatDate(String(invoice.invoiceDate).split('T')[0]) : '-' },
+                            { label: 'H?n thanh toán', value: invoice.dueDate ? formatDate(String(invoice.dueDate).split('T')[0]) : '-' },
                         ].map(({ label, value, link }) => (
                             <div key={label} style={{ display: 'flex', gap: 12, fontSize: 13, marginBottom: 8 }}>
                                 <span style={{ color: '#8FA3BF', width: 120, flexShrink: 0 }}>{label}</span>
@@ -119,12 +119,12 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
                     </div>
 
                     <div className="card" style={{ padding: 20 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Số tiền</div>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>S? ti?n</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                             {[
-                                { label: 'Trước thuế', value: formatCurrency(Number(invoice.amountUntaxed)), color: '#4A5E78' },
-                                { label: 'Thuế', value: formatCurrency(Number(invoice.amountTax)), color: '#8FA3BF' },
-                                { label: 'Tổng', value: formatCurrency(Number(invoice.amountTotal)), color: '#1F3A5F' },
+                                { label: 'Tru?c thu?', value: formatCurrency(Number(invoice.amountUntaxed)), color: '#4A5E78' },
+                                { label: 'Thu?', value: formatCurrency(Number(invoice.amountTax)), color: '#8FA3BF' },
+                                { label: 'T?ng', value: formatCurrency(Number(invoice.amountTotal)), color: '#1F3A5F' },
                             ].map(({ label, value, color }) => (
                                 <div key={label} style={{ background: '#F8F9FB', borderRadius: 8, padding: '10px 12px' }}>
                                     <div style={{ fontSize: 11, color: '#8FA3BF', marginBottom: 4 }}>{label}</div>
@@ -135,14 +135,14 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
 
                         <div style={{ marginTop: 14 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                                <span style={{ color: '#8FA3BF' }}>Đã thanh toán</span>
+                                <span style={{ color: '#8FA3BF' }}>Ðã thanh toán</span>
                                 <span style={{ fontWeight: 700, color: '#22C55E' }}>{formatCurrency(totalPaid)}</span>
                             </div>
                             <div className="progress" style={{ height: 10, marginBottom: 6 }}>
                                 <div className="progress-bar" style={{ width: `${Math.min(100, Number(invoice.amountTotal) > 0 ? totalPaid / Number(invoice.amountTotal) * 100 : 0)}%`, background: '#22C55E' }} />
                             </div>
                             <div style={{ textAlign: 'right', fontSize: 13, color: remaining > 0 ? '#EF4444' : '#22C55E', fontWeight: 700 }}>
-                                Còn lại: {formatCurrency(Math.max(0, remaining))}
+                                Còn l?i: {formatCurrency(Math.max(0, remaining))}
                             </div>
                         </div>
                     </div>
@@ -151,7 +151,7 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
                 {/* Right: Payments */}
                 <div className="card" style={{ padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>Lịch sử thanh toán</div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>L?ch s? thanh toán</div>
                         {invoice.state === 'POSTED' && (
                             <button className="btn btn-ghost btn-sm" onClick={() => setShowPayment(true)}>+ Thanh toán</button>
                         )}
@@ -161,16 +161,16 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
                         <form action={handlePayment} style={{ border: '1.5px solid #E2E8F0', borderRadius: 10, padding: 14, marginBottom: 14 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                 <div className="form-group">
-                                    <label className="form-label">Số tiền *</label>
+                                    <label className="form-label">S? ti?n *</label>
                                     <input className="form-input" name="amount" type="number" min="0" defaultValue={remaining > 0 ? remaining : ''} required />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Phương thức</label>
+                                    <label className="form-label">Phuong th?c</label>
                                     <select className="form-input" name="method">
-                                        <option value="">— Chọn —</option>
-                                        <option>Chuyển khoản</option>
-                                        <option>Tiền mặt</option>
-                                        <option>Ví điện tử</option>
+                                        <option value="">- Ch?n -</option>
+                                        <option>Chuy?n kho?n</option>
+                                        <option>Ti?n m?t</option>
+                                        <option>Ví di?n t?</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -179,23 +179,23 @@ export default function InvoiceDetail({ invoice: initInvoice }: { invoice: any }
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
-                                <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowPayment(false)}>Huỷ</button>
-                                <button className="btn btn-primary btn-sm" type="submit">Ghi nhận</button>
+                                <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowPayment(false)}>Hu?</button>
+                                <button className="btn btn-primary btn-sm" type="submit">Ghi nh?n</button>
                             </div>
                         </form>
                     )}
 
                     {payments.length === 0 && !showPayment ? (
-                        <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>Chưa có thanh toán</div>
+                        <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>Chua có thanh toán</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {payments.map((p: any) => (
                                 <div key={p.id} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
                                     <div>
                                         <div style={{ fontWeight: 700, fontSize: 14, color: '#22C55E' }}>{formatCurrency(Number(p.amount))}</div>
-                                        <div style={{ fontSize: 11, color: '#8FA3BF' }}>{p.method ?? '—'} {p.note ? `• ${p.note}` : ''}</div>
+                                        <div style={{ fontSize: 11, color: '#8FA3BF' }}>{p.method ?? '-'} {p.note ? ` ${p.note}` : ''}</div>
                                     </div>
-                                    <div style={{ fontSize: 12, color: '#8FA3BF' }}>{p.paymentDate ? formatDate(String(p.paymentDate).split('T')[0]) : '—'}</div>
+                                    <div style={{ fontSize: 12, color: '#8FA3BF' }}>{p.paymentDate ? formatDate(String(p.paymentDate).split('T')[0]) : '-'}</div>
                                 </div>
                             ))}
                         </div>

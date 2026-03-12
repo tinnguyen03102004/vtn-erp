@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { formatCurrency, formatDate } from '@/lib/utils'
+// import { formatCurrency, formatDate } from '@/lib/utils'
 import { getQuotations, getContracts } from '@/lib/actions/sale'
 import SalePageTabs from '@/components/SalePageTabs'
 

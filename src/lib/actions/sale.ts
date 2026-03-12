@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -7,7 +7,7 @@ import { createOrderSchema, updateOrderSchema, orderLineSchema, milestoneSchema,
 import { logAudit } from '@/lib/audit'
 import type { OrderLineInput, MilestoneInput } from '@/lib/types'
 
-// ── Quotations ──
+// -- Quotations --
 export async function getQuotations() {
     const { data: orders } = await supabase
         .from('sale_orders')
@@ -18,7 +18,7 @@ export async function getQuotations() {
     return orders || []
 }
 
-// ── Contracts ──
+// -- Contracts --
 export async function getContracts() {
     const { data: orders } = await supabase
         .from('sale_orders')
@@ -36,7 +36,7 @@ export async function getContracts() {
     }))
 }
 
-// ── All orders (for backward compat) ──
+// -- All orders (for backward compat) --
 export async function getOrders() {
     const { data: orders } = await supabase
         .from('sale_orders')
@@ -70,21 +70,23 @@ export async function getOrder(id: string) {
     return { ...order, lines: lines || [], milestones: milestones || [], quotation }
 }
 
-// ── Create (always starts as Quotation-DRAFT) ──
+// -- Create (always starts as Quotation-DRAFT) --
 export async function createOrder(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const parsed = parseInput(createOrderSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('sale_orders').insert({ ...parsed.data,
+    const { data, error } = await supabase.from('sale_orders').insert({ 
+        ...parsed.data,
         docType: 'QUOTATION',
         state: 'DRAFT',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'sale_order', entityId: data.id, details: `Tạo báo giá: ${data.name}` })
-    return ok(data)
+    await logAudit({ userId: user.id, action: 'create', entity: 'sale_order', entityId: data.id, details: `T?o báo giá: ${data.name}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(data as any)
 }
 
 export async function updateOrder(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
@@ -113,7 +115,7 @@ export async function deleteOrder(id: string): Promise<ActionResult<void>> {
     return ok(undefined as void)
 }
 
-// ── Quotation State Transitions ──
+// -- Quotation State Transitions --
 export async function sendQuotation(id: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const { data, error } = await supabase.from('sale_orders')
@@ -121,7 +123,7 @@ export async function sendQuotation(id: string): Promise<ActionResult<Record<str
         .eq('id', id).eq('docType', 'QUOTATION').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'send', entity: 'sale_order', entityId: id, details: 'Gửi báo giá' })
+    await logAudit({ userId: user.id, action: 'send', entity: 'sale_order', entityId: id, details: 'G?i báo giá' })
     return ok(data)
 }
 
@@ -132,7 +134,7 @@ export async function approveQuotation(id: string): Promise<ActionResult<Record<
         .eq('id', id).eq('docType', 'QUOTATION').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'approve', entity: 'sale_order', entityId: id, details: 'Duyệt báo giá' })
+    await logAudit({ userId: user.id, action: 'approve', entity: 'sale_order', entityId: id, details: 'Duy?t báo giá' })
     return ok(data)
 }
 
@@ -143,17 +145,17 @@ export async function rejectQuotation(id: string, reason?: string): Promise<Acti
         .eq('id', id).eq('docType', 'QUOTATION').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'reject', entity: 'sale_order', entityId: id, details: `Từ chối: ${reason || ''}` })
+    await logAudit({ userId: user.id, action: 'reject', entity: 'sale_order', entityId: id, details: `T? ch?i: ${reason || ''}` })
     return ok(data)
 }
 
-// ── Convert Quotation → Contract ──
+// -- Convert Quotation ? Contract --
 export async function convertToContract(quotationId: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const { data: quotation } = await supabase.from('sale_orders').select('*').eq('id', quotationId).single()
-    if (!quotation) return fail('Báo giá không tồn tại')
+    if (!quotation) return fail('Báo giá không t?n t?i')
 
-    const name = `HĐ-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
+    const name = `HÐ-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
     const { data: contract, error } = await supabase.from('sale_orders').insert({
         name,
         docType: 'CONTRACT',
@@ -182,19 +184,20 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
             sequence: l.sequence,
         }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: lineErr } = await supabase.from('sale_order_lines').insert(newLines as any)
+        const { error: lineErr } = await supabase.from('sale_order_lines').insert(newLines as any[])
         if (lineErr) {
             // Compensating rollback: delete orphaned contract
             await supabase.from('sale_orders').delete().eq('id', contract.id)
-            return fail(`Chuyển báo giá thất bại: ${lineErr.message}`)
+            return fail(`Chuy?n báo giá th?t b?i: ${lineErr.message}`)
         }
     }
 
-    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: quotationId, details: `Quotation → Contract ${contract.id}` })
-    return ok(contract)
+    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: quotationId, details: `Quotation ? Contract ${contract.id}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(contract as any)
 }
 
-// ── Contract State Transitions ──
+// -- Contract State Transitions --
 export async function signContract(id: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const { data, error } = await supabase.from('sale_orders')
@@ -202,7 +205,7 @@ export async function signContract(id: string): Promise<ActionResult<Record<stri
         .eq('id', id).eq('docType', 'CONTRACT').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'sign', entity: 'sale_order', entityId: id, details: 'Ký hợp đồng' })
+    await logAudit({ userId: user.id, action: 'sign', entity: 'sale_order', entityId: id, details: 'Ký h?p d?ng' })
     return ok(data)
 }
 
@@ -215,11 +218,11 @@ export async function updateOrderState(id: string, state: string): Promise<Actio
     const { data, error } = await supabase.from('sale_orders').update(extra).eq('id', id).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order', entityId: id, details: `Chuyển trạng thái → ${state}` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order', entityId: id, details: `Chuy?n tr?ng thái ? ${state}` })
     return ok(data)
 }
 
-// ── Order Lines ──
+// -- Order Lines --
 export async function saveOrderLines(orderId: string, lines: OrderLineInput[]): Promise<ActionResult<void>> {
     const user = await requirePermission('sale.edit')
 
@@ -240,17 +243,17 @@ export async function saveOrderLines(orderId: string, lines: OrderLineInput[]): 
             sequence: i,
         }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await supabase.from('sale_order_lines').insert(rows as any)
+        const { error } = await supabase.from('sale_order_lines').insert(rows as any[])
         if (error) return fail(error.message)
     }
     const total = lines.reduce((s, l) => s + (l.qty || 1) * (l.unitPrice || 0), 0)
     await supabase.from('sale_orders').update({ totalAmount: total, updatedAt: new Date().toISOString() }).eq('id', orderId)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order_lines', entityId: orderId, details: `Cập nhật ${lines.length} dòng dịch vụ` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order_lines', entityId: orderId, details: `C?p nh?t ${lines.length} dòng d?ch v?` })
     return ok(undefined as void)
 }
 
-// ── Milestones ──
+// -- Milestones --
 export async function addMilestone(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const parsed = parseInput(milestoneSchema, formData)
@@ -260,8 +263,9 @@ export async function addMilestone(formData: unknown): Promise<ActionResult<Reco
     const { data, error } = await supabase.from('sale_milestones').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'sale_milestone', entityId: data.id, details: `Thêm mốc: ${data.name}` })
-    return ok(data)
+    await logAudit({ userId: user.id, action: 'create', entity: 'sale_milestone', entityId: data.id, details: `Thêm m?c: ${data.name}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(data as any)
 }
 
 export async function saveMilestones(orderId: string, milestones: MilestoneInput[]): Promise<ActionResult<void>> {
@@ -270,7 +274,7 @@ export async function saveMilestones(orderId: string, milestones: MilestoneInput
     // Validate each milestone
     for (const m of milestones) {
         const parsed = parseInput(milestoneSchema, m)
-        if (!parsed.success) return fail(`Mốc "${m.name || ''}": ${parsed.error}`, parsed.fieldErrors)
+        if (!parsed.success) return fail(`M?c "${m.name || ''}": ${parsed.error}`, parsed.fieldErrors)
     }
 
     await supabase.from('sale_milestones').delete().eq('orderId', orderId)
@@ -287,25 +291,25 @@ export async function saveMilestones(orderId: string, milestones: MilestoneInput
             sequence: i,
         }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await supabase.from('sale_milestones').insert(rows as any)
+        const { error } = await supabase.from('sale_milestones').insert(rows as any[])
         if (error) return fail(error.message)
     }
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'sale_milestones', entityId: orderId, details: `Cập nhật ${milestones.length} mốc thanh toán` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'sale_milestones', entityId: orderId, details: `C?p nh?t ${milestones.length} m?c thanh toán` })
     return ok(undefined as void)
 }
 
-// ── Convert Sale → Project ──
+// -- Convert Sale ? Project --
 export async function convertOrderToProject(orderId: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const { data: order } = await supabase.from('sale_orders').select('*').eq('id', orderId).single()
-    if (!order) return fail('Đơn hàng không tồn tại')
+    if (!order) return fail('Ðon hàng không t?n t?i')
 
     const code = `PRJ-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`
     const { data: project, error } = await supabase
         .from('projects')
         .insert({
-            name: `Dự án ${order.partnerName}`,
+            name: `D? án ${order.partnerName}`,
             code,
             saleOrderId: order.id,
             partnerName: order.partnerName,
@@ -327,9 +331,10 @@ export async function convertOrderToProject(orderId: string): Promise<ActionResu
             milestoneId: m.id,
         }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await supabase.from('project_phases').insert(phases as any)
+        await supabase.from('project_phases').insert(phases as any[])
     }
 
-    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: orderId, details: `Order → Project ${project.id}` })
-    return ok(project)
+    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: orderId, details: `Order ? Project ${project.id}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(project as any)
 }

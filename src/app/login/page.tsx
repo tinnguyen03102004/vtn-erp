@@ -26,10 +26,10 @@ export default function LoginPage() {
                     router.push('/dashboard')
                     router.refresh()
                 } else {
-                    setError('Email hoặc mật khẩu không đúng')
+                    setError('Email hoáº·c máº­t kháº©u khÃ´ng ÄÃºng')
                 }
             } catch {
-                setError('Lỗi kết nối, vui lòng thử lại')
+                setError('Lá»-i káº¿t ná»i, vui lÃ²ng thá»­ láº¡i')
             }
         })
     }
@@ -48,10 +48,10 @@ export default function LoginPage() {
                     <p className="login-tagline">Architects</p>
                 </div>
                 <div className="login-hero">
-                    <h1>Hệ thống quản lý<br /><span>văn phòng kiến trúc</span></h1>
-                    <p>Quản lý toàn bộ vòng đời dự án từ lead đến nghiệm thu — CRM, hợp đồng, dự án, hóa đơn và timesheet trong một nền tảng duy nhất.</p>
+                    <h1>Há» thá»ng quáº£n lÃ½<br /><span>vÄn phÃ²ng kiáº¿n trÃºc</span></h1>
+                    <p>Quáº£n lÃ½ toÃ n bá» vÃ²ng Äá»i dá»± Ã¡n tá»« lead Äáº¿n nghiá»m thu â CRM, há»£p Äá»ng, dá»± Ã¡n, hÃ³a ÄÆ¡n vÃ  timesheet trong má»t ná»n táº£ng duy nháº¥t.</p>
                     <div className="login-features">
-                        {['CRM & Báo giá', 'Quản lý Dự án', 'Hóa đơn & Thanh toán', 'Timesheet'].map(f => (
+                        {['CRM & BÃ¡o giÃ¡', 'Quáº£n lÃ½ Dá»± Ã¡n', 'HÃ³a ÄÆ¡n & Thanh toÃ¡n', 'Timesheet'].map(f => (
                             <div key={f} className="login-feature-item">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                     <polyline points="20 6 9 17 4 12" />
@@ -66,8 +66,8 @@ export default function LoginPage() {
             <div className="login-right">
                 <div className="login-form-container">
                     <div className="login-form-header">
-                        <h2>Đăng nhập</h2>
-                        <p>Nhập thông tin tài khoản của bạn</p>
+                        <h2>ÄÄng nháº­p</h2>
+                        <p>Nháº­p thÃ´ng tin tÃ i khoáº£n cá»§a báº¡n</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="login-form">
@@ -85,11 +85,11 @@ export default function LoginPage() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Mật khẩu</label>
+                            <label className="form-label">Máº­t kháº©u</label>
                             <input
                                 type="password"
                                 className="form-input"
-                                placeholder="••••••••"
+                                placeholder="â¢â¢â¢â¢â¢â¢â¢â¢"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                                 required
@@ -120,14 +120,14 @@ export default function LoginPage() {
                                         <polyline points="10 17 15 12 10 7" />
                                         <line x1="15" y1="12" x2="3" y2="12" />
                                     </svg>
-                                    Đăng nhập
+                                    ÄÄng nháº­p
                                 </>
                             )}
                         </button>
                     </form>
 
                     <div className="login-demo-accounts">
-                        <p className="login-demo-title">Tài khoản demo:</p>
+                        <p className="login-demo-title">TÃ i khoáº£n demo:</p>
                         <div className="login-demo-grid">
                             {[
                                 { role: 'Director', email: 'director@vtn.vn', color: '#1F3A5F' },

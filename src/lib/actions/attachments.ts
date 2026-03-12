@@ -5,7 +5,7 @@ import { requireAuth } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { logAudit } from '@/lib/audit'
 
-// ── Allowed file types & size limits ──
+// ââ Allowed file types & size limits ââ
 const ALLOWED_TYPES = [
     'application/pdf',
     'image/jpeg', 'image/png', 'image/webp', 'image/gif',
@@ -15,7 +15,7 @@ const ALLOWED_TYPES = [
 ]
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
-// ── Types ──
+// ââ Types ââ
 export interface UploadAttachmentInput {
     entityType: 'lead' | 'order' | 'project' | 'invoice' | 'employee'
     entityId: string
@@ -25,7 +25,7 @@ export interface UploadAttachmentInput {
     fileBase64: string  // base64-encoded file content
 }
 
-// ── Read ──
+// ââ Read ââ
 export async function getAttachments(entityType: string, entityId: string) {
     await requireAuth()
     const { data } = await supabase
@@ -38,18 +38,18 @@ export async function getAttachments(entityType: string, entityId: string) {
     return data || []
 }
 
-// ── Upload ──
+// ââ Upload ââ
 export async function uploadAttachment(input: UploadAttachmentInput): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requireAuth()
 
     // Validate file type
     if (!ALLOWED_TYPES.includes(input.fileType)) {
-        return fail(`Loại file không được hỗ trợ: ${input.fileType}`)
+        return fail(`Loáº¡i file khÃ´ng ÄÆ°á»£c há»- trá»£: ${input.fileType}`)
     }
 
     // Validate file size
     if (input.fileSize > MAX_FILE_SIZE) {
-        return fail(`File quá lớn. Tối đa ${MAX_FILE_SIZE / 1024 / 1024}MB`)
+        return fail(`File quÃ¡ lá»n. Tá»i Äa ${MAX_FILE_SIZE / 1024 / 1024}MB`)
     }
 
     // Upload to Supabase Storage
@@ -59,7 +59,7 @@ export async function uploadAttachment(input: UploadAttachmentInput): Promise<Ac
     const { error: uploadErr } = await supabase.storage
         .from('documents')
         .upload(storagePath, fileBuffer, { contentType: input.fileType })
-    if (uploadErr) return fail(`Upload thất bại: ${uploadErr.message}`)
+    if (uploadErr) return fail(`Upload tháº¥t báº¡i: ${uploadErr.message}`)
 
     // Save metadata to DB
     const { data, error: dbErr } = await supabase.from('attachments').insert({
@@ -75,17 +75,17 @@ export async function uploadAttachment(input: UploadAttachmentInput): Promise<Ac
     if (dbErr) {
         // Rollback: remove uploaded file
         await supabase.storage.from('documents').remove([storagePath])
-        return fail(`Lưu metadata thất bại: ${dbErr.message}`)
+        return fail(`LÆ°u metadata tháº¥t báº¡i: ${dbErr.message}`)
     }
 
     await logAudit({
         userId: user.id, action: 'create', entity: 'attachment',
-        entityId: data.id, details: `Upload ${input.fileName} → ${input.entityType}/${input.entityId}`,
+        entityId: data.id, details: `Upload ${input.fileName} â ${input.entityType}/${input.entityId}`,
     })
     return ok(data)
 }
 
-// ── Delete ──
+// ââ Delete ââ
 export async function deleteAttachment(id: string): Promise<ActionResult<void>> {
     const user = await requireAuth()
 
@@ -95,7 +95,7 @@ export async function deleteAttachment(id: string): Promise<ActionResult<void>> 
         .eq('id', id)
         .single()
 
-    if (!attachment) return fail('Attachment không tồn tại')
+    if (!attachment) return fail('Attachment khÃ´ng tá»n táº¡i')
 
     // Delete from storage
     await supabase.storage.from('documents').remove([attachment.storagePath])
@@ -106,7 +106,7 @@ export async function deleteAttachment(id: string): Promise<ActionResult<void>> 
 
     await logAudit({
         userId: user.id, action: 'delete', entity: 'attachment',
-        entityId: id, details: `Xóa file từ ${attachment.entityType}/${attachment.entityId}`,
+        entityId: id, details: `XÃ³a file tá»« ${attachment.entityType}/${attachment.entityId}`,
     })
     return ok(undefined as void)
 }

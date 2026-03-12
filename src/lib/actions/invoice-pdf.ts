@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from '@/lib/supabase'
@@ -27,7 +27,7 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
   for (const s of settings || []) settingsMap[s.key] = s.value
 
   const stateLabels: Record<string, string> = {
-    DRAFT: 'Nháp', POSTED: 'Đã gửi', PAID: 'Đã thanh toán', CANCELLED: 'Đã huỷ'
+    DRAFT: 'Nháp', POSTED: 'Ðã g?i', PAID: 'Ðã thanh toán', CANCELLED: 'Ðã hu?'
   }
 
   const totalPaid = (payments || []).reduce((s: number, p: Record<string, unknown>) => s + Number(p.amount || 0), 0)
@@ -42,7 +42,7 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Hoá đơn ${invoice.name}</title>
+<title>Hoá don ${invoice.name}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #0F1C2E; padding: 48px; max-width: 800px; margin: 0 auto; }
@@ -78,18 +78,18 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
 <body>
   <div class="header">
     <div class="company">
-      <div class="company-name">${e(settingsMap['companyName'] || 'Công ty TNHH Võ Trọng Nghĩa')}</div>
+      <div class="company-name">${e(settingsMap['companyName'] || 'Công ty TNHH Võ Tr?ng Nghia')}</div>
       <div class="company-info">
         ${e(settingsMap['address'] || '')}<br>
-        ${settingsMap['phone'] ? 'ĐT: ' + e(settingsMap['phone']) : ''}<br>
+        ${settingsMap['phone'] ? 'ÐT: ' + e(settingsMap['phone']) : ''}<br>
         ${settingsMap['email'] ? 'Email: ' + e(settingsMap['email']) : ''}
       </div>
     </div>
     <div class="invoice-meta">
-      <div class="invoice-title">HOÁ ĐƠN</div>
-      <div class="meta-row">Số: <span class="meta-value">${e(invoice.name)}</span></div>
+      <div class="invoice-title">HOÁ ÐON</div>
+      <div class="meta-row">S?: <span class="meta-value">${e(invoice.name)}</span></div>
       <div class="meta-row">Ngày: <span class="meta-value">${new Date(invoice.invoiceDate || invoice.createdAt).toLocaleDateString('vi-VN')}</span></div>
-      <div class="meta-row">Hạn: <span class="meta-value">${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('vi-VN') : '—'}</span></div>
+      <div class="meta-row">H?n: <span class="meta-value">${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('vi-VN') : '-'}</span></div>
       <div style="margin-top: 8px;">
         <span class="status status-${invoice.state}">${stateLabels[invoice.state] || invoice.state}</span>
       </div>
@@ -99,30 +99,33 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
   <div class="section">
     <div class="section-title">Khách hàng</div>
     <div class="partner-box">
-      <div class="partner-name">${e(invoice.partnerName || '—')}</div>
+      <div class="partner-name">${e(invoice.partnerName || '-')}</div>
       <div class="partner-info">
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ${e((invoice as any).partnerAddress || '')}<br>
-        MST: ${e((invoice as any).partnerTaxId || '—')}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        MST: ${e((invoice as any).partnerTaxId || '-')}
       </div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Chi tiết</div>
+    <div class="section-title">Chi ti?t</div>
     <table>
       <thead>
         <tr>
-          <th>Mô tả</th>
-          <th class="amount-col">Thành tiền</th>
+          <th>Mô t?</th>
+          <th class="amount-col">Thành ti?n</th>
         </tr>
       </thead>
       <tbody>
         <tr>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           <td>${e((invoice as any).description || invoice.name)}</td>
           <td class="amount-col">${formatCurrency(Number(invoice.amountTotal || 0))}</td>
         </tr>
         <tr class="total-row">
-          <td>TỔNG CỘNG</td>
+          <td>T?NG C?NG</td>
           <td class="amount-col">${formatCurrency(Number(invoice.amountTotal || 0))}</td>
         </tr>
       </tbody>
@@ -131,31 +134,31 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
 
   ${(payments || []).length > 0 ? `
   <div class="section">
-    <div class="section-title">Lịch sử thanh toán</div>
+    <div class="section-title">L?ch s? thanh toán</div>
     <table>
       <thead>
         <tr>
           <th>Ngày</th>
-          <th>Hình thức</th>
+          <th>Hình th?c</th>
           <th>Ghi chú</th>
-          <th class="amount-col">Số tiền</th>
+          <th class="amount-col">S? ti?n</th>
         </tr>
       </thead>
       <tbody>
         ${(payments || []).map((p: Record<string, unknown>) => `
         <tr>
           <td>${new Date(String(p.paymentDate)).toLocaleDateString('vi-VN')}</td>
-          <td>${p.method === 'BANK' ? 'Chuyển khoản' : p.method === 'CASH' ? 'Tiền mặt' : e(p.method || '—')}</td>
-          <td>${e(p.note || '—')}</td>
+          <td>${p.method === 'BANK' ? 'Chuy?n kho?n' : p.method === 'CASH' ? 'Ti?n m?t' : e(p.method || '-')}</td>
+          <td>${e(p.note || '-')}</td>
           <td class="amount-col">${formatCurrency(Number(p.amount || 0))}</td>
         </tr>`).join('')}
         <tr class="total-row">
-          <td colspan="3">Đã thanh toán</td>
+          <td colspan="3">Ðã thanh toán</td>
           <td class="amount-col">${formatCurrency(totalPaid)}</td>
         </tr>
         ${remaining > 0 ? `
         <tr>
-          <td colspan="3" style="font-weight:700;color:#EF4444;">Còn lại</td>
+          <td colspan="3" style="font-weight:700;color:#EF4444;">Còn l?i</td>
           <td class="amount-col" style="color:#EF4444;font-weight:700;">${formatCurrency(remaining)}</td>
         </tr>` : ''}
       </tbody>
@@ -164,7 +167,7 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
   ` : ''}
 
   <div class="footer">
-    ${e(settingsMap['companyName'] || 'Cty TNHH Võ Trọng Nghĩa')} — Hoá đơn được tạo tự động bởi VTN ERP
+    ${e(settingsMap['companyName'] || 'Cty TNHH Võ Tr?ng Nghia')} - Hoá don du?c t?o t? d?ng b?i VTN ERP
   </div>
 </body>
 </html>`

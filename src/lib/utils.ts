@@ -14,7 +14,7 @@ export function formatCurrency(amount: number | string, currency = 'VND') {
     }).format(num)
 }
 
-export function formatDate(date: Date | string | null | undefined, format = 'dd/MM/yyyy') {
+export function formatDate(date: Date | string | null | undefined, _format = 'dd/MM/yyyy') {
     if (!date) return '—'
     const d = typeof date === 'string' ? new Date(date) : date
     const day = String(d.getDate()).padStart(2, '0')

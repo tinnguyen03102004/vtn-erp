@@ -1,0 +1,50 @@
+﻿
+> vtn-erp@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 23.1s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/13) ...
+  Generating static pages using 7 workers (3/13) 
+  Generating static pages using 7 workers (6/13) 
+  Generating static pages using 7 workers (9/13) 
+Γ£ô Generating static pages using 7 workers (13/13) in 1616.0ms
+  Finalizing page optimization ...
+
+Route (app)                 Revalidate  Expire
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /api/ai/chat
+Γö£ ╞Æ /api/auth/me
+Γö£ ╞Æ /api/auth/signin
+Γö£ ╞Æ /api/auth/signout
+Γö£ ╞Æ /api/pdf/[id]
+Γö£ ╞Æ /api/upload
+Γö£ ╞Æ /crm
+Γö£ ╞Æ /crm/[id]
+Γö£ Γùï /dashboard                      2m      1y
+Γö£ ╞Æ /employees
+Γö£ Γùï /finance
+Γö£ ╞Æ /finance/invoices
+Γö£ ╞Æ /finance/invoices/[id]
+Γö£ Γùï /login
+Γö£ ╞Æ /projects
+Γö£ ╞Æ /projects/[id]
+Γö£ ╞Æ /reports
+Γö£ ╞Æ /sale
+Γö£ ╞Æ /sale/[id]
+Γö£ Γùï /sale/new
+Γö£ ╞Æ /settings
+Γöö ╞Æ /timesheets
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

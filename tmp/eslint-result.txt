@@ -1,0 +1,29 @@
+﻿
+C:\Users\tinnh\.gemini\antigravity\workspaces\vtn-erp\src\components\AttachmentPanel.tsx
+  128:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\tinnh\.gemini\antigravity\workspaces\vtn-erp\src\components\ProjectDetail.tsx
+   38:21   warning  'setSaving' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  164:109  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                       react/no-unescaped-entities
+  164:117  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                       react/no-unescaped-entities
+
+C:\Users\tinnh\.gemini\antigravity\workspaces\vtn-erp\src\components\SaleDetail.tsx
+  8:5  warning  'updateOrder' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\tinnh\.gemini\antigravity\workspaces\vtn-erp\src\lib\actions\finance.ts
+  6:10  warning  'createInvoiceSchema' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\tinnh\.gemini\antigravity\workspaces\vtn-erp\src\lib\ai\tools.ts
+  4:43  warning  'updateLead' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  4:55  warning  'moveLeadStage' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  5:67  warning  'approveQuotation' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  5:85  warning  'convertToContract' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  7:30  warning  'getTimesheetsWithDetails' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  8:10  warning  'createInvoice' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  8:25  warning  'createPayment' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+
+C:\Users\tinnh\.gemini\antigravity\workspaces\vtn-erp\src\lib\utils.ts
+  17:68  warning  'format' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+Γ£û 14 problems (0 errors, 14 warnings)
+

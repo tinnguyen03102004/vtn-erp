@@ -27,10 +27,10 @@ interface Props {
     employeeId?: string
 }
 
-const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
+const dayLabels = ['Thá»© 2', 'Thá»© 3', 'Thá»© 4', 'Thá»© 5', 'Thá»© 6', 'Thá»© 7']
 const projectColors = ['#1F3A5F', '#C9A84C', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#14B8A6']
 
-export default function TimesheetGrid({ weekDates, monday, timesheets, projects, employeeId }: Props) {
+export default function TimesheetGrid({ weekDates, monday: _monday, timesheets, projects, employeeId }: Props) {
     const { toasts, addToast } = useToast()
     const [saving, setSaving] = useState(false)
 
@@ -70,7 +70,7 @@ export default function TimesheetGrid({ weekDates, monday, timesheets, projects,
     })
 
     async function handleSave() {
-        if (!employeeId) { addToast('Không tìm thấy nhân viên', 'error'); return }
+        if (!employeeId) { addToast('KhÃ´ng tÃ¬m tháº¥y nhÃ¢n viÃªn', 'error'); return }
         setSaving(true)
         try {
             const allEntries: { projectId: string; date: string; hours: number }[] = []
@@ -80,8 +80,8 @@ export default function TimesheetGrid({ weekDates, monday, timesheets, projects,
                 }
             }
             await saveWeekTimesheets(employeeId, allEntries)
-            addToast(`Đã lưu ${totalHours}h tuần này`)
-        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
+            addToast(`ÄÃ£ lÆ°u ${totalHours}h tuáº§n nÃ y`)
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lá»-i', 'error') }
         finally { setSaving(false) }
     }
 
@@ -93,19 +93,19 @@ export default function TimesheetGrid({ weekDates, monday, timesheets, projects,
                 <div className="page-header-left">
                     <h1 className="page-title">Timesheet</h1>
                     <p className="page-subtitle">
-                        Tuần {dateLabels[0]} – {dateLabels[5]} — Tổng: {totalHours}h / 48h
+                        Tuáº§n {dateLabels[0]} â {dateLabels[5]} â Tá»ng: {totalHours}h / 48h
                     </p>
                 </div>
                 <div className="page-actions">
                     <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                        {saving ? '⏳ Đang lưu...' : '💾 Lưu timesheet'}
+                        {saving ? 'â³ Äang lÆ°u...' : 'ð¾ LÆ°u timesheet'}
                     </button>
                 </div>
             </div>
 
             <div className="card" style={{ marginBottom: 20, padding: '16px 24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#4A5E78' }}>Tiến độ tuần</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#4A5E78' }}>Tiáº¿n Äá» tuáº§n</span>
                     <span style={{ fontSize: 14, fontWeight: 700, color: totalHours >= 40 ? '#22C55E' : '#F59E0B' }}>
                         {totalHours}h / 48h ({Math.round(totalHours / 48 * 100)}%)
                     </span>
@@ -120,14 +120,14 @@ export default function TimesheetGrid({ weekDates, monday, timesheets, projects,
                     <table className="data-table" style={{ minWidth: 700 }}>
                         <thead>
                             <tr>
-                                <th style={{ width: 220 }}>Dự án</th>
+                                <th style={{ width: 220 }}>Dá»± Ã¡n</th>
                                 {dayLabels.map((day, i) => (
                                     <th key={day} style={{ textAlign: 'center', width: 90 }}>
                                         <div style={{ fontWeight: 700 }}>{day}</div>
                                         <div style={{ fontWeight: 400, color: '#8FA3BF', fontSize: 11 }}>{dateLabels[i]}</div>
                                     </th>
                                 ))}
-                                <th style={{ textAlign: 'right' }}>Tổng</th>
+                                <th style={{ textAlign: 'right' }}>Tá»ng</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -173,15 +173,15 @@ export default function TimesheetGrid({ weekDates, monday, timesheets, projects,
                                 )
                             })}
                             {visibleProjects.length === 0 && (
-                                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>Chưa có dự án nào</td></tr>
+                                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>ChÆ°a cÃ³ dá»± Ã¡n nÃ o</td></tr>
                             )}
                         </tbody>
                         <tfoot>
                             <tr style={{ background: '#F8F9FB' }}>
-                                <td style={{ fontWeight: 700, fontSize: 13, color: '#4A5E78' }}>Tổng ngày</td>
+                                <td style={{ fontWeight: 700, fontSize: 13, color: '#4A5E78' }}>Tá»ng ngÃ y</td>
                                 {dailyTotals.map((total, i) => (
                                     <td key={i} style={{ textAlign: 'center', fontWeight: 700, color: total >= 8 ? '#22C55E' : total > 0 ? '#F59E0B' : '#CBD5E1' }}>
-                                        {total > 0 ? `${total}h` : '—'}
+                                        {total > 0 ? `${total}h` : 'â'}
                                     </td>
                                 ))}
                                 <td style={{ textAlign: 'right', fontWeight: 800, color: '#1F3A5F', fontSize: 15 }}>{totalHours}h</td>

@@ -1,5 +1,7 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
+
 // ================================================================
 // SHARED DTO TYPES for VTN-ERP Server Actions
 // Provides type-safe interfaces for all mutation inputs.
@@ -143,3 +145,38 @@ export interface CreateTimesheetInput {
 }
 
 export type UpdateTimesheetInput = Partial<Omit<CreateTimesheetInput, 'employeeId'>>
+
+// === Prisma Payload Types ===
+
+export type SaleOrderWithRelations = Prisma.SaleOrderGetPayload<{
+    include: {
+        lines: true
+        milestones: true
+        lead: true
+        createdBy: true
+        projects: true
+        quotation: true
+    }
+}>
+
+export type LeadWithStage = Prisma.CrmLeadGetPayload<{
+    include: { stage: true; assignedTo: true }
+}>
+
+export type InvoiceWithPayments = Prisma.InvoiceGetPayload<{
+    include: { payments: true; project: true; milestone: true }
+}>
+
+export type ProjectWithRelations = Prisma.ProjectGetPayload<{
+    include: {
+        phases: { include: { tasks: true } }
+        manager: true
+        saleOrder: true
+        invoices: true
+        timesheets: true
+    }
+}>
+
+export type EmployeeWithRole = Prisma.EmployeeGetPayload<{
+    include: { user: true }
+}>

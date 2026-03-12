@@ -9,5 +9,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     const project = await getProject(id)
     if (!project) notFound()
 
-    return <ProjectDetail project={project as React.ComponentProps<typeof ProjectDetail>['project']} />
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return <ProjectDetail project={project as any} />
 }

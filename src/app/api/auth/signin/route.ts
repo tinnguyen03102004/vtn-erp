@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
         const { email, password } = body
 
         if (!email || !password) {
-            return NextResponse.json({ ok: false, error: 'Vui lòng nhập email và mật khẩu' }, { status: 400 })
+            return NextResponse.json({ ok: false, error: 'Vui lÃ²ng nháº­p email vÃ  máº­t kháº©u' }, { status: 400 })
         }
 
         // Query user from Supabase
@@ -20,17 +20,17 @@ export async function POST(req: NextRequest) {
             .single()
 
         if (error || !user || !user.password) {
-            return NextResponse.json({ ok: false, error: 'Email không tồn tại' }, { status: 401 })
+            return NextResponse.json({ ok: false, error: 'Email khÃ´ng tá»n táº¡i' }, { status: 401 })
         }
 
         if (!user.isActive) {
-            return NextResponse.json({ ok: false, error: 'Tài khoản đã bị khóa' }, { status: 401 })
+            return NextResponse.json({ ok: false, error: 'TÃ i khoáº£n ÄÃ£ bá» khÃ³a' }, { status: 401 })
         }
 
         // Verify password with bcrypt
         const isValid = await bcrypt.compare(password as string, user.password)
         if (!isValid) {
-            return NextResponse.json({ ok: false, error: 'Mật khẩu không đúng' }, { status: 401 })
+            return NextResponse.json({ ok: false, error: 'Máº­t kháº©u khÃ´ng ÄÃºng' }, { status: 401 })
         }
 
         // Create server-side session
@@ -48,6 +48,6 @@ export async function POST(req: NextRequest) {
         return response
     } catch (error) {
         console.error('Login error:', error)
-        return NextResponse.json({ ok: false, error: 'Lỗi server' }, { status: 500 })
+        return NextResponse.json({ ok: false, error: 'Lá»-i server' }, { status: 500 })
     }
 }

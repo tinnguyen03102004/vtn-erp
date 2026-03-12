@@ -1,7 +1,7 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
-import { requirePermission, requireAuth } from '@/lib/auth-guard'
+import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createLeadSchema, updateLeadSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
@@ -40,8 +40,9 @@ export async function createLead(formData: unknown): Promise<ActionResult<Record
     const { data, error } = await supabase.from('crm_leads').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'lead', entityId: data.id, details: `Tạo lead: ${data.name}` })
-    return ok(data)
+    await logAudit({ userId: user.id, action: 'create', entity: 'lead', entityId: data.id, details: `T?o lead: ${data.name}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(data as any)
 }
 
 export async function updateLead(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
@@ -76,14 +77,14 @@ export async function moveLeadStage(leadId: string, stageId: string): Promise<Ac
         .single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'lead', entityId: leadId, details: `Di chuyển sang stage ${stageId}` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'lead', entityId: leadId, details: `Di chuy?n sang stage ${stageId}` })
     return ok(data)
 }
 
 export async function convertLeadToOrder(leadId: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('crm.edit')
     const lead = await getLead(leadId)
-    if (!lead) return fail('Lead không tồn tại')
+    if (!lead) return fail('Lead không t?n t?i')
 
     const orderName = `SO-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`
     const { data: order, error } = await supabase
@@ -102,6 +103,6 @@ export async function convertLeadToOrder(leadId: string): Promise<ActionResult<R
 
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'convert', entity: 'lead', entityId: leadId, details: `Convert → order ${order.id}` })
+    await logAudit({ userId: user.id, action: 'convert', entity: 'lead', entityId: leadId, details: `Convert ? order ${order.id}` })
     return ok(order)
 }

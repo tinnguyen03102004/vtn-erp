@@ -4,8 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { globalSearch } from '@/lib/actions/search'
 
-const typeIcons: Record<string, string> = { lead: '🎯', order: '📋', project: '🏗️', invoice: '📄', employee: '👤' }
-const typeLabels: Record<string, string> = { lead: 'Lead', order: 'Báo giá', project: 'Dự án', invoice: 'Hoá đơn', employee: 'Nhân viên' }
+const typeIcons: Record<string, string> = { lead: 'ð¯', order: 'ð', project: 'ð-ï¸', invoice: 'ð', employee: 'ð¤' }
+const typeLabels: Record<string, string> = { lead: 'Lead', order: 'BÃ¡o giÃ¡', project: 'Dá»± Ã¡n', invoice: 'HoÃ¡ ÄÆ¡n', employee: 'NhÃ¢n viÃªn' }
 
 export default function GlobalSearch() {
     const router = useRouter()
@@ -75,18 +75,18 @@ export default function GlobalSearch() {
                     onFocus={() => query.length >= 2 && setOpen(true)}
                     onBlur={() => setTimeout(() => setOpen(false), 200)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Tìm kiếm... (Ctrl+K)"
+                    placeholder="TÃ¬m kiáº¿m... (Ctrl+K)"
                     style={{
                         width: '100%', padding: '8px 12px 8px 36px', border: '1.5px solid #E2E8F0',
                         borderRadius: 8, fontSize: 13, outline: 'none', transition: 'border-color 0.15s',
                         background: '#F8F9FB', color: '#0F1C2E',
                     }}
                 />
-                {loading && <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#8FA3BF' }}>⏳</span>}
+                {loading && <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#8FA3BF' }}>â³</span>}
                 <kbd style={{
                     position: 'absolute', right: loading ? 30 : 10, top: '50%', transform: 'translateY(-50%)',
                     fontSize: 10, color: '#8FA3BF', background: '#E2E8F0', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace',
-                }}>⌘K</kbd>
+                }}>âK</kbd>
             </div>
 
             {open && results.length > 0 && (
@@ -120,7 +120,7 @@ export default function GlobalSearch() {
                     position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 6,
                     background: '#fff', borderRadius: 10, boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
                     border: '1px solid #E2E8F0', padding: '20px', textAlign: 'center', color: '#8FA3BF', fontSize: 13, zIndex: 9999,
-                }}>Không tìm thấy kết quả</div>
+                }}>KhÃ´ng tÃ¬m tháº¥y káº¿t quáº£</div>
             )}
         </div>
     )

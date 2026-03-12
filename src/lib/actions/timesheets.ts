@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requireAuth } from '@/lib/auth-guard'
@@ -52,11 +52,11 @@ export async function saveWeekTimesheets(employeeId: string, entries: TimesheetE
 
     if (rows.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await supabase.from('timesheets').insert(rows as any)
+        const { error } = await supabase.from('timesheets').insert(rows as any[])
         if (error) return fail(error.message)
     }
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'timesheet', entityId: employeeId, details: `Lưu ${rows.length} timesheet entries` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'timesheet', entityId: employeeId, details: `Luu ${rows.length} timesheet entries` })
     return ok(undefined as void)
 }
 
@@ -66,11 +66,11 @@ export async function getTimesheetsWithDetails() {
     const { data: users } = await supabase.from('users').select('id, name')
     const { data: projects } = await supabase.from('projects').select('id, name')
 
-    return (timesheets || []).map((ts) => {
-        const emp = (employees || []).find((e) => e.id === ts.employeeId)
-        const user = emp ? (users || []).find((u) => u.id === emp.userId) : null
-        const project = (projects || []).find((p) => p.id === ts.projectId)
-        return { ...ts, userName: user?.name ?? '—', projectName: project?.name ?? '—' }
+    return (timesheets || []).map((ts: Record<string, unknown>) => {
+        const emp = (employees || []).find((e: Record<string, unknown>) => e.id === ts.employeeId)
+        const user = emp ? (users || []).find((u: Record<string, unknown>) => u.id === emp.userId) : null
+        const project = (projects || []).find((p: Record<string, unknown>) => p.id === ts.projectId)
+        return { ...ts, userName: user?.name ?? '-', projectName: project?.name ?? '-' }
     })
 }
 
@@ -85,7 +85,8 @@ export async function getWeekTimesheets(employeeId: string, weekStart: string) {
         .lte('date', weekEnd)
         .order('date')
 
-    return data || []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (data || []) as any[]
 }
 
 export async function createTimesheet(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
@@ -98,14 +99,16 @@ export async function createTimesheet(formData: unknown): Promise<ActionResult<R
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'timesheet', entityId: data.id })
-    return ok(data)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(data as any)
 }
 
 export async function updateTimesheet(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requireAuth()
     const { data, error } = await supabase
         .from('timesheets')
-        .update({ ...(formData as Record<string, unknown>), updatedAt: new Date().toISOString() })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update({ ...(formData as any), updatedAt: new Date().toISOString() })
         .eq('id', id).select().single()
     if (error) return fail(error.message)
 

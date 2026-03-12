@@ -1,11 +1,11 @@
 // ── AI Tool Registry ──
 // Maps natural language intents → server actions as OpenAI function declarations
 
-import { createLead, getLeads, getStages, updateLead, moveLeadStage, convertLeadToOrder } from '@/lib/actions/crm'
-import { createOrder, getQuotations, getContracts, sendQuotation, approveQuotation, convertToContract, getOrder } from '@/lib/actions/sale'
+import { createLead, getLeads, getStages, updateLead as _updateLead, moveLeadStage as _moveLeadStage, convertLeadToOrder } from '@/lib/actions/crm'
+import { createOrder, getQuotations, getContracts, sendQuotation, approveQuotation as _approveQuotation, convertToContract as _convertToContract, getOrder } from '@/lib/actions/sale'
 import { getEmployees, createEmployee } from '@/lib/actions/employees'
-import { saveWeekTimesheets, getTimesheetsWithDetails } from '@/lib/actions/timesheets'
-import { createInvoice, createPayment, getInvoices } from '@/lib/actions/finance'
+import { saveWeekTimesheets, getTimesheetsWithDetails as _getTimesheetsWithDetails } from '@/lib/actions/timesheets'
+import { createInvoice as _createInvoice, createPayment as _createPayment, getInvoices } from '@/lib/actions/finance'
 import { getProjects, createTask } from '@/lib/actions/projects'
 import { globalSearch } from '@/lib/actions/search'
 import { getDashboardKPIs } from '@/lib/actions/dashboard'

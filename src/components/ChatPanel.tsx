@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, type CSSProperties } from 'react'
 import { Bot, X, Send, User, Loader2, Maximize2, Minimize2, Trash2, ChevronRight, Check, XCircle } from 'lucide-react'
 
-// ── Types ──
+// ââ Types ââ
 
 interface Message {
     id: string
@@ -14,12 +14,11 @@ interface Message {
 
 interface PendingAction {
     toolName: string
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    args: Record<string, any>
+    args: Record<string, string | number | boolean | null | undefined>
     preview: string
 }
 
-// ── LocalStorage ──
+// ââ LocalStorage ââ
 
 const STORAGE_KEY = 'vtn_ai_chat'
 
@@ -38,66 +37,66 @@ function saveMessages(messages: Message[]) {
     catch { /* storage full */ }
 }
 
-// ── Welcome ──
+// ââ Welcome ââ
 
 const WELCOME: Message = {
     id: 'welcome',
     role: 'assistant',
-    content: `Xin chào! Tôi là **trợ lý AI** của VTN Architects 🏗️
+    content: `Xin chÃ o! TÃ´i lÃ  **trá»£ lÃ½ AI** cá»§a VTN Architects ð-ï¸
 
-Tôi có thể giúp bạn:
-• 📊 Xem tổng quan dashboard
-• 👤 Quản lý khách hàng (leads)
-• 💰 Tạo & phân tích báo giá
-• 📋 Xem hợp đồng, dự án
-• 💵 Ước tính giá dịch vụ
-• 🔍 Tìm kiếm nhanh
+TÃ´i cÃ³ thá» giÃºp báº¡n:
+â¢ ð Xem tá»ng quan dashboard
+â¢ ð¤ Quáº£n lÃ½ khÃ¡ch hÃ ng (leads)
+â¢ ð° Táº¡o & phÃ¢n tÃ­ch bÃ¡o giÃ¡
+â¢ ð Xem há»£p Äá»ng, dá»± Ã¡n
+â¢ ðµ Æ¯á»c tÃ­nh giÃ¡ dá»ch vá»¥
+â¢ ð TÃ¬m kiáº¿m nhanh
 
-Hãy hỏi gì đi nào!`,
+HÃ£y há»i gÃ¬ Äi nÃ o!`,
     timestamp: Date.now(),
 }
 
 const QUICK_ACTIONS = [
-    { label: '📊 Tổng quan', text: 'Tổng quan hôm nay' },
-    { label: '👤 Leads', text: 'Danh sách lead' },
-    { label: '💰 Báo giá', text: 'Danh sách báo giá' },
-    { label: '💵 Ước tính giá', text: 'Ước tính thiết kế biệt thự 300m2 trọn gói' },
+    { label: 'ð Tá»ng quan', text: 'Tá»ng quan hÃ´m nay' },
+    { label: 'ð¤ Leads', text: 'Danh sÃ¡ch lead' },
+    { label: 'ð° BÃ¡o giÃ¡', text: 'Danh sÃ¡ch bÃ¡o giÃ¡' },
+    { label: 'ðµ Æ¯á»c tÃ­nh giÃ¡', text: 'Æ¯á»c tÃ­nh thiáº¿t káº¿ biá»t thá»± 300m2 trá»n gÃ³i' },
 ]
 
 const TOOL_LABELS: Record<string, string> = {
-    create_lead: '👤 Tạo Lead',
-    create_quotation: '💰 Tạo Báo giá',
-    send_quotation: '📤 Gửi Báo giá',
-    create_employee: '🧑‍💼 Tạo Nhân viên',
-    log_timesheet: '⏱️ Log Timesheet',
-    create_task: '📋 Tạo Task',
-    convert_lead_to_quotation: '🔄 Chuyển Lead → Báo giá',
+    create_lead: 'ð¤ Táº¡o Lead',
+    create_quotation: 'ð° Táº¡o BÃ¡o giÃ¡',
+    send_quotation: 'ð¤ Gá»­i BÃ¡o giÃ¡',
+    create_employee: 'ð§âð¼ Táº¡o NhÃ¢n viÃªn',
+    log_timesheet: 'â±ï¸ Log Timesheet',
+    create_task: 'ð Táº¡o Task',
+    convert_lead_to_quotation: 'ð Chuyá»n Lead â BÃ¡o giÃ¡',
 }
 
 const FIELD_LABELS: Record<string, string> = {
-    partnerName: 'Khách hàng',
+    partnerName: 'KhÃ¡ch hÃ ng',
     email: 'Email',
-    phone: 'SĐT',
-    expectedValue: 'Giá trị dự kiến',
-    totalAmount: 'Tổng tiền',
-    notes: 'Ghi chú',
+    phone: 'SÄT',
+    expectedValue: 'GiÃ¡ trá» dá»± kiáº¿n',
+    totalAmount: 'Tá»ng tiá»n',
+    notes: 'Ghi chÃº',
     partnerEmail: 'Email KH',
-    partnerPhone: 'SĐT KH',
-    name: 'Tên',
-    department: 'Phòng ban',
-    position: 'Chức vụ',
-    salary: 'Lương',
+    partnerPhone: 'SÄT KH',
+    name: 'TÃªn',
+    department: 'PhÃ²ng ban',
+    position: 'Chá»©c vá»¥',
+    salary: 'LÆ°Æ¡ng',
     leadId: 'Lead ID',
-    projectId: 'Dự án ID',
-    description: 'Mô tả',
-    hours: 'Số giờ',
-    priority: 'Ưu tiên',
-    query: 'Từ khóa',
+    projectId: 'Dá»± Ã¡n ID',
+    description: 'MÃ´ táº£',
+    hours: 'Sá» giá»',
+    priority: 'Æ¯u tiÃªn',
+    query: 'Tá»« khÃ³a',
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatArgValue(key: string, val: any): string {
-    if (val === null || val === undefined) return '—'
+    if (val === null || val === undefined) return 'â'
     if (typeof val === 'number' && ['expectedValue', 'totalAmount', 'salary', 'amount'].includes(key)) {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(val)
     }
@@ -209,7 +208,7 @@ const S = {
     } as CSSProperties,
 }
 
-// ── Safe Markdown renderer ──
+// ââ Safe Markdown renderer ââ
 
 function renderBoldSegments(text: string, parentKey: string) {
     const parts = text.split(/\*\*(.*?)\*\*/g)
@@ -243,9 +242,9 @@ function renderMarkdown(text: string) {
     }
 
     lines.forEach((line, i) => {
-        if (/^[•\-\*]\s/.test(line)) {
+        if (/^[â¢\-\*]\s/.test(line)) {
             if (listType !== 'ul') { flushList(); listType = 'ul' }
-            const content = line.replace(/^[•\-\*]\s/, '')
+            const content = line.replace(/^[â¢\-\*]\s/, '')
             listBuffer.push(<li key={i} style={{ marginBottom: 2 }}>{renderBoldSegments(content, `l${i}`)}</li>)
             return
         }
@@ -267,7 +266,7 @@ function renderMarkdown(text: string) {
     return elements
 }
 
-// ── Keyframes (injected once) ──
+// ââ Keyframes (injected once) ââ
 
 const KEYFRAMES = `
 @keyframes chatBounce {
@@ -276,7 +275,7 @@ const KEYFRAMES = `
 }
 `
 
-// ── Component ──
+// ââ Component ââ
 
 export default function ChatPanel() {
     const [isOpen, setIsOpen] = useState(false)
@@ -336,20 +335,20 @@ export default function ChatPanel() {
             if (data.error) {
                 setMessages(prev => [...prev, {
                     id: `err-${Date.now()}`, role: 'assistant',
-                    content: `❌ ${data.error}`, timestamp: Date.now(),
+                    content: `â ${data.error}`, timestamp: Date.now(),
                 }])
             } else {
                 setMessages(prev => [...prev, {
                     id: `a-${Date.now()}`, role: 'assistant',
-                    content: data.content || '❌ Không có phản hồi.', timestamp: Date.now(),
+                    content: data.content || 'â KhÃ´ng cÃ³ pháº£n há»i.', timestamp: Date.now(),
                 }])
                 if (data.pendingAction) setPendingAction(data.pendingAction)
             }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const errorMsg = err?.name === 'AbortError'
-                ? '⏱️ Hết thời gian chờ (30s). Vui lòng thử lại.'
-                : '❌ Có lỗi kết nối. Vui lòng thử lại.'
+                ? 'â±ï¸ Háº¿t thá»i gian chá» (30s). Vui lÃ²ng thá»­ láº¡i.'
+                : 'â CÃ³ lá»-i káº¿t ná»i. Vui lÃ²ng thá»­ láº¡i.'
             setMessages(prev => [...prev, {
                 id: `err-${Date.now()}`, role: 'assistant',
                 content: errorMsg, timestamp: Date.now(),
@@ -378,12 +377,12 @@ export default function ChatPanel() {
             const data = await res.json()
             setMessages(prev => [...prev, {
                 id: `confirm-${Date.now()}`, role: 'assistant',
-                content: data.content || data.error || '❌ Lỗi xác nhận.', timestamp: Date.now(),
+                content: data.content || data.error || 'â Lá»-i xÃ¡c nháº­n.', timestamp: Date.now(),
             }])
         } catch {
             setMessages(prev => [...prev, {
                 id: `err-${Date.now()}`, role: 'assistant',
-                content: '❌ Lỗi kết nối khi xác nhận.', timestamp: Date.now(),
+                content: 'â Lá»-i káº¿t ná»i khi xÃ¡c nháº­n.', timestamp: Date.now(),
             }])
         } finally {
             clearTimeout(timeoutId)
@@ -396,7 +395,7 @@ export default function ChatPanel() {
         setPendingAction(null)
         setMessages(prev => [...prev, {
             id: `reject-${Date.now()}`, role: 'assistant',
-            content: '🚫 Đã hủy thao tác.', timestamp: Date.now(),
+            content: 'ð« ÄÃ£ há»§y thao tÃ¡c.', timestamp: Date.now(),
         }])
     }
 
@@ -415,7 +414,7 @@ export default function ChatPanel() {
 
             {/* FAB */}
             {!isOpen && (
-                <button onClick={() => setIsOpen(true)} style={S.fab} aria-label="Mở AI Assistant"
+                <button onClick={() => setIsOpen(true)} style={S.fab} aria-label="Má» AI Assistant"
                     onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(124,58,237,0.4)' }}
                     onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(124,58,237,0.3)' }}
                 >
@@ -432,16 +431,16 @@ export default function ChatPanel() {
                         <Bot size={24} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={S.headerTitle}>VTN AI Assistant</p>
-                            <p style={S.headerSub}>Trợ lý thông minh — Cty TNHH Võ Trọng Nghĩa</p>
+                            <p style={S.headerSub}>Trá»£ lÃ½ thÃ´ng minh â Cty TNHH VÃµ Trá»ng NghÄ©a</p>
                         </div>
                         <div style={{ display: 'flex', gap: 4 }}>
-                            <button onClick={clearHistory} style={S.headerBtn} title="Xóa lịch sử">
+                            <button onClick={clearHistory} style={S.headerBtn} title="XÃ³a lá»ch sá»­">
                                 <Trash2 size={16} />
                             </button>
-                            <button onClick={() => setIsExpanded(!isExpanded)} style={S.headerBtn} title={isExpanded ? 'Thu nhỏ' : 'Mở rộng'}>
+                            <button onClick={() => setIsExpanded(!isExpanded)} style={S.headerBtn} title={isExpanded ? 'Thu nhá»' : 'Má» rá»ng'}>
                                 {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                             </button>
-                            <button onClick={() => setIsOpen(false)} style={S.headerBtn} title="Đóng">
+                            <button onClick={() => setIsOpen(false)} style={S.headerBtn} title="ÄÃ³ng">
                                 <X size={16} />
                             </button>
                         </div>
@@ -469,7 +468,7 @@ export default function ChatPanel() {
 
                         {pendingAction && !isLoading && (
                             <div style={S.confirmCard}>
-                                <p style={S.confirmTitle}>⚠️ Xác nhận thao tác</p>
+                                <p style={S.confirmTitle}>â ï¸ XÃ¡c nháº­n thao tÃ¡c</p>
                                 <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', color: '#92400e' }}>
                                     {TOOL_LABELS[pendingAction.toolName] || pendingAction.toolName}
                                 </p>
@@ -493,10 +492,10 @@ export default function ChatPanel() {
                                 </div>
                                 <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                                     <button onClick={handleConfirmAction} style={S.confirmBtnOk}>
-                                        <Check size={14} /> Xác nhận
+                                        <Check size={14} /> XÃ¡c nháº­n
                                     </button>
                                     <button onClick={handleRejectAction} style={S.confirmBtnCancel}>
-                                        <XCircle size={14} /> Hủy
+                                        <XCircle size={14} /> Há»§y
                                     </button>
                                 </div>
                             </div>
@@ -541,7 +540,7 @@ export default function ChatPanel() {
                                 ref={inputRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="Hỏi AI bất kỳ điều gì..."
+                                placeholder="Há»i AI báº¥t ká»³ Äiá»u gÃ¬..."
                                 disabled={isLoading}
                                 maxLength={2000}
                                 style={{

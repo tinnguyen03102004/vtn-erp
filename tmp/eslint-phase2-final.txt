@@ -1,0 +1,6 @@
+﻿
+C:\Users\tinnh\.gemini\antigravity\workspaces\vtn-erp\src\components\SaleDetail.tsx
+  8:15  error  Parsing error: ',' expected
+
+Γ£û 1 problem (1 error, 0 warnings)
+

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from 'react'
@@ -20,7 +20,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
     const [form, setForm] = useState(initialLead)
 
     async function handleSave() {
-        if (!form.name || !form.partnerName) { addToast('Tên lead và khách hàng bắt buộc', 'error'); return }
+        if (!form.name || !form.partnerName) { addToast('TÃªn lead vÃ  khÃ¡ch hÃ ng báº¯t buá»c', 'error'); return }
         setSaving(true)
         const result = await updateLead(lead.id, {
             name: form.name,
@@ -33,38 +33,38 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
             updatedAt: new Date().toISOString(),
         })
         setSaving(false)
-        if (!result.success) { addToast(result.error || 'Lỗi', 'error'); return }
+        if (!result.success) { addToast(result.error || 'Lá»-i', 'error'); return }
         setLead(result.data as Lead)
         setEditing(false)
-        addToast('Đã cập nhật lead')
+        addToast('ÄÃ£ cáº­p nháº­t lead')
     }
 
     async function handleDelete() {
-        if (!confirm(`Xóa lead "${lead.name}"? Hành động này không thể hoàn tác.`)) return
+        if (!confirm(`XÃ³a lead "${lead.name}"? HÃ nh Äá»ng nÃ y khÃ´ng thá» hoÃ n tÃ¡c.`)) return
         try {
             await deleteLead(lead.id)
-            addToast('Đã xóa lead')
+            addToast('ÄÃ£ xÃ³a lead')
             router.push('/crm')
         } catch (err: any) {
-            addToast(err.message || 'Lỗi khi xóa', 'error')
+            addToast(err.message || 'Lá»-i khi xÃ³a', 'error')
         }
     }
 
     async function handleConvert() {
-        if (!confirm(`Chuyển lead "${lead.name}" thành Báo giá?`)) return
+        if (!confirm(`Chuyá»n lead "${lead.name}" thÃ nh BÃ¡o giÃ¡?`)) return
         const result = await convertLeadToOrder(lead.id)
-        if (!result.success) { addToast(result.error || 'Lỗi', 'error'); return }
-        addToast(`Đã tạo báo giá ${result.data.name}`)
+        if (!result.success) { addToast(result.error || 'Lá»-i', 'error'); return }
+        addToast(`ÄÃ£ táº¡o bÃ¡o giÃ¡ ${result.data.name}`)
         router.push(`/sale/${result.data.id}`)
     }
 
     const fields = [
-        { key: 'name', label: 'Tên lead', required: true },
-        { key: 'partnerName', label: 'Khách hàng', required: true },
+        { key: 'name', label: 'TÃªn lead', required: true },
+        { key: 'partnerName', label: 'KhÃ¡ch hÃ ng', required: true },
         { key: 'email', label: 'Email', type: 'email' },
-        { key: 'phone', label: 'Điện thoại' },
-        { key: 'source', label: 'Nguồn' },
-        { key: 'expectedValue', label: 'Giá trị ước tính', type: 'number' },
+        { key: 'phone', label: 'Äiá»n thoáº¡i' },
+        { key: 'source', label: 'Nguá»n' },
+        { key: 'expectedValue', label: 'GiÃ¡ trá» Æ°á»c tÃ­nh', type: 'number' },
     ] as const
 
     return (
@@ -74,7 +74,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
             {/* Breadcrumb */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 13, color: '#8FA3BF' }}>
                 <Link href="/crm" style={{ color: '#8FA3BF', textDecoration: 'none' }}>CRM & Leads</Link>
-                <span>›</span>
+                <span>âº</span>
                 <span style={{ color: '#0F1C2E', fontWeight: 600 }}>{lead.name}</span>
             </div>
 
@@ -82,17 +82,17 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                         <h1 className="page-title" style={{ marginBottom: 0 }}>{lead.name}</h1>
-                        <span className="badge badge-info">{lead.source ?? '—'}</span>
+                        <span className="badge badge-info">{lead.source ?? 'â'}</span>
                     </div>
-                    <p className="page-subtitle">{lead.partnerName} • {formatCurrency(Number(lead.expectedValue ?? 0))} • {lead.probability}% xác suất</p>
+                    <p className="page-subtitle">{lead.partnerName} â¢ {formatCurrency(Number(lead.expectedValue ?? 0))} â¢ {lead.probability}% xÃ¡c suáº¥t</p>
                 </div>
                 <div className="page-actions">
-                    <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={handleDelete}>Xóa</button>
+                    <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={handleDelete}>XÃ³a</button>
                     <button className="btn btn-outline btn-sm" onClick={() => { setForm(lead); setEditing(!editing) }}>
-                        {editing ? 'Huỷ sửa' : 'Sửa lead'}
+                        {editing ? 'Huá»· sá»­a' : 'Sá»­a lead'}
                     </button>
                     <button className="btn btn-accent btn-sm" onClick={handleConvert}>
-                        Chuyển sang Báo giá →
+                        Chuyá»n sang BÃ¡o giÃ¡ â
                     </button>
                 </div>
             </div>
@@ -102,7 +102,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div className="card" style={{ padding: 20 }}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>
-                            {editing ? 'Chỉnh sửa thông tin' : 'Thông tin khách hàng'}
+                            {editing ? 'Chá»nh sá»­a thÃ´ng tin' : 'ThÃ´ng tin khÃ¡ch hÃ ng'}
                         </div>
                         {editing ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -118,7 +118,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                                     </div>
                                 ))}
                                 <div className="form-group">
-                                    <label className="form-label">Ghi chú</label>
+                                    <label className="form-label">Ghi chÃº</label>
                                     <textarea
                                         className="form-textarea" rows={3}
                                         value={form.notes ?? ''}
@@ -126,20 +126,20 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                                     />
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-                                    <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>Huỷ</button>
+                                    <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>Huá»·</button>
                                     <button className="btn btn-primary btn-sm" disabled={saving} onClick={handleSave}>
-                                        {saving ? '⏳ Đang lưu...' : '💾 Lưu'}
+                                        {saving ? 'â³ Äang lÆ°u...' : 'ð¾ LÆ°u'}
                                     </button>
                                 </div>
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                 {[
-                                    { label: 'Tên', value: lead.partnerName, bold: true },
-                                    { label: 'Email', value: lead.email ?? '—' },
-                                    { label: 'Điện thoại', value: lead.phone ?? '—' },
-                                    { label: 'Nguồn', value: lead.source ?? '—' },
-                                    { label: 'Ngày tạo', value: lead.createdAt ? formatDate(String(lead.createdAt).split('T')[0]) : '—' },
+                                    { label: 'TÃªn', value: lead.partnerName, bold: true },
+                                    { label: 'Email', value: lead.email ?? 'â' },
+                                    { label: 'Äiá»n thoáº¡i', value: lead.phone ?? 'â' },
+                                    { label: 'Nguá»n', value: lead.source ?? 'â' },
+                                    { label: 'NgÃ y táº¡o', value: lead.createdAt ? formatDate(String(lead.createdAt).split('T')[0]) : 'â' },
                                 ].map(({ label, value, bold }) => (
                                     <div key={label} style={{ display: 'flex', gap: 12, fontSize: 13 }}>
                                         <span style={{ color: '#8FA3BF', width: 100, flexShrink: 0 }}>{label}</span>
@@ -151,13 +151,13 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                     </div>
 
                     <div className="card" style={{ padding: 20 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Cơ hội kinh doanh</div>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>CÆ¡ há»i kinh doanh</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             {[
-                                { label: 'Giá trị ước tính', value: formatCurrency(Number(lead.expectedValue ?? 0)), color: '#1F3A5F' },
-                                { label: 'Xác suất', value: `${lead.probability ?? 0}%`, color: '#C9A84C' },
-                                { label: 'Giá trị kỳ vọng', value: formatCurrency(Number(lead.expectedValue ?? 0) * Number(lead.probability ?? 0) / 100), color: '#22C55E' },
-                                { label: 'Nguồn', value: lead.source ?? '—', color: '#4A5E78' },
+                                { label: 'GiÃ¡ trá» Æ°á»c tÃ­nh', value: formatCurrency(Number(lead.expectedValue ?? 0)), color: '#1F3A5F' },
+                                { label: 'XÃ¡c suáº¥t', value: `${lead.probability ?? 0}%`, color: '#C9A84C' },
+                                { label: 'GiÃ¡ trá» ká»³ vá»ng', value: formatCurrency(Number(lead.expectedValue ?? 0) * Number(lead.probability ?? 0) / 100), color: '#22C55E' },
+                                { label: 'Nguá»n', value: lead.source ?? 'â', color: '#4A5E78' },
                             ].map(({ label, value, color }) => (
                                 <div key={label} style={{ background: '#F8F9FB', borderRadius: 8, padding: '10px 12px' }}>
                                     <div style={{ fontSize: 11, color: '#8FA3BF', marginBottom: 4 }}>{label}</div>
@@ -169,7 +169,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
 
                     {lead.notes && !editing && (
                         <div className="card" style={{ padding: 20 }}>
-                            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Ghi chú</div>
+                            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Ghi chÃº</div>
                             <p style={{ fontSize: 13, color: '#4A5E78', lineHeight: 1.7 }}>{lead.notes}</p>
                         </div>
                     )}
@@ -178,10 +178,10 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                 {/* Right: Activity */}
                 <div className="card" style={{ padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>Lịch sử hoạt động</div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>Lá»ch sá»­ hoáº¡t Äá»ng</div>
                     </div>
                     <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>
-                        Chưa có hoạt động nào được ghi nhận
+                        ChÆ°a cÃ³ hoáº¡t Äá»ng nÃ o ÄÆ°á»£c ghi nháº­n
                     </div>
                 </div>
             </div>

@@ -1,9 +1,9 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
-import { createInvoiceSchema, createPaymentSchema, directInvoiceSchema, parseInput } from '@/lib/schemas'
+import { createInvoiceSchema as _createInvoiceSchema, createPaymentSchema, directInvoiceSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 
 export async function getInvoices() {
@@ -36,7 +36,7 @@ export async function getInvoice(id: string) {
     }
 }
 
-// ── Create Invoice ──
+// -- Create Invoice --
 export async function createInvoice(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('finance.edit')
     const parsed = parseInput(directInvoiceSchema, formData)
@@ -49,11 +49,11 @@ export async function createInvoice(formData: unknown): Promise<ActionResult<Rec
         .select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'invoice', entityId: data.id, details: `Tạo hóa đơn: ${name}` })
+    await logAudit({ userId: user.id, action: 'create', entity: 'invoice', entityId: data.id, details: `T?o hóa don: ${name}` })
     return ok(data)
 }
 
-// ── Invoice State ──
+// -- Invoice State --
 export async function updateInvoiceState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('finance.edit')
     const { data, error } = await supabase
@@ -61,11 +61,12 @@ export async function updateInvoiceState(id: string, state: string): Promise<Act
         .from('invoices').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'invoice', entityId: id, details: `Chuyển trạng thái → ${state}` })
-    return ok(data)
+    await logAudit({ userId: user.id, action: 'update', entity: 'invoice', entityId: id, details: `Chuy?n tr?ng thái ? ${state}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(data as any)
 }
 
-// ── Payments ──
+// -- Payments --
 export async function createPayment(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('finance.edit')
     const parsed = parseInput(createPaymentSchema, formData)
@@ -85,14 +86,15 @@ export async function createPayment(formData: unknown): Promise<ActionResult<Rec
     }
 
     await logAudit({ userId: user.id, action: 'create', entity: 'payment', entityId: payment.id, details: `Thanh toán ${parsed.data.amount}` })
-    return ok(payment)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(payment as any)
 }
 
-// ── Create from Milestone ──
+// -- Create from Milestone --
 export async function createInvoiceFromMilestone(milestoneId: string, projectId: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('finance.edit')
     const { data: milestone } = await supabase.from('sale_milestones').select('*').eq('id', milestoneId).single()
-    if (!milestone) return fail('Milestone không tồn tại')
+    if (!milestone) return fail('Milestone không t?n t?i')
 
     const { data: project } = await supabase.from('projects').select('partnerName').eq('id', projectId).single()
 
@@ -116,6 +118,6 @@ export async function createInvoiceFromMilestone(milestoneId: string, projectId:
     // Mark milestone as invoiced
     await supabase.from('sale_milestones').update({ state: 'INVOICED' }).eq('id', milestoneId)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'invoice', entityId: data.id, details: `Invoice từ milestone ${milestoneId}` })
+    await logAudit({ userId: user.id, action: 'create', entity: 'invoice', entityId: data.id, details: `Invoice t? milestone ${milestoneId}` })
     return ok(data)
 }

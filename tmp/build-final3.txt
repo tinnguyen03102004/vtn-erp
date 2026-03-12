@@ -1,0 +1,387 @@
+﻿
+> vtn-erp@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteExceptio 
+   n
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+> Build error occurred
+Error: Turbopack build failed with 25 errors:
+./src/app/(dashboard)/dashboard/page.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 3 bytes from index 13575
+
+
+./src/app/(dashboard)/error.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 393
+
+
+./src/app/(dashboard)/projects/page.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 3 bytes from index 1737
+
+
+./src/app/(dashboard)/sale/new/page.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 3875
+
+
+./src/app/(dashboard)/timesheets/grid.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 3084
+
+Import trace:
+  Server Component:
+    ./src/app/(dashboard)/timesheets/grid.tsx
+    ./src/app/(dashboard)/timesheets/page.tsx
+
+
+./src/app/api/ai/chat/route.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 4748
+
+
+./src/app/api/auth/signin/route.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 1984
+
+
+./src/app/login/page.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 1132
+
+
+./src/components/AttachmentPanel.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 10614
+
+Import traces:
+  Client Component Browser:
+    ./src/components/AttachmentPanel.tsx [Client Component Browser]
+    ./src/components/sale/SaleDetail.tsx [Client Component Browser]
+    ./src/components/sale/SaleDetail.tsx [Server Component]
+    ./src/app/(dashboard)/sale/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/AttachmentPanel.tsx [Client Component SSR]
+    ./src/components/sale/SaleDetail.tsx [Client Component SSR]
+    ./src/components/sale/SaleDetail.tsx [Server Component]
+    ./src/app/(dashboard)/sale/[id]/page.tsx [Server Component]
+
+
+./src/components/CRMKanban.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 2577
+
+Import trace:
+  Server Component:
+    ./src/components/CRMKanban.tsx
+    ./src/app/(dashboard)/crm/page.tsx
+
+
+./src/components/EmployeesGrid.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 2459
+
+Import trace:
+  Server Component:
+    ./src/components/EmployeesGrid.tsx
+    ./src/app/(dashboard)/employees/page.tsx
+
+
+./src/components/GlobalSearch.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 3 bytes from index 265
+
+Import traces:
+  Client Component Browser:
+    ./src/components/GlobalSearch.tsx [Client Component Browser]
+    ./src/components/shared/Header.tsx [Client Component Browser]
+    ./src/app/(dashboard)/layout.tsx [Client Component Browser]
+    ./src/app/(dashboard)/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/GlobalSearch.tsx [Client Component SSR]
+    ./src/components/shared/Header.tsx [Client Component SSR]
+    ./src/app/(dashboard)/layout.tsx [Client Component SSR]
+    ./src/app/(dashboard)/layout.tsx [Server Component]
+
+
+./src/components/InvoiceDetail.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 1 bytes from index 618
+
+Import trace:
+  Server Component:
+    ./src/components/InvoiceDetail.tsx
+    ./src/app/(dashboard)/finance/invoices/[id]/page.tsx
+
+
+./src/components/LeadDetail.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 1501
+
+Import trace:
+  Server Component:
+    ./src/components/LeadDetail.tsx
+    ./src/app/(dashboard)/crm/[id]/page.tsx
+
+
+./src/components/ProjectDetail.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 2187
+
+Import trace:
+  Server Component:
+    ./src/components/ProjectDetail.tsx
+    ./src/app/(dashboard)/projects/[id]/page.tsx
+
+
+./src/components/SettingsContent.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 1326
+
+Import trace:
+  Server Component:
+    ./src/components/SettingsContent.tsx
+    ./src/app/(dashboard)/settings/page.tsx
+
+
+./src/components/chat/ChatPanel.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 3214
+
+Import traces:
+  Client Component Browser:
+    ./src/components/chat/ChatPanel.tsx [Client Component Browser]
+    ./src/app/(dashboard)/layout.tsx [Client Component Browser]
+    ./src/app/(dashboard)/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/chat/ChatPanel.tsx [Client Component SSR]
+    ./src/app/(dashboard)/layout.tsx [Client Component SSR]
+    ./src/app/(dashboard)/layout.tsx [Server Component]
+
+
+./src/components/sale/SaleStateActions.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 3 bytes from index 3472
+
+Import traces:
+  Client Component Browser:
+    ./src/components/sale/SaleStateActions.tsx [Client Component Browser]
+    ./src/components/sale/SaleDetail.tsx [Client Component Browser]
+    ./src/components/sale/SaleDetail.tsx [Server Component]
+    ./src/app/(dashboard)/sale/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/sale/SaleStateActions.tsx [Client Component SSR]
+    ./src/components/sale/SaleDetail.tsx [Client Component SSR]
+    ./src/components/sale/SaleDetail.tsx [Server Component]
+    ./src/app/(dashboard)/sale/[id]/page.tsx [Server Component]
+
+
+./src/components/shared/ModuleError.tsx
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 489
+
+Import traces:
+  Client Component Browser:
+    ./src/components/shared/ModuleError.tsx [Client Component Browser]
+    ./src/app/(dashboard)/crm/error.tsx [Client Component Browser]
+    ./src/app/(dashboard)/crm/error.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/shared/ModuleError.tsx [Client Component SSR]
+    ./src/app/(dashboard)/crm/error.tsx [Client Component SSR]
+    ./src/app/(dashboard)/crm/error.tsx [Server Component]
+
+
+./src/lib/actions/attachments.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 2 bytes from index 1633
+
+Import trace:
+  Server Component:
+    ./src/lib/actions/attachments.ts
+    ./src/app/(dashboard)/sale/[id]/page.tsx
+
+
+./src/lib/actions/crm.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 1 bytes from index 3811
+
+Import trace:
+  Server Component:
+    ./src/lib/actions/crm.ts
+    ./src/app/(dashboard)/crm/page.tsx
+
+
+./src/lib/actions/employees.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 1 bytes from index 2643
+
+Import trace:
+  Server Component:
+    ./src/lib/actions/employees.ts
+    ./src/app/(dashboard)/employees/page.tsx
+
+
+./src/lib/actions/finance.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 1 bytes from index 2090
+
+Import trace:
+  Server Component:
+    ./src/lib/actions/finance.ts
+    ./src/app/(dashboard)/finance/invoices/page.tsx
+
+
+./src/lib/actions/projects.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 1 bytes from index 2412
+
+Import trace:
+  Server Component:
+    ./src/lib/actions/projects.ts
+    ./src/app/(dashboard)/projects/[id]/page.tsx
+
+
+./src/lib/actions/sale.ts
+Reading source code for parsing failed
+An unexpected error happened while trying to read the source code to 
+parse: failed to convert rope into string
+
+Caused by:
+- invalid utf-8 sequence of 1 bytes from index 3343
+
+Import traces:
+  App Route:
+    ./src/lib/actions/sale.ts
+    ./src/app/api/pdf/[id]/route.ts
+
+  Server Component:
+    ./src/lib/actions/sale.ts
+    ./src/app/(dashboard)/sale/page.tsx
+
+  Client Component Browser:
+    ./src/lib/actions/sale.ts [Client Component Browser]
+    ./src/components/sale/SaleDetail.tsx [Client Component Browser]
+    ./src/components/sale/SaleDetail.tsx [Server Component]
+    ./src/app/(dashboard)/sale/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/lib/actions/sale.ts [Client Component SSR]
+    ./src/components/sale/SaleDetail.tsx [Client Component SSR]
+    ./src/components/sale/SaleDetail.tsx [Server Component]
+    ./src/app/(dashboard)/sale/[id]/page.tsx [Server Component]
+
+
+    at ignore-listed frames

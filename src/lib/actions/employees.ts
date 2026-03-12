@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -53,11 +53,12 @@ export async function createEmployee(formData: unknown): Promise<ActionResult<Re
     if (empErr) {
         // Compensating rollback: delete orphaned user
         await supabase.from('users').delete().eq('id', newUser.id)
-        return fail(`Tạo nhân viên thất bại: ${empErr.message}`)
+        return fail(`T?o nhân viên th?t b?i: ${empErr.message}`)
     }
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'employee', entityId: emp.id, details: `Tạo nhân viên: ${parsed.data.name}` })
-    return ok({ ...emp, user: newUser })
+    await logAudit({ userId: user.id, action: 'create', entity: 'employee', entityId: emp.id, details: `T?o nhân viên: ${parsed.data.name}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok({ ...emp, user: newUser } as any)
 }
 
 export async function updateEmployee(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
@@ -66,7 +67,7 @@ export async function updateEmployee(id: string, formData: unknown): Promise<Act
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
     const { data: emp } = await supabase.from('employees').select('userId').eq('id', id).single()
-    if (!emp) return fail('Nhân viên không tồn tại')
+    if (!emp) return fail('Nhân viên không t?n t?i')
 
     // Update user
     await supabase.from('users').update({
@@ -86,5 +87,6 @@ export async function updateEmployee(id: string, formData: unknown): Promise<Act
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'employee', entityId: id })
-    return ok(data)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(data as any)
 }

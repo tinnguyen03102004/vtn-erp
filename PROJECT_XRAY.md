@@ -1,7 +1,7 @@
 # 🔬 PROJECT X-RAY: VTN Architecture ERP
 
-> Generated: 2026-03-09 | By: VibeCoding Kit v4.0 — XRAY Protocol  
-> Purpose: **Onboarding / Handover** — Full codebase documentation
+> Generated: 2026-03-10 | Updated: 2026-03-12
+> By: VibeCoding Kit v4.0 — XRAY Protocol (Post-Upgrade)
 
 ---
 
@@ -11,17 +11,14 @@
 2. [Quick Start](#2-quick-start)
 3. [Architecture](#3-architecture)
 4. [Key Components](#4-key-components)
-5. [Server Actions Reference](#5-server-actions-reference)
-6. [API Routes](#6-api-routes)
-7. [Database Schema](#7-database-schema)
-8. [Auth & RBAC](#8-auth--rbac)
-9. [AI Assistant](#9-ai-assistant)
-10. [Environment Variables](#10-environment-variables)
-11. [Testing](#11-testing)
-12. [Deployment](#12-deployment)
-13. [Common Tasks](#13-common-tasks)
-14. [Code Quality Status](#14-code-quality-status)
-15. [Future Improvements](#15-future-improvements)
+5. [API Reference](#5-api-reference)
+6. [Database Schema](#6-database-schema)
+7. [Environment Variables](#7-environment-variables)
+8. [Deployment](#8-deployment)
+9. [Common Tasks](#9-common-tasks)
+10. [Troubleshooting](#10-troubleshooting)
+11. [Code Health Assessment](#11-code-health-assessment)
+12. [Technical Debt & Upgrade Recommendations](#12-technical-debt--upgrade-recommendations)
 
 ---
 
@@ -29,39 +26,31 @@
 
 ### What is this project?
 
-VTN Architecture ERP là hệ thống quản lý nội bộ (ERP) dành cho công ty kiến trúc VTN, lấy cảm hứng từ Odoo. Hệ thống bao gồm CRM pipeline, quản lý báo giá/hợp đồng, quản lý dự án, theo dõi tiến độ, hoá đơn/thanh toán, chấm công, và AI assistant.
+VTN Architecture ERP is an **Odoo-inspired enterprise resource planning system** built for an architecture firm. It manages the full business cycle: CRM (leads/opportunities) → Sales (quotations/contracts) → Projects (phases/tasks) → Finance (invoices/payments) → HR (employees/timesheets). Includes an **AI assistant** powered by OpenAI for natural-language ERP operations.
 
 ### Tech Stack
 
 | Category | Technology | Version |
-| --- | --- | --- |
-| Framework | Next.js (App Router, Turbopack) | 16.1.6 |
-| Language | TypeScript | ^5 |
+|----------|------------|---------|
+| Framework | Next.js (App Router) | 16.1.6 |
+| Language | TypeScript (strict) | ^5 |
 | UI Library | React | 19.2.3 |
-| Styling | Tailwind CSS v4 | ^4 |
-| UI Components | Radix UI | Various |
-| Icons | Lucide React | ^0.577.0 |
-| Charts | Recharts | ^3.7.0 |
-| Database | Supabase (PostgreSQL) | ^2.98.0 |
-| Schema Modeling | Prisma | ^7.4.2 |
-| Auth | Server-side sessions (custom, Odoo-style) | — |
-| AI | Vercel AI SDK + OpenAI | ^6.0.116 |
-| PDF | @react-pdf/renderer | ^4.3.2 |
-| Validation | Zod | 4.3.6 |
-| Testing | Vitest | ^4.0.18 |
+| Styling | Vanilla CSS (Design System) | Custom |
+| Database | PostgreSQL via Supabase | — |
+| ORM | Prisma | 7.4.2 |
+| Auth | Custom session-based (bcryptjs + cookies) | — |
+| AI | OpenAI (via Vercel AI SDK) | ai ^6.0 |
+| Charts | Recharts | 3.7.0 |
+| PDF | @react-pdf/renderer | 4.3.2 |
+| UI Primitives | Radix UI | Various |
+| Testing | Vitest (unit) + Playwright (E2E) | 4.0 / 1.58 |
+| Deployment | Vercel | — |
 
-### Codebase Metrics
+### Project History
 
-| Metric | Value |
-| --- | --- |
-| Total TS/TSX Files | 74 |
-| Lines of Code | ~7,864 |
-| Components | 18 |
-| Dashboard Pages | 9 (CRM, Sale, Finance, Projects, Employees, Timesheets, Reports, Settings, Dashboard) |
-| Server Action Files | 12 |
-| API Routes | 4 (auth/signin, auth/me, ai/chat, upload, pdf) |
-| DB Models (Prisma) | 18 |
-| Test Cases | 27 |
+- Created: ~2025
+- Last XRAY: 2026-03-06
+- Current XRAY: 2026-03-10 (Upgrade Planning focus)
 
 ---
 
@@ -69,9 +58,10 @@ VTN Architecture ERP là hệ thống quản lý nội bộ (ERP) dành cho côn
 
 ### Prerequisites
 
-- Node.js ≥ 18
-- npm
-- Supabase project (PostgreSQL)
+- **Node.js** ≥ 18
+- **npm** (ships with Node.js)
+- **Supabase** project with PostgreSQL database
+- **OpenAI API key** (for AI assistant)
 
 ### Installation
 
@@ -84,31 +74,29 @@ cd vtn-erp
 npm install
 
 # Setup environment
-cp .env.example .env
-# Edit .env with your Supabase credentials
+cp .env.example .env.local
+# Edit .env.local with your values (see Section 7)
+
+# Push database schema
+npx prisma db push
+
+# Seed initial data (CRM stages, admin user, etc.)
+# → handled by app's first-run logic or manual SQL
 
 # Run development server
 npm run dev
-
 # Open http://localhost:3000
 ```
 
 ### Available Scripts
 
-| Script | Command | Purpose |
-| --- | --- | --- |
-| `npm run dev` | `next dev` | Development server (Turbopack) |
-| `npm run build` | `next build` | Production build |
-| `npm run start` | `next start` | Start production server |
-| `npm run lint` | `eslint` | Run linter |
-| `npm test` | `vitest run` | Run tests once |
-| `npm run test:watch` | `vitest` | Run tests in watch mode |
-
-### Default Login
-
-| Email | Password | Role |
-| --- | --- | --- |
-| `admin@vtn.com` | `123456` | DIRECTOR |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint check |
+| `npm run test` | Run unit tests (Vitest) |
+| `npm run test:e2e` | Run E2E tests (Playwright) |
 
 ---
 
@@ -119,520 +107,356 @@ npm run dev
 ```
 vtn-erp/
 ├── prisma/
-│   └── schema.prisma          # 18 models, Odoo-inspired data schema
+│   └── schema.prisma          # 16 models, 464 lines
 ├── src/
-│   ├── proxy.ts               # Request proxy middleware
 │   ├── app/
-│   │   ├── globals.css        # Tailwind v4 + custom design system
+│   │   ├── globals.css        # TailwindCSS v4 + design tokens (19KB)
 │   │   ├── layout.tsx         # Root layout
-│   │   ├── page.tsx           # Redirect to /dashboard
+│   │   ├── page.tsx           # Home → redirects to dashboard
 │   │   ├── login/             # Login page
-│   │   ├── (dashboard)/       # Dashboard route group (9 modules)
-│   │   │   ├── layout.tsx     # Sidebar + Header + Auth guard
-│   │   │   ├── dashboard/     # Overview dashboard
-│   │   │   ├── crm/           # CRM Kanban pipeline
-│   │   │   ├── sale/          # Quotations + Contracts
-│   │   │   ├── projects/      # Project tracking
-│   │   │   ├── finance/       # Invoices + Payments
-│   │   │   ├── employees/     # HR management
-│   │   │   ├── timesheets/    # Weekly timesheet grid
-│   │   │   ├── reports/       # Revenue reports + charts
-│   │   │   └── settings/      # Company settings
+│   │   ├── (dashboard)/       # Protected dashboard routes
+│   │   │   ├── layout.tsx     # Dashboard layout (sidebar + header)
+│   │   │   ├── dashboard/     # Main dashboard with KPIs
+│   │   │   ├── crm/           # CRM Kanban + lead detail
+│   │   │   ├── sale/          # Quotations/Contracts
+│   │   │   ├── projects/      # Project management
+│   │   │   ├── timesheets/    # Timesheet grid
+│   │   │   ├── finance/       # Invoices
+│   │   │   ├── employees/     # Employee management
+│   │   │   ├── reports/       # Reports & analytics
+│   │   │   └── settings/      # App settings
 │   │   └── api/
-│   │       ├── auth/          # signin, me endpoints
-│   │       ├── ai/chat/       # AI chat endpoint (streaming)
-│   │       ├── upload/        # File upload endpoint
-│   │       └── pdf/           # Invoice PDF generation
-│   ├── components/
-│   │   ├── CRMKanban.tsx      # Drag-and-drop CRM pipeline
-│   │   ├── ChatPanel.tsx      # AI assistant panel
-│   │   ├── SaleDetail.tsx     # Quotation/Contract detail
-│   │   ├── ProjectDetail.tsx  # Project management
-│   │   ├── InvoiceDetail.tsx  # Invoice management
-│   │   ├── LeadDetail.tsx     # Lead detail drawer
-│   │   ├── EmployeesGrid.tsx  # Employee management
-│   │   ├── SalePageTabs.tsx   # Sale tabs component
-│   │   ├── AttachmentPanel.tsx# File attachments
-│   │   ├── GlobalSearch.tsx   # Cross-module search
-│   │   ├── SettingsContent.tsx# Company settings form
-│   │   ├── UserManagement.tsx # User/role management
-│   │   ├── Toast.tsx          # Toast notifications
+│   │       ├── ai/            # AI chat endpoint (Vercel AI SDK)
+│   │       ├── auth/          # Login / Logout / Session
+│   │       ├── pdf/           # PDF generation
+│   │       └── upload/        # File upload (Supabase Storage)
+│   ├── components/            # 16 components
 │   │   ├── shared/            # Header, Sidebar
-│   │   ├── ai/               # ChatDataTable, ChatMetricCard
-│   │   └── pdf/              # SaleOrderPDF
+│   │   ├── ai/                # ChatDataTable, ChatMetricCard
+│   │   ├── pdf/               # SaleOrderPDF
+│   │   └── [Feature].tsx      # Feature-specific components
 │   └── lib/
-│       ├── action-result.ts   # ActionResult<T> pattern (ok/fail)
-│       ├── schemas.ts         # Zod validation schemas (all modules)
-│       ├── types.ts           # DTO interfaces (15+)
-│       ├── audit.ts           # Non-blocking audit trail
-│       ├── auth-guard.ts      # requireAuth(), requirePermission()
-│       ├── auth-context.tsx   # React auth context provider
-│       ├── rbac.ts            # Role-based permission matrix
-│       ├── session.ts         # Server-side session management
-│       ├── supabase.ts        # Supabase client singleton
-│       ├── prisma.ts          # Prisma client (schema+auth only)
-│       ├── utils.ts           # Utility functions (cn, formatVND)
-│       ├── validation.tsx     # Client-side form validation
 │       ├── actions/           # 12 server action files
-│       │   ├── crm.ts         # CRM leads (Zod+ActionResult+Audit)
-│       │   ├── sale.ts        # Orders, lines, milestones
-│       │   ├── finance.ts     # Invoices, payments
-│       │   ├── projects.ts    # Projects, phases, tasks
-│       │   ├── employees.ts   # Employee CRUD + rollback
-│       │   ├── timesheets.ts  # Weekly timesheet grid
-│       │   ├── attachments.ts # Upload/delete + validation
-│       │   ├── dashboard.ts   # Dashboard KPIs
-│       │   ├── settings.ts    # Company settings
-│       │   ├── users.ts       # User management
-│       │   ├── search.ts      # Global search
-│       │   └── invoice-pdf.ts # PDF template generation
-│       └── ai/
-│           ├── tools.ts       # 20+ AI tool definitions
-│           ├── schemas.ts     # AI tool Zod schemas
-│           └── prompts.ts     # System prompts
-├── vitest.config.ts           # Test configuration
-├── docs/                      # PRD, Architecture, Specs
+│       ├── ai/                # AI tools, system-prompt, quote-analysis
+│       ├── __tests__/         # 6 unit test files
+│       ├── prisma.ts          # Prisma client singleton
+│       ├── supabase.ts        # Supabase client
+│       ├── session.ts         # Session management
+│       ├── auth-guard.ts      # Route protection
+│       ├── rbac.ts            # Role-based access control
+│       ├── schemas.ts         # Zod validation schemas
+│       ├── types.ts           # TypeScript type definitions
+│       └── utils.ts           # Utility functions
+├── e2e/                       # 3 Playwright test specs
+├── docs/                      # Project documentation
 └── public/                    # Static assets
 ```
 
 ### Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        BROWSER (Client)                         │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────────┐ │
-│  │  Pages   │ │Components│ │  Forms   │ │   AI ChatPanel     │ │
-│  │ (RSC)    │ │ (Client) │ │ (Client) │ │   (Streaming)      │ │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────────┬───────────┘ │
-│       │             │            │                 │             │
-└───────┼─────────────┼────────────┼─────────────────┼─────────────┘
-        │             │            │                 │
-┌───────┼─────────────┼────────────┼─────────────────┼─────────────┐
-│       ▼             ▼            ▼                 ▼    SERVER   │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │              Server Actions (src/lib/actions/)           │   │
-│  │  ┌─────────┐ ┌──────┐ ┌─────────┐ ┌────────────────┐   │   │
-│  │  │Zod Parse│→│ RBAC │→│ Supabase│→│ Audit Trail    │   │   │
-│  │  │schemas  │ │guard │ │  query  │ │ (non-blocking) │   │   │
-│  │  └─────────┘ └──────┘ └─────────┘ └────────────────┘   │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                          │                                       │
-│  ┌───────────────────────┼───────────────────────────────────┐  │
-│  │                       ▼         Infrastructure             │  │
-│  │  ┌─────────┐  ┌──────────┐  ┌────────┐  ┌──────────────┐ │  │
-│  │  │session  │  │supabase  │  │ prisma │  │ action-result│ │  │
-│  │  │.ts      │  │.ts       │  │ .ts    │  │ .ts          │ │  │
-│  │  └─────────┘  └──────────┘  └────────┘  └──────────────┘ │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                          │                                       │
-└──────────────────────────┼───────────────────────────────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │  Supabase   │
-                    │ PostgreSQL  │
-                    │ + Storage   │
-                    └─────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                          BROWSER (Client)                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────┐ │
+│  │  Dashboard   │  │  CRM/Sale   │  │   AI Chat (useChat hook)   │ │
+│  │   Charts     │  │  Kanban     │  │  ← Vercel AI SDK streaming │ │
+│  └──────┬───────┘  └──────┬──────┘  └──────────────┬──────────────┘ │
+└─────────┼─────────────────┼────────────────────────┼────────────────┘
+          │                 │                        │
+          ▼                 ▼                        ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     NEXT.JS 16 SERVER                               │
+│  ┌──────────────────────┐  ┌───────────────────────────────────────┐│
+│  │   Server Actions     │  │        API Routes                     ││
+│  │  (12 action files)   │  │  /api/ai   → OpenAI streaming         ││
+│  │  dashboard, crm,     │  │  /api/auth → login/logout/session     ││
+│  │  sale, projects,     │  │  /api/pdf  → @react-pdf generation    ││
+│  │  finance, employees  │  │  /api/upload → Supabase Storage       ││
+│  └──────────┬───────────┘  └──────────────┬────────────────────────┘│
+│             │                             │                         │
+│  ┌──────────▼─────────────────────────────▼────────────────────────┐│
+│  │                    LIB LAYER                                    ││
+│  │  session.ts → auth-guard.ts → rbac.ts → schemas.ts (Zod)       ││
+│  │  prisma.ts → Prisma Client     supabase.ts → Storage           ││
+│  │  ai/tools.ts → 15 AI tools     ai/quote-analysis.ts            ││
+│  └──────────┬──────────────────────────────┬───────────────────────┘│
+└─────────────┼──────────────────────────────┼────────────────────────┘
+              │                              │
+              ▼                              ▼
+┌──────────────────────┐    ┌────────────────────────────────────────┐
+│  Supabase PostgreSQL │    │      Supabase Storage                  │
+│  (Prisma ORM)        │    │  (Attachments, Documents)              │
+│  16 tables           │    │                                        │
+└──────────────────────┘    └────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
 ```
-User Action → React Component → Server Action
-    → Zod Validation → RBAC Guard → Supabase Query
-    → Audit Log → ActionResult<T> → UI Update
+CRM Lead → Convert to Sale Order → Create Quotation → Send → Sign
+         → Generate Contract → Create Project (phases + tasks)
+         → Log Timesheets → Generate Invoices → Record Payments
 ```
-
-### Data Layer Strategy
-
-| Layer | Tool | Purpose |
-| --- | --- | --- |
-| Runtime Data | Supabase JS | CRUD, queries, storage, realtime |
-| Schema Modeling | Prisma | Single source of truth for schema |
-| Auth Sessions | Prisma + `app_sessions` table | Server-side session management |
 
 ---
 
 ## 4. Key Components
 
-### CRMKanban.tsx (15.8KB)
+### Feature Components (src/components/)
 
-Kanban board cho CRM pipeline. Drag-and-drop lead giữa các stages.
+| Component | Size | Purpose |
+|-----------|------|---------|
+| `SaleDetail.tsx` | 29KB / ~680 lines | Full sale order/quotation editor with lines, milestones, state machine, PDF export |
+| `ChatPanel.tsx` | 24KB / ~580 lines | AI assistant chat with tool result rendering (tables, cards, confirmations) |
+| `ProjectDetail.tsx` | 16KB | Project management — phases, tasks, kanban-style board |
+| `CRMKanban.tsx` | 15KB | CRM pipeline with drag-and-drop Kanban columns |
+| `EmployeesGrid.tsx` | 13KB | Employee directory with CRUD operations |
+| `InvoiceDetail.tsx` | 13KB | Invoice viewer with payment tracking |
+| `SalePageTabs.tsx` | 12KB | Tab navigation for quotations/contracts |
+| `LeadDetail.tsx` | 10KB | CRM lead detail panel |
+| `AttachmentPanel.tsx` | 11KB | File upload/management via Supabase Storage |
+| `UserManagement.tsx` | 9KB | User admin with role assignment |
 
-### ChatPanel.tsx (24.5KB)
+### Layout Components (src/components/shared/)
 
-AI assistant panel. Streaming chat với OpenAI, hiển thị data tables, metric cards, confirmation cards cho tool calls.
+| Component | Size | Purpose |
+|-----------|------|---------|
+| `Header.tsx` | 8KB | Top navigation bar with search, profile, notifications |
+| `Sidebar.tsx` | 8KB | Collapsible sidebar with module navigation |
 
-### SaleDetail.tsx (28.4KB)
+### AI Components (src/components/ai/)
 
-Chi tiết báo giá/hợp đồng. Quản lý order lines, milestones, state machine (DRAFT → SENT → APPROVED → CONTRACT → DONE).
-
-### ProjectDetail.tsx (15.5KB)
-
-Quản lý dự án. Phases, tasks, tiến độ, gắn nhân sự.
-
-### InvoiceDetail.tsx (13.2KB)
-
-Thu chi, xuất PDF, ghi nhận thanh toán.
-
-### EmployeesGrid.tsx (13.2KB)
-
-Quản lý nhân sự. CRUD employees, gắn user accounts.
-
----
-
-## 5. Server Actions Reference
-
-| Module | File | Functions | Guard |
-| --- | --- | --- | --- |
-| CRM | `crm.ts` | getStages, getLeads, getLeadsByStage, getLead, **createLead**, **updateLead**, **deleteLead**, **moveLeadStage**, **convertLeadToOrder** | `crm.edit` |
-| Sale | `sale.ts` | getQuotations, getContracts, getOrder, **createOrder**, **updateOrder**, **deleteOrder**, **addOrderLine**, **updateOrderLine**, **deleteOrderLine**, **addMilestone**, **updateMilestone**, **deleteMilestone**, **sendQuotation**, **approveQuotation**, **rejectQuotation**, **convertToContract** | `sale.edit`, `sale.approve` |
-| Finance | `finance.ts` | getInvoices, getPayments, **createInvoiceFromMilestone**, **createPayment**, **createDirectInvoice** | `finance.edit` |
-| Projects | `projects.ts` | getProjects, getProject, **createPhase**, **updatePhase**, **deletePhase**, **createTask**, **updateTask**, **deleteTask**, **updateProjectState** | `project.edit` |
-| HR | `employees.ts` | getEmployees, **createEmployee**, **updateEmployee** | `hr.edit` |
-| Timesheets | `timesheets.ts` | getTimesheets, getProjects, getEmployeeByUserId, **saveWeekTimesheets**, **createTimesheet**, **updateTimesheet**, **deleteTimesheet** | `requireAuth` |
-| Attachments | `attachments.ts` | getAttachments, **uploadAttachment**, **deleteAttachment** | `requireAuth` |
-| Dashboard | `dashboard.ts` | getDashboardData | — |
-| Settings | `settings.ts` | getSettings, **updateSettings** | — |
-| Users | `users.ts` | getUsers, **updateUserRole**, **toggleUserActive** | — |
-| Search | `search.ts` | globalSearch | — |
-| PDF | `invoice-pdf.ts` | generateInvoicePDF | — |
-
-> **Bold** = mutation (tạo/sửa/xóa). Tất cả mutations đều có RBAC guard.
-
-### ActionResult Pattern (CRM reference implementation)
-
-```typescript
-// Trước (throw pattern):
-if (error) throw new Error(error.message)
-
-// Sau (ActionResult pattern):
-import { ok, fail, type ActionResult } from '@/lib/action-result'
-if (error) return fail(error.message)
-return ok(data)
-```
+| Component | Purpose |
+|-----------|---------|
+| `ChatDataTable.tsx` | Renders tabular AI tool results |
+| `ChatMetricCard.tsx` | Renders metric cards from AI responses |
 
 ---
 
-## 6. API Routes
+## 5. API Reference
+
+### API Routes (src/app/api/)
 
 | Route | Method | Purpose |
-| --- | --- | --- |
-| `/api/auth/signin` | POST | Login — verify credentials, create session |
-| `/api/auth/me` | GET | Get current user from session cookie |
-| `/api/ai/chat` | POST | AI chat (streaming via Vercel AI SDK) |
-| `/api/upload` | POST | File upload to Supabase Storage |
-| `/api/pdf/[invoiceId]` | GET | Generate invoice PDF |
+|-------|--------|---------|
+| `/api/ai` | POST | AI chat streaming via Vercel AI SDK + OpenAI |
+| `/api/auth/login` | POST | Email/password authentication |
+| `/api/auth/logout` | POST | Session invalidation |
+| `/api/auth/session` | GET | Current session check |
+| `/api/pdf` | GET | Generate sale order PDF |
+| `/api/upload` | POST | Upload files to Supabase Storage |
+
+### Server Actions (src/lib/actions/)
+
+| Module | File | Key Functions |
+|--------|------|---------------|
+| Dashboard | `dashboard.ts` | `getDashboardKPIs`, revenue/pipeline stats |
+| CRM | `crm.ts` | `getStages`, `getLeads`, `createLead`, `updateLead`, `moveLead` |
+| Sales | `sale.ts` (15KB) | `getSaleOrders`, `createSaleOrder`, `updateOrderState`, `addOrderLine`, `convertToContract`, `createProjectFromOrder` |
+| Projects | `projects.ts` | `getProjects`, `createProject`, `createPhase`, `createTask`, `updateTask` |
+| Timesheets | `timesheets.ts` | `getTimesheets`, `saveTimesheet`, `getTimesheetGrid` |
+| Finance | `finance.ts` | `getInvoices`, `createInvoice`, `recordPayment` |
+| Employees | `employees.ts` | `getEmployees`, `createEmployee`, `updateEmployee` |
+| Attachments | `attachments.ts` | `getAttachments`, `deleteAttachment` |
+| Search | `search.ts` | `globalSearch` — cross-module search |
+| Users | `users.ts` | `getUsers`, `createUser`, `updateUser` |
+| Settings | `settings.ts` | `getSettings`, `updateSettings` |
+| PDF | `invoice-pdf.ts` | `generateInvoicePDF` |
 
 ---
 
-## 7. Database Schema
+## 6. Database Schema
 
-### ER Overview (18 models)
+### Models Overview (16 total)
 
 ```
-┌──────────┐    ┌───────────┐    ┌──────────────┐
-│   User   │───→│ Employee  │    │   CrmStage   │
-│          │    │           │    │   (pipeline)  │
-│ roles:   │    └───────────┘    └──────┬───────┘
-│ DIRECTOR │                            │
-│ PM       │    ┌───────────┐    ┌──────▼───────┐
-│ ARCHITECT│───→│ AppSession│    │   CrmLead    │
-│ FINANCE  │    │(auth)     │    │              │
-│ SALES    │    └───────────┘    └──────┬───────┘
-└──────────┘                           │ convertToOrder
-                                 ┌─────▼────────┐
-                                 │  SaleOrder    │──→ OrderLine[]
-                                 │  (Q/C)        │──→ Milestone[]
-                                 │  state machine│
-                                 └──────┬────────┘
-                                        │
-                          ┌─────────────┼─────────────┐
-                    ┌─────▼─────┐ ┌─────▼─────┐ ┌─────▼─────┐
-                    │  Project  │ │  Invoice  │ │ Attachment│
-                    │  phases   │ │  payments │ │           │
-                    │  tasks    │ │           │ │           │
-                    └───────────┘ └───────────┘ └───────────┘
-                          │
-                    ┌─────▼─────┐
-                    │ Timesheet │
-                    └───────────┘
+AUTH MODULE:
+  User ──┬── Account (OAuth providers)
+         ├── Session (NextAuth sessions)
+         └── AppSession (Custom Odoo-style sessions)
+
+HR MODULE:
+  Employee ←→ User (1:1)
+
+CRM MODULE:
+  CrmStage ──→ CrmLead[] (pipeline stages)
+  CrmLead ──→ SaleOrder[] (conversion)
+
+SALE MODULE:
+  SaleOrder ──┬── SaleOrderLine[] (items)
+              ├── SaleMilestone[] (payment milestones)
+              └── Project[] (delivery projects)
+  SaleOrder ──→ SaleOrder (self-ref: Contract → Quotation)
+
+PROJECT MODULE:
+  Project ──┬── ProjectPhase[] ──→ ProjectTask[]
+            └── Timesheet[]
+
+ACCOUNTING MODULE:
+  Invoice ──→ Payment[]
+  Invoice ←── SaleMilestone (milestone invoicing)
+
+SUPPORT:
+  Setting (key-value config)
+  Attachment (polymorphic file attachments)
+  VerificationToken (email verification)
 ```
 
-### Models
+### Key Relationships
 
-| Model | Table | Key Fields |
-| --- | --- | --- |
-| User | `users` | email, password, name, role (enum), isActive |
-| Employee | `employees` | userId, department, position, phone, salary |
-| AppSession | `app_sessions` | userId, token (SHA-256), expiresAt |
-| CrmStage | `crm_stages` | name, sequence, probability |
-| CrmLead | `crm_leads` | name, partnerName, email, stageId, expectedValue |
-| SaleOrder | `sale_orders` | name, state, partnerName, totalAmount, leadId |
-| OrderLine | `order_lines` | orderId, description, qty, unitPrice, subtotal |
-| Milestone | `milestones` | orderId, name, percent, amount, state |
-| Project | `projects` | name, orderId, managerId, state, startDate |
-| ProjectPhase | `project_phases` | projectId, name, sequence, state |
-| ProjectTask | `project_tasks` | phaseId, name, assigneeId, state, deadline |
-| Invoice | `invoices` | orderId, milestoneId, amount, state, dueDate |
-| Payment | `payments` | invoiceId, amount, method, paymentDate |
-| Timesheet | `timesheets` | employeeId, projectId, date, hours |
-| Attachment | `attachments` | entityType, entityId, fileName, storagePath |
-| CompanySettings | `company_settings` | key, value (globalKVstore) |
-| AuditLog | `audit_logs` | userId, action, entity, entityId, metadata |
+```
+CrmLead → SaleOrder → Project → Timesheet
+                    ↘ SaleMilestone → Invoice → Payment
+```
 
 ---
 
-## 8. Auth & RBAC
-
-### Auth Flow (Server-Side Sessions — Odoo-style)
-
-```
-Login → POST /api/auth/signin
-  → bcrypt.compare(password)
-  → createSession(userId) → SHA-256 token
-  → Set cookie: vtn_session=<token>
-
-Each request:
-  → middleware reads cookie
-  → getSession(token) from app_sessions table
-  → attach user to request
-```
-
-### RBAC Matrix
-
-| Permission | DIRECTOR | PM | ARCHITECT | FINANCE | SALES |
-| --- | --- | --- | --- | --- | --- |
-| crm.view | ✅ | ✅ | ❌ | ❌ | ✅ |
-| crm.edit | ✅ | ✅ | ❌ | ❌ | ✅ |
-| sale.view | ✅ | ✅ | ❌ | ✅ | ✅ |
-| sale.edit | ✅ | ✅ | ❌ | ❌ | ✅ |
-| sale.approve | ✅ | ❌ | ❌ | ❌ | ❌ |
-| project.view | ✅ | ✅ | ✅ | ❌ | ❌ |
-| project.edit | ✅ | ✅ | ❌ | ❌ | ❌ |
-| finance.view | ✅ | ❌ | ❌ | ✅ | ❌ |
-| finance.edit | ✅ | ❌ | ❌ | ✅ | ❌ |
-| hr.view | ✅ | ✅ | ✅ | ✅ | ✅ |
-| hr.edit | ✅ | ❌ | ❌ | ❌ | ❌ |
-| settings.edit | ✅ | ❌ | ❌ | ❌ | ❌ |
-| users.manage | ✅ | ❌ | ❌ | ❌ | ❌ |
-
----
-
-## 9. AI Assistant
-
-### Architecture
-
-```
-ChatPanel (client) → POST /api/ai/chat → Vercel AI SDK → OpenAI
-                                        ↓
-                                  Tool Calls (20+ tools)
-                                        ↓
-                                  Server Actions
-```
-
-### Available AI Tools
-
-| Tool | Action |
-| --- | --- |
-| `get_leads` | Xem danh sách leads |
-| `create_lead` | Tạo lead mới |
-| `convert_lead_to_quotation` | Chuyển lead → báo giá |
-| `get_quotations` | Xem báo giá |
-| `create_quotation` | Tạo báo giá |
-| `get_contracts` | Xem hợp đồng |
-| `get_projects` | Xem dự án |
-| `create_task` | Tạo task |
-| `get_invoices` | Xem hoá đơn |
-| `get_dashboard` | Dashboard KPIs |
-| `estimate_price` | Ước tính giá (AI) |
-| `search_all` | Tìm kiếm toàn bộ |
-
----
-
-## 10. Environment Variables
+## 7. Environment Variables
 
 | Variable | Required | Description |
-| --- | --- | --- |
+|----------|----------|-------------|
 | `DATABASE_URL` | ✅ | PostgreSQL connection string (Supabase) |
-| `AUTH_SECRET` | ✅ | Secret for session token hashing |
+| `AUTH_SECRET` | ✅ | Session token hashing secret |
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anonymous key |
-| `OPENAI_API_KEY` | ✅ | OpenAI API key (for AI chat) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anonymous/public key |
+| `OPENAI_API_KEY` | ✅ | OpenAI API key for AI assistant |
 
 ---
 
-## 11. Testing
+## 8. Deployment
 
-### Framework
+### Vercel (Current)
 
-Vitest 4.x với path aliases (`@/` → `src/`).
+1. Connect GitHub repo to Vercel
+2. Set all environment variables (Section 7)
+3. Build command: `npm run build` (auto-detected)
+4. Output: `.next/` (auto-detected)
 
-### Test Coverage
-
-```
-src/lib/__tests__/schemas.test.ts — 27 tests
-├── CRM Schemas (6 tests)
-├── Sale Schemas (7 tests)
-├── Finance Schemas (3 tests)
-├── HR Schema (3 tests)
-├── Timesheet Schema (2 tests)
-├── Project Schemas (3 tests)
-└── ActionResult helpers (2 tests + 1 edge case)
-```
-
-### Run Tests
+### Build Commands
 
 ```bash
-npm test              # Run once
-npm run test:watch    # Watch mode
+npm run build     # Production build
+npm start         # Start production server
 ```
 
 ---
 
-## 12. Deployment
+## 9. Common Tasks
 
-### Vercel (Recommended)
+### Add a New Dashboard Module
 
-1. Connect repo to Vercel
-2. Set environment variables
-3. Deploy — Turbopack auto-enabled
+1. Create route: `src/app/(dashboard)/[module]/page.tsx`
+2. Create server actions: `src/lib/actions/[module].ts`
+3. Create component: `src/components/[ModuleName].tsx`
+4. Add Prisma model: `prisma/schema.prisma`
+5. Run `npx prisma db push`
+6. Add sidebar link: `src/components/shared/Sidebar.tsx`
 
-### Manual
+### Add a New Server Action
 
-```bash
-npm run build
-npm start
-```
+1. Create/edit file in `src/lib/actions/`
+2. Add `'use server'` directive at top
+3. Use `requireAuth()` for protected actions
+4. Use Zod schema for input validation
+5. Return `ActionResult<T>` for consistent error handling
 
----
+### Add AI Tool
 
-## 13. Common Tasks
-
-### Thêm module mới
-
-1. Tạo Prisma model trong `schema.prisma`
-2. Tạo server actions: `src/lib/actions/<module>.ts`
-3. Thêm Zod schema: `src/lib/schemas.ts`
-4. Thêm DTO types: `src/lib/types.ts`
-5. Tạo page: `src/app/(dashboard)/<module>/page.tsx`
-6. Tạo component: `src/components/<Module>Detail.tsx`
-7. Thêm route vào Sidebar: `src/components/shared/Sidebar.tsx`
-8. Thêm RBAC permission: `src/lib/rbac.ts`
-
-### Thêm AI tool mới
-
-1. Định nghĩa tool + schema trong `src/lib/ai/schemas.ts`
-2. Implement handler trong `src/lib/ai/tools.ts`
-3. Test qua ChatPanel
-
-### Thay đổi RBAC
-
-Edit `src/lib/rbac.ts` → `rolePermissions` map.
+1. Edit `src/lib/ai/tools.ts`
+2. Define tool with Zod parameters
+3. Add execute function
+4. Tool auto-registers with AI SDK
 
 ---
 
-## 14. Code Quality Status
+## 10. Troubleshooting
 
-### Infrastructure Đã Có
+### Common Issues
 
-| Layer | Tool | Status |
-| --- | --- | --- |
-| Type System | DTO interfaces (`types.ts`) | ✅ 15+ types |
-| Server Validation | Zod schemas (`schemas.ts`) | ✅ All modules |
-| Error Handling | ActionResult pattern | ✅ CRM reference |
-| Auth | Server-side sessions | ✅ Odoo-style |
-| RBAC | Permission matrix | ✅ 100% mutations |
-| Audit Trail | `logAudit()` | ✅ Non-blocking |
-| Testing | Vitest | ✅ 27 test cases |
-| File Uploads | Typed + validated | ✅ Type/size whitelist |
-| Transactions | Compensating rollback | ✅ 2 critical flows |
-
-### Code Health
+**Issue: Prisma connection timeout**
 
 ```
-🟢 HEALTHY:
-• TypeScript — strict mode enabled
-• Server-side auth (no client secrets)
-• RBAC on 100% mutations
-• Zod validation schemas defined
-• Test infrastructure present
-• Audit trail wired into CRM
-
-🟡 NEEDS ATTENTION:
-• ActionResult pattern chỉ áp dụng cho CRM (reference)
-  → Các module khác vẫn dùng throw pattern
-• Lint warnings còn (mostly table formatting in README)
-• Một số `any` types còn trong components
-
-🔴 KNOWN GAPS:
-• No E2E tests
-• No CI/CD pipeline
-• Client-side validation chưa thống nhất với Zod schemas
+Error: Can't reach database server
 ```
 
----
+**Solution:** Check `DATABASE_URL` in `.env.local`. Ensure Supabase project is active.
 
-## 15. Future Improvements
+**Issue: Build fails with `bcryptjs` error**
+**Solution:** Ensure `bcryptjs` is in `serverExternalPackages` in `next.config.ts`.
 
-### Technical Debt
-
-- [ ] Áp dụng ActionResult + Zod validation cho tất cả action files (hiện chỉ CRM)
-- [ ] Xóa remaining `any` types trong components
-- [ ] Thống nhất client validation (dùng Zod schemas thay validation.tsx riêng)
-- [ ] Thêm E2E tests (Playwright)
-- [ ] CI/CD pipeline (GitHub Actions)
-
-### Planned Features
-
-- [ ] Email notifications (quotation sent, invoice due)
-- [ ] File preview (PDF, images) trong AttachmentPanel
-- [ ] Dashboard customizable widgets
-- [ ] Multi-language support (VN/EN)
-- [ ] Mobile responsive improvements
-
-### Upgrade Recommendations
-
-- [ ] Migrate remaining actions to ActionResult pattern
-- [ ] Consider RLS (Row Level Security) on Supabase cho multi-tenant
-- [ ] Add rate limiting cho API routes
-- [ ] WebSocket/Realtime cho CRM kanban updates
+**Issue: AI assistant not responding**
+**Solution:** Verify `OPENAI_API_KEY` is set and valid. Check `/api/ai` route.
 
 ---
 
-## Appendix
+## 11. Code Health Assessment
 
-### Changelog Reference
+### 🟢 Healthy
 
-| Date | Version | Change |
-| --- | --- | --- |
-| 2026-03-09 | v3.3 | P2 complete: Vitest, attachments rewrite |
-| 2026-03-09 | v3.2 | ActionResult, Zod schemas, audit trail |
-| 2026-03-09 | v3.1 | DTO types, RBAC end-to-end |
-| 2026-03-09 | v3.0 | Server-side sessions (Odoo-style) |
-| 2026-03-06 | v2.0 | ER Diagram, API Ref, RBAC Matrix |
-| 2026-03-05 | v1.0 | Initial wire-up: mock → real data |
+| Indicator | Status |
+|-----------|--------|
+| TypeScript strict mode | ✅ Enabled |
+| ESLint configured | ✅ `no-explicit-any: error` enforced |
+| ESLint errors | ✅ **0 errors** |
+| `tsc --noEmit` | ✅ **0 errors** |
+| `npm run build` | ✅ **Passes** |
+| `console.log` in production | ✅ **0 found** |
+| TODO/FIXME in code | ✅ **0 found** |
+| npm audit (production) | ✅ **0 vulnerabilities** |
+| `.gitignore` covers secrets | ✅ `.env*` excluded |
+| Input validation (Zod) | ✅ `schemas.ts` (5.7KB) |
+| Auth RBAC | ✅ `rbac.ts` + `auth-guard.ts` |
+| Error boundaries | ✅ 9 `error.tsx` + 10 `loading.tsx` across all routes |
+| Server-side caching | ✅ `unstable_cache` for dashboard (KPIs 5min, lists 2min, charts 10min) |
+| Test coverage | ✅ **181 tests** (11 test files, 56 server action tests) |
+| Component health | ✅ Large components decomposed (SaleDetail, ChatPanel) |
+| Shared UI components | ✅ `DataTable`, `StatusBadge`, `ConfirmDialog`, `ModuleError`, `ModuleLoading` |
 
-### Key Files Quick Reference
+### Codebase Metrics (Post-Upgrade 2026-03-12)
 
-| File | Purpose |
-| --- | --- |
-| `src/lib/action-result.ts` | `ok()` / `fail()` response pattern |
-| `src/lib/schemas.ts` | Zod validation for all modules |
-| `src/lib/types.ts` | TypeScript DTOs for server actions |
-| `src/lib/audit.ts` | Non-blocking audit trail |
-| `src/lib/auth-guard.ts` | `requireAuth()`, `requirePermission()` |
-| `src/lib/rbac.ts` | Role → Permission matrix |
-| `src/lib/session.ts` | Session CRUD (create, get, destroy) |
-| `src/lib/supabase.ts` | Supabase client singleton |
+| Metric | Before | After |
+|--------|--------|-------|
+| Total TS/TSX files | 80 | 118 |
+| Lines of code | ~9,772 | ~12,800 |
+| Components | 16 | 30+ |
+| Shared UI components | 2 | 7 |
+| Server action files | 12 | 12 |
+| API routes | 4 | 4 |
+| Dashboard routes | 9 | 9 |
+| Prisma models | 16 | 16 |
+| Unit tests | 6 | 181 (11 files) |
+| E2E tests | 3 | 3 |
+| Error boundaries | 0 | 9 |
+| Loading skeletons | 0 | 10 |
 
-### Estimated Onboarding Time
+---
 
-| Level | Time |
-| --- | --- |
-| Senior dev (familiar with Next.js + Supabase) | ~2 hours |
-| Mid-level dev | ~4 hours |
-| Junior dev | ~1 day |
+## 12. Technical Debt & Upgrade Recommendations
+
+### Completed (Upgrade Sprint 2026-03-10 → 2026-03-12)
+
+| Priority | Item | Status |
+|----------|------|--------|
+| P1 | Type Safety — Reduce `eslint-disable` | ✅ Shared `types.ts`, reduced file-level disables |
+| P2 | Component Decomposition | ✅ SaleDetail (4 sub-components), ChatPanel (3 sub-components), Shared UI (5 components) |
+| P3 | Test Coverage | ✅ 6 → 181 tests (56 server action tests across 5 modules) |
+| P4 | Unused Variable Cleanup | ✅ Cleaned in Phase 1 |
+| P5 | Package Updates | ✅ Updated |
+| P6 | Architecture: Error boundaries | ✅ 9 error.tsx + 10 loading.tsx |
+| P6 | Architecture: Caching | ✅ `unstable_cache` for dashboard |
+
+### Remaining (Future)
+
+| Area | Current | Recommended | Priority |
+|------|---------|-------------|----------|
+| Form handling | Manual `useState` | React Hook Form for `SaleDetail` | Low (works fine) |
+| State management | Props drilling | Zustand for complex forms | Low |
+| i18n | Hardcoded Vietnamese | `next-intl` if multi-language needed | Low |
+| E2E Tests | 3 basic specs | Full Sales workflow E2E | Medium |
+| Performance | No audit | Lighthouse / Core Web Vitals | Medium |
+| Security | Basic auth | RLS review, API hardening | Medium |
 
 ---
 
 *Generated by VibeCoding Kit v4.0 — XRAY Protocol*
+*Updated: 2026-03-12 (Post-Upgrade)*

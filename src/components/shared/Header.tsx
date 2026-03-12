@@ -25,7 +25,7 @@ const roleLabels: Record<string, { label: string; color: string }> = {
 
 const avatarColors = ['#1F3A5F', '#2A6496', '#8B5E3C', '#1A6B47', '#6B3FA0']
 
-export function Header({ title, user }: HeaderProps) {
+export function Header({ title: _title, user }: HeaderProps) {
     const [showMenu, setShowMenu] = useState(false)
     const { logout } = useAuth()
     const role = user?.role || 'ARCHITECT'
