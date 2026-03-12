@@ -27,25 +27,25 @@ export default function SaleStateActions({
                 case 'DRAFT':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#3B82F6', color: '#fff', border: 'none' }} onClick={onSend}>ð¤ Gá»­i CÄT</button>
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => onStateChange('CANCEL')}>Huá»·</button>
+                            <button className="btn btn-sm" style={{ background: '#3B82F6', color: '#fff', border: 'none' }} onClick={onSend}>{'📤'} Gửi CĐT</button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => onStateChange('CANCEL')}>Huỷ</button>
                         </>
                     )
                 case 'SENT':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={onApprove}>â CÄT duyá»t</button>
-                            <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={() => setShowRejectDialog(true)}>â Tá»« chá»i</button>
-                            <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('DRAFT')}>â© Vá» nhÃ¡p</button>
+                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={onApprove}>{'✅'} CĐT duyệt</button>
+                            <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={() => setShowRejectDialog(true)}>{'❌'} Từ chối</button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('DRAFT')}>{'↩'} Về nháp</button>
                         </>
                     )
                 case 'APPROVED':
                     return (
-                        <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={onConvertToContract}>ð Chuyá»n sang Há»£p Äá»ng</button>
+                        <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={onConvertToContract}>{'📝'} Chuyển sang Hợp Đồng</button>
                     )
                 case 'REJECTED': case 'EXPIRED': case 'CANCEL':
                     return (
-                        <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('DRAFT')}>â© Má» láº¡i</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('DRAFT')}>{'↩'} Mở lại</button>
                     )
                 default: return null
             }
@@ -56,19 +56,19 @@ export default function SaleStateActions({
                 case 'NEGOTIATING':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={onSign}>â KÃ½ há»£p Äá»ng</button>
-                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => onStateChange('CANCEL')}>Huá»·</button>
+                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={onSign}>{'✅'} Ký hợp đồng</button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={() => onStateChange('CANCEL')}>Huỷ</button>
                         </>
                     )
                 case 'SIGNED':
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={onDone}>ð HoÃ n thÃ nh</button>
-                            <button className="btn btn-accent btn-sm" onClick={onConvertToContract}>ð-ï¸ Táº¡o dá»± Ã¡n</button>
+                            <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={onDone}>{'🏁'} Hoàn thành</button>
+                            <button className="btn btn-accent btn-sm" onClick={onConvertToContract}>{'🗒️'} Tạo dự án</button>
                         </>
                     )
                 case 'CANCEL':
-                    return <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('NEGOTIATING')}>â© Má» láº¡i</button>
+                    return <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('NEGOTIATING')}>{'↩'} Mở lại</button>
                 default: return null
             }
         }
@@ -83,13 +83,13 @@ export default function SaleStateActions({
             {showRejectDialog && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
                     <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 420, maxWidth: '90vw' }}>
-                        <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>LÃ½ do tá»« chá»i</h3>
+                        <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>Lý do từ chối</h3>
                         <textarea className="form-input" value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                            rows={3} placeholder="Nháº­p lÃ½ do CÄT tá»« chá»i..." style={{ width: '100%', resize: 'vertical' }} />
+                            rows={3} placeholder="Nhập lý do CĐT từ chối..." style={{ width: '100%', resize: 'vertical' }} />
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => setShowRejectDialog(false)}>Huá»·</button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setShowRejectDialog(false)}>Huỷ</button>
                             <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }}
-                                onClick={() => { onReject(rejectReason); setShowRejectDialog(false) }}>Tá»« chá»i</button>
+                                onClick={() => { onReject(rejectReason); setShowRejectDialog(false) }}>Từ chối</button>
                         </div>
                     </div>
                 </div>

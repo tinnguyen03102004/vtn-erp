@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -44,7 +44,7 @@ export async function getProject(id: string) {
     }
 }
 
-// -- Project State --
+// ── Project State ──
 export async function updateProjectState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
     const { data, error } = await supabase
@@ -52,12 +52,11 @@ export async function updateProjectState(id: string, state: string): Promise<Act
         .from('projects').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'project', entityId: id, details: `Tr?ng thái ? ${state}` })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ok(data as any)
+    await logAudit({ userId: user.id, action: 'update', entity: 'project', entityId: id, details: `Trạng thái → ${state}` })
+    return ok(data)
 }
 
-// -- Phases --
+// ── Phases ──
 export async function createPhase(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
     const parsed = parseInput(createPhaseSchema, formData)
@@ -67,15 +66,13 @@ export async function createPhase(formData: unknown): Promise<ActionResult<Recor
     const { data, error } = await supabase.from('project_phases').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'project_phase', entityId: data.id, details: `T?o giai do?n: ${data.name}` })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ok(data as any)
+    await logAudit({ userId: user.id, action: 'create', entity: 'project_phase', entityId: data.id, details: `Tạo giai đoạn: ${data.name}` })
+    return ok(data)
 }
 
 export async function updatePhase(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await supabase.from('project_phases').update(formData as any).eq('id', id).select().single()
+    const { data, error } = await supabase.from('project_phases').update(formData as Record<string, unknown>).eq('id', id).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'project_phase', entityId: id })
@@ -92,7 +89,7 @@ export async function deletePhase(id: string): Promise<ActionResult<void>> {
     return ok(undefined as void)
 }
 
-// -- Tasks --
+// ── Tasks ──
 export async function createTask(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
     const parsed = parseInput(createTaskSchema, formData)
@@ -102,16 +99,14 @@ export async function createTask(formData: unknown): Promise<ActionResult<Record
     const { data, error } = await supabase.from('project_tasks').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'project_task', entityId: data.id, details: `T?o task: ${data.name}` })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ok(data as any)
+    await logAudit({ userId: user.id, action: 'create', entity: 'project_task', entityId: data.id, details: `Tạo task: ${data.name}` })
+    return ok(data)
 }
 
 export async function updateTask(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
     const { data, error } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('project_tasks').update({ ...(formData as any), updatedAt: new Date().toISOString() }).eq('id', id).select().single()
+        .from('project_tasks').update({ ...(formData as Record<string, unknown>), updatedAt: new Date().toISOString() }).eq('id', id).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'project_task', entityId: id })

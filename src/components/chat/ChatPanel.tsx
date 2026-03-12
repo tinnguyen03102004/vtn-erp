@@ -64,20 +64,20 @@ export default function ChatPanel() {
             if (data.error) {
                 setMessages(prev => [...prev, {
                     id: `err-${Date.now()}`, role: 'assistant',
-                    content: `â ${data.error}`, timestamp: Date.now(),
+                    content: `\u274c ${data.error}`, timestamp: Date.now(),
                 }])
             } else {
                 setMessages(prev => [...prev, {
                     id: `a-${Date.now()}`, role: 'assistant',
-                    content: data.content || 'â KhÃ´ng cÃ³ pháº£n há»i.', timestamp: Date.now(),
+                    content: data.content || '\u274c Không có phản hồi.', timestamp: Date.now(),
                 }])
                 if (data.pendingAction) setPendingAction(data.pendingAction)
             }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const errorMsg = err?.name === 'AbortError'
-                ? 'â±ï¸ Háº¿t thá»i gian chá» (30s). Vui lÃ²ng thá»­ láº¡i.'
-                : 'â CÃ³ lá»-i káº¿t ná»i. Vui lÃ²ng thá»­ láº¡i.'
+                ? '\u23f1\ufe0f Hết thời gian chờ (30s). Vui lòng thử lại.'
+                : '\u274c Có lỗi kết nối. Vui lòng thử lại.'
             setMessages(prev => [...prev, {
                 id: `err-${Date.now()}`, role: 'assistant',
                 content: errorMsg, timestamp: Date.now(),
@@ -106,12 +106,12 @@ export default function ChatPanel() {
             const data = await res.json()
             setMessages(prev => [...prev, {
                 id: `confirm-${Date.now()}`, role: 'assistant',
-                content: data.content || data.error || 'â Lá»-i xÃ¡c nháº­n.', timestamp: Date.now(),
+                content: data.content || data.error || '\u274c Lỗi xác nhận.', timestamp: Date.now(),
             }])
         } catch {
             setMessages(prev => [...prev, {
                 id: `err-${Date.now()}`, role: 'assistant',
-                content: 'â Lá»-i káº¿t ná»i khi xÃ¡c nháº­n.', timestamp: Date.now(),
+                content: '\u274c Lỗi kết nối khi xác nhận.', timestamp: Date.now(),
             }])
         } finally {
             clearTimeout(timeoutId)
@@ -124,7 +124,7 @@ export default function ChatPanel() {
         setPendingAction(null)
         setMessages(prev => [...prev, {
             id: `reject-${Date.now()}`, role: 'assistant',
-            content: 'ð« ÄÃ£ há»§y thao tÃ¡c.', timestamp: Date.now(),
+            content: '\ud83d\udeab Đã hủy thao tác.', timestamp: Date.now(),
         }])
     }
 
@@ -143,7 +143,7 @@ export default function ChatPanel() {
 
             {/* FAB */}
             {!isOpen && (
-                <button onClick={() => setIsOpen(true)} style={S.fab} aria-label="Má» AI Assistant"
+                <button onClick={() => setIsOpen(true)} style={S.fab} aria-label="Mở AI Assistant"
                     onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(124,58,237,0.4)' }}
                     onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(124,58,237,0.3)' }}
                 >
@@ -160,16 +160,16 @@ export default function ChatPanel() {
                         <Bot size={24} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={S.headerTitle}>VTN AI Assistant</p>
-                            <p style={S.headerSub}>Trá»£ lÃ½ thÃ´ng minh â Cty TNHH VÃµ Trá»ng NghÄ©a</p>
+                            <p style={S.headerSub}>Trợ lý thông minh — Cty TNHH Võ Trọng Nghĩa</p>
                         </div>
                         <div style={{ display: 'flex', gap: 4 }}>
-                            <button onClick={clearHistory} style={S.headerBtn} title="XÃ³a lá»ch sá»­">
+                            <button onClick={clearHistory} style={S.headerBtn} title="Xóa lịch sử">
                                 <Trash2 size={16} />
                             </button>
-                            <button onClick={() => setIsExpanded(!isExpanded)} style={S.headerBtn} title={isExpanded ? 'Thu nhá»' : 'Má» rá»ng'}>
+                            <button onClick={() => setIsExpanded(!isExpanded)} style={S.headerBtn} title={isExpanded ? 'Thu nhỏ' : 'Mở rộng'}>
                                 {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                             </button>
-                            <button onClick={() => setIsOpen(false)} style={S.headerBtn} title="ÄÃ³ng">
+                            <button onClick={() => setIsOpen(false)} style={S.headerBtn} title="\u0110óng">
                                 <X size={16} />
                             </button>
                         </div>
@@ -224,7 +224,7 @@ export default function ChatPanel() {
                                 ref={inputRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="Há»i AI báº¥t ká»³ Äiá»u gÃ¬..."
+                                placeholder="Hỏi AI bất kỳ \u0111iều gì..."
                                 disabled={isLoading}
                                 maxLength={2000}
                                 style={{

@@ -15,15 +15,15 @@ export default function ModuleError({ error, reset, moduleName }: ModuleErrorPro
 
     return (
         <div className="error-boundary">
-            <div className="error-boundary-icon">â ï¸</div>
-            <h2>Lá»-i táº¡i {moduleName}</h2>
-            <p>{error.message || 'ÄÃ£ xáº£y ra lá»-i khÃ´ng mong Äá»£i. Vui lÃ²ng thá»­ láº¡i.'}</p>
+            <div className="error-boundary-icon">{'⚠️'}</div>
+            <h2>Lỗi tại {moduleName}</h2>
+            <p>{error.message || 'Đã xảy ra lỗi không mong đợi. Vui lòng thử lại.'}</p>
             <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn-primary" onClick={reset}>
-                    Thá»­ láº¡i
+                    Thử lại
                 </button>
                 <button className="btn btn-outline" onClick={() => window.location.href = '/dashboard'}>
-                    Vá» Dashboard
+                    Về Dashboard
                 </button>
             </div>
         </div>

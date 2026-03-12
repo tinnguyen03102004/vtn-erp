@@ -12,8 +12,8 @@ type Lead = Tables<'crm_leads'>
 type Stage = { id: string; name: string; sequence: number; probability: number; leads: Lead[] }
 
 const stageColors: Record<string, string> = {
-    'Leads má»i': '#8FA3BF', 'LiÃªn há»': '#3B82F6', 'Äá» xuáº¥t': '#F59E0B',
-    'ÄÃ m phÃ¡n': '#C9A84C', 'Tháº¯ng': '#22C55E',
+    'Leads mới': '#8FA3BF', 'Liên hệ': '#3B82F6', 'Đề xuất': '#F59E0B',
+    'Đàm phán': '#C9A84C', 'Thắng': '#22C55E',
 }
 
 export default function CRMKanban({ initialStages }: { initialStages: Stage[] }) {
@@ -24,7 +24,7 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
     const [modalStageId, setModalStageId] = useState<string | null>(null)
     const dragRef = useRef<{ leadId: string; fromStageId: string } | null>(null)
 
-    // ââ Drag & Drop ââ
+    // ── Drag & Drop ──
     function onDragStart(e: React.DragEvent, leadId: string, fromStageId: string) {
         dragRef.current = { leadId, fromStageId }
         e.dataTransfer.effectAllowed = 'move'
@@ -56,15 +56,15 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
         const toStage = stages.find(s => s.id === toStageId)
         try {
             await moveLeadStage(leadId, toStageId)
-            addToast(`ÄÃ£ chuyá»n sang ${toStage?.name ?? 'stage má»i'}`)
+            addToast(`Đã chuyển sang ${toStage?.name ?? 'stage mới'}`)
         } catch {
-            addToast('Lá»-i khi chuyá»n stage', 'error')
+            addToast('Lỗi khi chuyển stage', 'error')
             router.refresh()
         }
         dragRef.current = null
     }
 
-    // ââ Create Lead Modal ââ
+    // ── Create Lead Modal ──
     function openCreate(stageId?: string) {
         setModalStageId(stageId ?? stages[0]?.id ?? null)
         setShowModal(true)
@@ -83,15 +83,15 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
             probability: stages.find(s => s.id === modalStageId)?.probability ?? 0,
         }
 
-        if (!data.name || !data.partnerName) { addToast('Vui lÃ²ng nháº­p tÃªn lead vÃ  khÃ¡ch hÃ ng', 'error'); return }
+        if (!data.name || !data.partnerName) { addToast('Vui lòng nhập tên lead và khách hàng', 'error'); return }
 
         const result = await createLead(data)
-        if (!result.success) { addToast(result.error || 'Lá»-i khi táº¡o lead', 'error'); return }
+        if (!result.success) { addToast(result.error || 'Lỗi khi tạo lead', 'error'); return }
         setStages(prev => prev.map(s =>
             s.id === modalStageId ? { ...s, leads: [...s.leads, result.data as Lead] } : s
         ))
         setShowModal(false)
-        addToast(`ÄÃ£ táº¡o lead "${data.name}"`)
+        addToast(`Đã tạo lead "${data.name}"`)
 
     }
 
@@ -105,14 +105,14 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
             <div className="page-header">
                 <div className="page-header-left">
                     <h1 className="page-title">CRM & Leads</h1>
-                    <p className="page-subtitle">{allLeads.length} leads â Pipeline: {formatCurrency(totalPipelineValue)}</p>
+                    <p className="page-subtitle">{allLeads.length} leads — Pipeline: {formatCurrency(totalPipelineValue)}</p>
                 </div>
                 <div className="page-actions">
                     <button className="btn btn-primary btn-sm" onClick={() => openCreate()}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                         </svg>
-                        ThÃªm Lead
+                        Thêm Lead
                     </button>
                 </div>
             </div>
@@ -120,10 +120,10 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
             {/* KPI cards */}
             <div className="grid-4" style={{ marginBottom: 24 }}>
                 {[
-                    { label: 'Tá»ng leads', value: `${allLeads.length}`, icon: 'ð¤' },
-                    { label: 'Pipeline value', value: formatCurrency(totalPipelineValue), icon: 'ð°' },
-                    { label: 'ÄÃ m phÃ¡n', value: `${stages.find(s => s.name === 'ÄÃ m phÃ¡n')?.leads.length ?? 0}`, icon: 'ð¤' },
-                    { label: 'ÄÃ£ tháº¯ng', value: `${stages.find(s => s.name === 'Tháº¯ng')?.leads.length ?? 0}`, icon: 'ð' },
+                    { label: 'Tổng leads', value: `${allLeads.length}`, icon: '👤' },
+                    { label: 'Pipeline value', value: formatCurrency(totalPipelineValue), icon: '💰' },
+                    { label: 'Đàm phán', value: `${stages.find(s => s.name === 'Đàm phán')?.leads.length ?? 0}`, icon: '🤝' },
+                    { label: 'Đã thắng', value: `${stages.find(s => s.name === 'Thắng')?.leads.length ?? 0}`, icon: '🏆' },
                 ].map(k => (
                     <div key={k.label} className="kpi-card" style={{ padding: 16 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -195,7 +195,7 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
                                         justifyContent: 'center', gap: 6, transition: 'all 0.15s ease'
                                     }}
                                 >
-                                    + ThÃªm lead
+                                    + Thêm lead
                                 </button>
                             </div>
                         </div>
@@ -214,18 +214,18 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
                         boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
                     }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F1C2E' }}>Táº¡o Lead Má»i</h2>
-                            <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20, color: '#8FA3BF' }}>â</button>
+                            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F1C2E' }}>Tạo Lead Mới</h2>
+                            <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20, color: '#8FA3BF' }}>✕</button>
                         </div>
                         <form action={handleCreate}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                                 <div className="form-group">
-                                    <label className="form-label">TÃªn lead *</label>
-                                    <input className="form-input" name="name" placeholder="VD: Biá»t thá»± Tháº£o Äiá»n" required />
+                                    <label className="form-label">Tên lead *</label>
+                                    <input className="form-input" name="name" placeholder="VD: Biệt thự Thảo Điền" required />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">KhÃ¡ch hÃ ng *</label>
-                                    <input className="form-input" name="partnerName" placeholder="Ãng/BÃ  Nguyá»n VÄn A" required />
+                                    <label className="form-label">Khách hàng *</label>
+                                    <input className="form-input" name="partnerName" placeholder="Ông/Bà Nguyễn Văn A" required />
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                                     <div className="form-group">
@@ -233,35 +233,35 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
                                         <input className="form-input" name="email" type="email" placeholder="email@example.com" />
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">SÄT</label>
+                                        <label className="form-label">SĐT</label>
                                         <input className="form-input" name="phone" placeholder="09xx xxx xxx" />
                                     </div>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                                     <div className="form-group">
-                                        <label className="form-label">Nguá»n</label>
+                                        <label className="form-label">Nguồn</label>
                                         <select className="form-input" name="source" defaultValue="">
-                                            <option value="">â Chá»n â</option>
+                                            <option value="">— Chọn —</option>
                                             <option>Website</option>
                                             <option>Facebook</option>
-                                            <option>Giá»i thiá»u</option>
-                                            <option>Äáº¡i lÃ½</option>
-                                            <option>Sá»± kiá»n</option>
+                                            <option>Giới thiệu</option>
+                                            <option>Đại lý</option>
+                                            <option>Sự kiện</option>
                                         </select>
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">GiÃ¡ trá» Æ°á»c tÃ­nh</label>
+                                        <label className="form-label">Giá trị ước tính</label>
                                         <input className="form-input" name="expectedValue" type="number" min="0" placeholder="0" />
                                     </div>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Ghi chÃº</label>
-                                    <textarea className="form-textarea" name="notes" rows={2} placeholder="MÃ´ táº£ ngáº¯n..." />
+                                    <label className="form-label">Ghi chú</label>
+                                    <textarea className="form-textarea" name="notes" rows={2} placeholder="Mô tả ngắn..." />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>Huá»·</button>
-                                <button type="submit" className="btn btn-primary">Táº¡o Lead</button>
+                                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>Huỷ</button>
+                                <button type="submit" className="btn btn-primary">Tạo Lead</button>
                             </div>
                         </form>
                     </div>

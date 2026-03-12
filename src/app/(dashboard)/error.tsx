@@ -9,11 +9,11 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
 
     return (
         <div className="error-boundary">
-            <div className="error-boundary-icon">â ï¸</div>
-            <h2>CÃ³ lá»-i xáº£y ra</h2>
-            <p>{error.message || 'ÄÃ£ xáº£y ra lá»-i khÃ´ng mong Äá»£i. Vui lÃ²ng thá»­ láº¡i.'}</p>
+            <div className="error-boundary-icon">{'⚠️'}</div>
+            <h2>Có lỗi xảy ra</h2>
+            <p>{error.message || 'Đã xảy ra lỗi không mong đợi. Vui lòng thử lại.'}</p>
             <button className="btn btn-primary" onClick={reset}>
-                Thá»­ láº¡i
+                Thử lại
             </button>
         </div>
     )

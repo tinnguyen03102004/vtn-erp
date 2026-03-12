@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 
-// ââ Types ââ
+// —— Types ——
 
 export interface Message {
     id: string
@@ -15,7 +15,7 @@ export interface PendingAction {
     preview: string
 }
 
-// ââ LocalStorage ââ
+// —— LocalStorage ——
 
 const STORAGE_KEY = 'vtn_ai_chat'
 
@@ -34,73 +34,73 @@ export function saveMessages(messages: Message[]) {
     catch { /* storage full */ }
 }
 
-// ââ Welcome ââ
+// —— Welcome ——
 
 export const WELCOME: Message = {
     id: 'welcome',
     role: 'assistant',
-    content: `Xin chÃ o! TÃ´i lÃ  **trá»£ lÃ½ AI** cá»§a VTN Architects ð-ï¸
+    content: `Xin chào! Tôi là **trợ lý AI** của VTN Architects 🏗️
 
-TÃ´i cÃ³ thá» giÃºp báº¡n:
-â¢ ð Xem tá»ng quan dashboard
-â¢ ð¤ Quáº£n lÃ½ khÃ¡ch hÃ ng (leads)
-â¢ ð° Táº¡o & phÃ¢n tÃ­ch bÃ¡o giÃ¡
-â¢ ð Xem há»£p Äá»ng, dá»± Ã¡n
-â¢ ðµ Æ¯á»c tÃ­nh giÃ¡ dá»ch vá»¥
-â¢ ð TÃ¬m kiáº¿m nhanh
+Tôi có thể giúp bạn:
+• 📊 Xem tổng quan dashboard
+• 🤝 Quản lý khách hàng (leads)
+• 💰 Tạo & phân tích báo giá
+• 📋 Xem hợp đồng, dự án
+• 💵 Ước tính giá dịch vụ
+• 🔍 Tìm kiếm nhanh
 
-HÃ£y há»i gÃ¬ Äi nÃ o!`,
+Hãy hỏi gì đi nào!`,
     timestamp: Date.now(),
 }
 
 export const QUICK_ACTIONS = [
-    { label: 'ð Tá»ng quan', text: 'Tá»ng quan hÃ´m nay' },
-    { label: 'ð¤ Leads', text: 'Danh sÃ¡ch lead' },
-    { label: 'ð° BÃ¡o giÃ¡', text: 'Danh sÃ¡ch bÃ¡o giÃ¡' },
-    { label: 'ðµ Æ¯á»c tÃ­nh giÃ¡', text: 'Æ¯á»c tÃ­nh thiáº¿t káº¿ biá»t thá»± 300m2 trá»n gÃ³i' },
+    { label: '📊 Tổng quan', text: 'Tổng quan hôm nay' },
+    { label: '🤝 Leads', text: 'Danh sách lead' },
+    { label: '💰 Báo giá', text: 'Danh sách báo giá' },
+    { label: '💵 Ước tính giá', text: 'Ước tính thiết kế biệt thự 300m2 trọn gói' },
 ]
 
 export const TOOL_LABELS: Record<string, string> = {
-    create_lead: 'ð¤ Táº¡o Lead',
-    create_quotation: 'ð° Táº¡o BÃ¡o giÃ¡',
-    send_quotation: 'ð¤ Gá»­i BÃ¡o giÃ¡',
-    create_employee: 'ð§âð¼ Táº¡o NhÃ¢n viÃªn',
-    log_timesheet: 'â±ï¸ Log Timesheet',
-    create_task: 'ð Táº¡o Task',
-    convert_lead_to_quotation: 'ð Chuyá»n Lead â BÃ¡o giÃ¡',
+    create_lead: '🤝 Tạo Lead',
+    create_quotation: '💰 Tạo Báo giá',
+    send_quotation: '📤 Gửi Báo giá',
+    create_employee: '🧑‍💼 Tạo Nhân viên',
+    log_timesheet: '⏱️ Log Timesheet',
+    create_task: '📋 Tạo Task',
+    convert_lead_to_quotation: '🔄 Chuyển Lead → Báo giá',
 }
 
 export const FIELD_LABELS: Record<string, string> = {
-    partnerName: 'KhÃ¡ch hÃ ng',
+    partnerName: 'Khách hàng',
     email: 'Email',
-    phone: 'SÄT',
-    expectedValue: 'GiÃ¡ trá» dá»± kiáº¿n',
-    totalAmount: 'Tá»ng tiá»n',
-    notes: 'Ghi chÃº',
+    phone: 'SĐT',
+    expectedValue: 'Giá trị dự kiến',
+    totalAmount: 'Tổng tiền',
+    notes: 'Ghi chú',
     partnerEmail: 'Email KH',
-    partnerPhone: 'SÄT KH',
-    name: 'TÃªn',
-    department: 'PhÃ²ng ban',
-    position: 'Chá»©c vá»¥',
-    salary: 'LÆ°Æ¡ng',
+    partnerPhone: 'SĐT KH',
+    name: 'Tên',
+    department: 'Phòng ban',
+    position: 'Chức vụ',
+    salary: 'Lương',
     leadId: 'Lead ID',
-    projectId: 'Dá»± Ã¡n ID',
-    description: 'MÃ´ táº£',
-    hours: 'Sá» giá»',
-    priority: 'Æ¯u tiÃªn',
-    query: 'Tá»« khÃ³a',
+    projectId: 'Dự án ID',
+    description: 'Mô tả',
+    hours: 'Số giờ',
+    priority: 'Ưu tiên',
+    query: 'Từ khóa',
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function formatArgValue(key: string, val: any): string {
-    if (val === null || val === undefined) return 'â'
+    if (val === null || val === undefined) return '—'
     if (typeof val === 'number' && ['expectedValue', 'totalAmount', 'salary', 'amount'].includes(key)) {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(val)
     }
     return String(val)
 }
 
-// ââ Styles ââ
+// —— Styles ——
 
 export const S = {
     fab: {

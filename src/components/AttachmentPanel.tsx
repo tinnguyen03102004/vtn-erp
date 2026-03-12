@@ -1,19 +1,18 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import NextImage from 'next/image'
 import { deleteAttachment } from '@/lib/actions/attachments'
 import { useToast, ToastContainer } from '@/components/Toast'
 
 const FILE_ICONS: Record<string, string> = {
-    'application/pdf': 'ð',
-    'application/msword': 'ð',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'ð',
-    'application/vnd.ms-excel': 'ð',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'ð',
-    'image/png': 'ð¼ï¸',
-    'image/jpeg': 'ð¼ï¸',
-    'image/webp': 'ð¼ï¸',
+    'application/pdf': '📄',
+    'application/msword': '📝',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
+    'application/vnd.ms-excel': '📊',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '📊',
+    'image/png': '🖼️',
+    'image/jpeg': '🖼️',
+    'image/webp': '🖼️',
 }
 
 function formatSize(bytes: number) {
@@ -32,24 +31,17 @@ function formatTime(dateStr: string) {
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 
-interface Attachment {
-    id: string
-    fileName: string
-    fileType: string
-    fileSize: number
-    storagePath: string
-    createdAt: string
-}
-
 type Props = {
     entityType: string
     entityId: string
-    initialFiles?: Attachment[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialFiles?: any[]
 }
 
 export default function AttachmentPanel({ entityType, entityId, initialFiles = [] }: Props) {
     const { toasts, addToast } = useToast()
-    const [files, setFiles] = useState<Attachment[]>(initialFiles)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [files, setFiles] = useState<any[]>(initialFiles)
     const [uploading, setUploading] = useState(false)
     const [dragOver, setDragOver] = useState(false)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -62,7 +54,7 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
 
         for (const file of Array.from(fileList)) {
             if (file.size > 10 * 1024 * 1024) {
-                addToast(`"${file.name}" quÃ¡ lá»n (tá»i Äa 10MB)`, 'error')
+                addToast(`"${file.name}" quá lớn (tối đa 10MB)`, 'error')
                 continue
             }
 
@@ -76,33 +68,38 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                 const data = await res.json()
                 if (!res.ok) throw new Error(data.error || 'Upload failed')
                 setFiles(prev => [data, ...prev])
-                addToast(`ÄÃ£ upload "${file.name}"`)
-            } catch (err: unknown) {
-                addToast(err instanceof Error ? err.message : 'Upload failed', 'error')
+                addToast(`Đã upload "${file.name}"`)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (err: any) {
+                addToast(err.message, 'error')
             }
         }
         setUploading(false)
         if (inputRef.current) inputRef.current.value = ''
     }, [entityType, entityId, addToast])
 
-    async function handleDelete(attachment: Attachment) {
-        if (!confirm(`XÃ³a file "${attachment.fileName}"?`)) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async function handleDelete(attachment: any) {
+        if (!confirm(`Xóa file "${attachment.fileName}"?`)) return
         try {
             await deleteAttachment(attachment.id)
             setFiles(prev => prev.filter(f => f.id !== attachment.id))
-            addToast('ÄÃ£ xÃ³a file')
-        } catch (err: unknown) {
-            addToast(err instanceof Error ? err.message : 'Delete failed', 'error')
+            addToast('Đã xóa file')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            addToast(err.message, 'error')
         }
     }
 
-    function handlePreview(attachment: Attachment) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function handlePreview(attachment: any) {
         const url = getPublicUrl(attachment.storagePath)
         setPreviewUrl(url)
         setPreviewType(attachment.fileType)
     }
 
-    function handleDownload(attachment: Attachment) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function handleDownload(attachment: any) {
         const url = getPublicUrl(attachment.storagePath)
         const a = document.createElement('a')
         a.href = url
@@ -123,20 +120,20 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                 >
                     <div style={{ background: '#fff', borderRadius: 16, width: '80vw', maxWidth: 900, height: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderBottom: '1px solid #E2E8F0' }}>
-                            <span style={{ fontWeight: 700, fontSize: 14 }}>Xem tÃ i liá»u</span>
-                            <button onClick={() => setPreviewUrl(null)} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', color: '#8FA3BF' }}>â</button>
+                            <span style={{ fontWeight: 700, fontSize: 14 }}>Xem tài liệu</span>
+                            <button onClick={() => setPreviewUrl(null)} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', color: '#8FA3BF' }}>✕</button>
                         </div>
                         <div style={{ flex: 1, overflow: 'auto' }}>
                             {previewType.startsWith('image/') ? (
-                                <NextImage src={previewUrl} alt="Preview" width={800} height={600} unoptimized style={{ maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto' }} />
+                                <img src={previewUrl} alt="Preview" style={{ maxWidth: '100%', display: 'block', margin: '0 auto' }} />
                             ) : previewType === 'application/pdf' ? (
                                 <iframe src={previewUrl} style={{ width: '100%', height: '100%', border: 'none' }} />
                             ) : (
                                 <div style={{ textAlign: 'center', padding: 60, color: '#8FA3BF' }}>
-                                    <div style={{ fontSize: 48, marginBottom: 16 }}>ð</div>
-                                    <p>KhÃ´ng thá» xem trÆ°á»c loáº¡i file nÃ y</p>
+                                    <div style={{ fontSize: 48, marginBottom: 16 }}>📎</div>
+                                    <p>Không thể xem trước loại file này</p>
                                     <a href={previewUrl} target="_blank" className="btn btn-primary btn-sm" style={{ marginTop: 12 }}>
-                                        Táº£i xuá»ng
+                                        Tải xuống
                                     </a>
                                 </div>
                             )}
@@ -146,7 +143,7 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
             )}
 
             <div className="card" style={{ padding: 20 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>ð TÃ i liá»u ÄÃ­nh kÃ¨m</div>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>📎 Tài liệu đính kèm</div>
 
                 {/* Drop Zone */}
                 <div
@@ -167,12 +164,12 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                 >
                     <input ref={inputRef} type="file" multiple hidden onChange={e => handleUpload(e.target.files)} accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp" />
                     {uploading ? (
-                        <div style={{ color: '#3B82F6', fontWeight: 600, fontSize: 13 }}>â³ Äang upload...</div>
+                        <div style={{ color: '#3B82F6', fontWeight: 600, fontSize: 13 }}>⏳ Đang upload...</div>
                     ) : (
                         <>
-                            <div style={{ fontSize: 28, marginBottom: 6 }}>ð¤</div>
-                            <div style={{ fontSize: 13, color: '#4A5E78', fontWeight: 500 }}>KÃ©o tháº£ file hoáº·c <span style={{ color: '#3B82F6', fontWeight: 700 }}>nháº¥n Äá» chá»n</span></div>
-                            <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 4 }}>PDF, Word, Excel, áº¢nh â Tá»i Äa 10MB</div>
+                            <div style={{ fontSize: 28, marginBottom: 6 }}>📤</div>
+                            <div style={{ fontSize: 13, color: '#4A5E78', fontWeight: 500 }}>Kéo thả file hoặc <span style={{ color: '#3B82F6', fontWeight: 700 }}>nhấn để chọn</span></div>
+                            <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 4 }}>PDF, Word, Excel, Ảnh — Tối đa 10MB</div>
                         </>
                     )}
                 </div>
@@ -186,21 +183,21 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                                 padding: '10px 14px', borderRadius: 10, background: '#F8F9FB',
                                 border: '1px solid #E2E8F0',
                             }}>
-                                <div style={{ fontSize: 24, flexShrink: 0 }}>{FILE_ICONS[f.fileType] || 'ð'}</div>
+                                <div style={{ fontSize: 24, flexShrink: 0 }}>{FILE_ICONS[f.fileType] || '📎'}</div>
                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: '#0F1C2E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {f.fileName}
                                     </div>
                                     <div style={{ fontSize: 11, color: '#8FA3BF' }}>
-                                        {formatSize(f.fileSize)} â¢ {formatTime(f.createdAt)}
+                                        {formatSize(f.fileSize)} • {formatTime(f.createdAt)}
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                                     {(f.fileType.startsWith('image/') || f.fileType === 'application/pdf') && (
-                                        <button onClick={() => handlePreview(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12 }}>ðï¸</button>
+                                        <button onClick={() => handlePreview(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12 }}>👁️</button>
                                     )}
-                                    <button onClick={() => handleDownload(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12 }}>â¬ï¸</button>
-                                    <button onClick={() => handleDelete(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12, color: '#EF4444' }}>ð-ï¸</button>
+                                    <button onClick={() => handleDownload(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12 }}>⬇️</button>
+                                    <button onClick={() => handleDelete(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12, color: '#EF4444' }}>🗑️</button>
                                 </div>
                             </div>
                         ))}
