@@ -28,7 +28,10 @@
       "@vtn/database/*": ["./packages/database/src/*"],
       "@vtn/auth": ["./packages/auth/src"],
       "@vtn/auth/*": ["./packages/auth/src/*"],
-      "@vtn/audit": ["./packages/audit/src"]
+      "@vtn/audit": ["./packages/audit/src"],
+      "@vtn/vietnam": ["./packages/vietnam/src"],
+      "@vtn/vietnam/*": ["./packages/vietnam/src/*"],
+      "@vtn/logger": ["./packages/logger/src"]
     }
   },
   "include": [

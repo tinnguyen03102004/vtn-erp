@@ -1,0 +1,25 @@
+{
+  "name": "@vtn/vietnam",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tax": "./src/tax.ts",
+    "./currency": "./src/currency.ts",
+    "./insurance": "./src/insurance.ts",
+    "./e-invoice": "./src/e-invoice.ts",
+    "./vas": "./src/vas.ts",
+    "./vietqr": "./src/vietqr.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4"
+  }
+}
