@@ -60,3 +60,128 @@ RETURN caller.name, caller.filePath
 ```
 
 <!-- gitnexus:end -->
+
+---
+
+<!-- supabase:start -->
+# Supabase Infrastructure
+
+## Active Project
+
+| Key | Value |
+|-----|-------|
+| **Project Name** | VTN ERP |
+| **Project ID** | `obewplzrudymjchbzpdc` |
+| **Region** | ap-southeast-1 |
+| **Database Host** | `db.obewplzrudymjchbzpdc.supabase.co` |
+| **API URL** | `https://obewplzrudymjchbzpdc.supabase.co` |
+| **Dashboard** | https://supabase.com/dashboard/project/obewplzrudymjchbzpdc |
+
+> [!CAUTION]
+> **KHÔNG sử dụng** project `archstudio-erp` (ID: `cmnsgazvqtvpiqbclvix`) cho VTN ERP.
+> Project đó thuộc repo 9Nghĩa (Mekong ERP), chỉ chứa data của 9Nghĩa.
+> Mọi query/migration cho VTN ERP **PHẢI** dùng project ID `obewplzrudymjchbzpdc`.
+
+## Demo Accounts
+
+Tất cả tài khoản dùng password: `password123`
+
+| Email | Role | Tên | Mô tả |
+|-------|------|-----|-------|
+| `director@vtn.vn` | DIRECTOR | Nguyễn Văn Nam | Ban giám đốc — full quyền |
+| `pm@vtn.vn` | PROJECT_MANAGER | Trần Minh Khoa | Quản lý dự án |
+| `arch@vtn.vn` | ARCHITECT | Lê Thu Hương | Kiến trúc sư |
+| `finance@vtn.vn` | FINANCE | Phạm Thị Khánh Linh | Kế toán / tài chính |
+| `sales@vtn.vn` | SALES | Đỗ Thị Hoàng Yến | Kinh doanh |
+| `dat@vtn.vn` | ARCHITECT | Bùi Quang Đạt | Kiến trúc sư |
+| `luan@vtn.vn` | ARCHITECT | Nguyễn Thành Luân | Kiến trúc sư |
+| `ha@vtn.vn` | ARCHITECT | Trần Thị Hà | Kiến trúc sư |
+
+## Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://obewplzrudymjchbzpdc.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZXdwbHpydWR5bWpjaGJ6cGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2OTU1OTMsImV4cCI6MjA4ODI3MTU5M30.inSAk4A9lgjWSfYeNWNq7tNxB1Hq5lCdhvw_w6fcU6Y
+DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+AUTH_SECRET=<HMAC-SHA256 key for session cookie signing>
+OPENAI_API_KEY=sk-...
+```
+
+## Database Tables
+
+| Table | Mục đích |
+|-------|----------|
+| `users` | Tài khoản đăng nhập, role, password (bcrypt) |
+| `employees` | Thông tin nhân viên (liên kết userId) |
+| `app_sessions` | Server-side sessions (HMAC-signed cookie) |
+| `crm_stages` | Pipeline stages cho CRM |
+| `crm_leads` | Leads/cơ hội kinh doanh |
+| `sale_orders` | Báo giá & hợp đồng |
+| `sale_order_lines` | Dòng dịch vụ trong báo giá |
+| `sale_milestones` | Milestone thanh toán |
+| `projects` | Dự án kiến trúc |
+| `project_phases` | Giai đoạn dự án |
+| `project_tasks` | Tasks trong dự án |
+| `invoices` | Hóa đơn |
+| `payments` | Thanh toán |
+| `timesheets` | Chấm công theo giờ |
+| `audit_logs` | Nhật ký thao tác |
+| `settings` | Cài đặt công ty |
+| `attachments` | File đính kèm |
+
+<!-- supabase:end -->
+
+---
+
+<!-- conventions:start -->
+# Project Conventions
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19, Radix UI, Recharts |
+| Language | TypeScript 5 |
+| Database | PostgreSQL (Supabase hosted) |
+| Data Access | Supabase JS (primary), Prisma (schema/modeling) |
+| Auth | Server-side sessions (HMAC-signed cookie → `app_sessions` table) |
+| AI | OpenAI Chat Completions + tool calling |
+| Styling | Tailwind CSS 4 + global CSS |
+| PDF | @react-pdf/renderer |
+
+## Architecture Pattern
+
+- **Modular monolith** trên Next.js App Router
+- Server Actions cho business logic (`src/lib/actions/`)
+- RBAC via `src/lib/rbac.ts` — permission matrix theo role
+- Auth guard: HMAC signature verify (proxy.ts) + DB session lookup (auth-guard.ts)
+
+## Business Flow
+
+```
+Lead → Quotation → Contract → Project → Phases → Milestones → Invoice → Payment
+                                          └→ Tasks → Timesheet
+```
+
+## Key Directories
+
+```
+src/app/(dashboard)/     → Route pages theo module
+src/lib/actions/         → Server actions (business logic)
+src/lib/ai/             → AI tools & chat handler
+src/components/          → UI components
+packages/vietnam/        → Vietnam-specific utils (tax, insurance, VietQR)
+packages/schemas/        → Zod validation schemas
+packages/shared/         → Shared types
+```
+
+## Coding Rules
+
+- Supabase JS là data access chính, KHÔNG dùng Prisma cho runtime queries
+- Tất cả mutations phải có `requireAuth()` + `requirePermission()` guard
+- ActionResult<T> pattern cho error handling
+- Zod schemas cho input validation
+- Audit logging cho hành động quan trọng
+
+<!-- conventions:end -->
