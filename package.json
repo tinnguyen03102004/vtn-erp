@@ -2,15 +2,24 @@
   "name": "vtn-erp",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.6.2",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "turbo run build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "turbo run lint",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "format": "prettier --write .",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.41",
@@ -57,6 +66,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "turbo": "^2.9.6",
     "typescript": "^5",
     "vitest": "^4.0.18"
   }

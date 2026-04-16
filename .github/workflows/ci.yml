@@ -2,21 +2,26 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   push:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: '20'
+  TURBO_TELEMETRY_DISABLED: 1
   # Supabase URL/key needed for build (referenced at import time)
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
 
 jobs:
   ci:
-    name: Lint → Test → Build
+    name: Lint → Typecheck → Test → Build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -31,18 +36,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ── Gate 1: TypeScript ──
-      - name: TypeScript check
-        run: npx tsc --noEmit
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
-      # ── Gate 2: Lint ──
+      # ── Gate 1: Lint ──
       - name: ESLint
         run: npm run lint
 
-      # ── Gate 3: Unit Tests ──
+      # ── Gate 2: Typecheck packages ──
+      - name: Typecheck @vtn/* packages
+        run: npx turbo run typecheck
+
+      # ── Gate 3: TypeScript (app) ──
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      # ── Gate 4: Unit Tests ──
       - name: Vitest
         run: npm test
+        env:
+          VITEST: 'true'
 
-      # ── Gate 4: Build ──
+      # ── Gate 5: Build ──
       - name: Next.js build
-        run: npm run build
+        run: npx next build

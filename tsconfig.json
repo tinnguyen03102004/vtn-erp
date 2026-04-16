@@ -19,7 +19,16 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@vtn/shared": ["./packages/shared/src"],
+      "@vtn/shared/*": ["./packages/shared/src/*"],
+      "@vtn/errors": ["./packages/errors/src"],
+      "@vtn/schemas": ["./packages/schemas/src"],
+      "@vtn/database": ["./packages/database/src"],
+      "@vtn/database/*": ["./packages/database/src/*"],
+      "@vtn/auth": ["./packages/auth/src"],
+      "@vtn/auth/*": ["./packages/auth/src/*"],
+      "@vtn/audit": ["./packages/audit/src"]
     }
   },
   "include": [

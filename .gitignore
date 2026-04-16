@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+**/node_modules
+/.pnp
 /.pnp
 .pnp.*
 .yarn/*
@@ -60,3 +62,6 @@ tmp/
 .npm-cache-gitnexus*/
 .next-dev.*
 .claude/
+.turbo/
+**/.turbo/
+dist/

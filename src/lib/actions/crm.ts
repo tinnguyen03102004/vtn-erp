@@ -53,7 +53,8 @@ export async function updateLead(id: string, formData: unknown): Promise<ActionR
     const parsed = parseInput(updateLeadSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
-    const { data, error } = await supabase.from('crm_leads').update(parsed.data).eq('id', id).select().single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await supabase.from('crm_leads').update(parsed.data as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'lead', entityId: id })
