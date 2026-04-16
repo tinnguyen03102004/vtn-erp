@@ -9,7 +9,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "turbo run build",
+    "build": "turbo run build --filter='./packages/*' && next build",
     "start": "next start",
     "lint": "turbo run lint",
     "test": "vitest run",
