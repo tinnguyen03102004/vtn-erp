@@ -1,9 +1,10 @@
-'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatCurrency } from '@/lib/utils'
 import { createEmployee, updateEmployee } from '@/lib/actions/employees'
+import { updateEmployeeSalary } from '@/lib/actions/payroll'
 import { useToast, ToastContainer } from '@/components/Toast'
 
 const roleLabels: Record<string, { label: string; badge: string }> = {
@@ -25,6 +26,7 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
     const [showModal, setShowModal] = useState(false)
     const [editId, setEditId] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
+    const [salaryEmpId, setSalaryEmpId] = useState<string | null>(null)
 
     const editEmp = editId ? employees.find(e => e.id === editId) : null
 
@@ -62,6 +64,31 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
             }
             setShowModal(false)
             setEditId(null)
+            router.refresh()
+        } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
+        finally { setSaving(false) }
+    }
+
+    const salaryEmp = salaryEmpId ? employees.find(e => e.id === salaryEmpId) : null
+
+    async function handleSalarySubmit(fd: FormData) {
+        if (!salaryEmpId) return
+        setSaving(true)
+        try {
+            const data = {
+                baseSalary: Number(fd.get('baseSalary') || 0),
+                insurableSalary: Number(fd.get('insurableSalary') || 0),
+                region: Number(fd.get('region') || 1),
+                dependents: Number(fd.get('dependents') || 0),
+                allowances: Number(fd.get('allowances') || 0),
+            }
+            if (data.baseSalary <= 0) { addToast('Lương cơ bản phải > 0', 'error'); return }
+            const result = await updateEmployeeSalary(salaryEmpId, data)
+            if ('success' in result && !result.success) {
+                addToast(result.error || 'Cập nhật lương thất bại', 'error'); return
+            }
+            addToast('Đã cập nhật lương nhân viên')
+            setSalaryEmpId(null)
             router.refresh()
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
         finally { setSaving(false) }
@@ -152,6 +179,24 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                                 <div>{emp.user?.email}</div>
                                 <div>📅 {emp.joinDate ? formatDate(String(emp.joinDate).split('T')[0]) : '—'}</div>
                             </div>
+                            {canManageEmployees && (
+                                <div style={{ display: 'flex', gap: 8, marginTop: 10, borderTop: '1px solid #F0F2F5', paddingTop: 10 }}>
+                                    <button
+                                        className="btn btn-ghost btn-sm"
+                                        style={{ fontSize: 11, flex: 1 }}
+                                        onClick={(e) => { e.stopPropagation(); setSalaryEmpId(emp.id) }}
+                                    >
+                                        💰 Cài lương
+                                    </button>
+                                    <div style={{ fontSize: 11, color: '#8FA3BF', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        {Number(emp.baseSalary || 0) > 0 ? (
+                                            <span style={{ color: '#22C55E', fontWeight: 600 }}>{formatCurrency(Number(emp.baseSalary))}</span>
+                                        ) : (
+                                            <span style={{ color: '#EF4444' }}>Chưa cài</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )
                 })}
@@ -216,6 +261,61 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
                                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setShowModal(false); setEditId(null) }}>Huỷ</button>
                                 <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? '⏳' : editId ? '💾 Cập nhật' : 'Thêm'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Salary Modal */}
+            {canManageEmployees && salaryEmpId && salaryEmp && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => setSalaryEmpId(null)}>
+                    <div style={{ background: '#fff', borderRadius: 14, padding: 28, width: 440, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+                        onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                            <div>
+                                <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F1C2E', margin: 0 }}>💰 Cài đặt lương</h2>
+                                <div style={{ fontSize: 13, color: '#8FA3BF', marginTop: 4 }}>{salaryEmp.user?.name} — {salaryEmp.position || 'Chưa có chức vụ'}</div>
+                            </div>
+                            <button onClick={() => setSalaryEmpId(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20, color: '#8FA3BF' }}>✕</button>
+                        </div>
+                        <form action={handleSalarySubmit}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                <div className="form-group">
+                                    <label className="form-label">Lương gross (VND/tháng) *</label>
+                                    <input className="form-input" name="baseSalary" type="number" defaultValue={Number(salaryEmp.baseSalary || 0)} min={0} step={100000} required />
+                                    <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 2 }}>Lương cơ bản hàng tháng trước thuế</div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Lương đóng BHXH (VND)</label>
+                                    <input className="form-input" name="insurableSalary" type="number" defaultValue={Number(salaryEmp.insurableSalary || 0)} min={0} step={100000} />
+                                    <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 2 }}>Để 0 = bằng lương gross</div>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Vùng lương</label>
+                                        <select className="form-input" name="region" defaultValue={Number(salaryEmp.region || 1)}>
+                                            <option value={1}>Vùng 1 (TP.HCM, Hà Nội)</option>
+                                            <option value={2}>Vùng 2</option>
+                                            <option value={3}>Vùng 3</option>
+                                            <option value={4}>Vùng 4</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Người phụ thuộc</label>
+                                        <input className="form-input" name="dependents" type="number" defaultValue={Number(salaryEmp.dependents || 0)} min={0} />
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Phụ cấp (VND/tháng)</label>
+                                    <input className="form-input" name="allowances" type="number" defaultValue={Number(salaryEmp.allowances || 0)} min={0} step={100000} />
+                                    <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 2 }}>Phụ cấp ăn trưa, xăng xe, điện thoại…</div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+                                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSalaryEmpId(null)}>Huỷ</button>
+                                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? '⏳' : '💾 Lưu lương'}</button>
                             </div>
                         </form>
                     </div>

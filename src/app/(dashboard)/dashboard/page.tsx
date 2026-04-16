@@ -19,6 +19,7 @@ type DashboardKPIs = {
     pendingInvoices: number
     totalEmployees: number
     totalLeads: number
+    latestPayrollNet: number
 }
 
 type ChartData = {
@@ -47,6 +48,7 @@ const emptyKpis: DashboardKPIs = {
     pendingInvoices: 0,
     totalEmployees: 0,
     totalLeads: 0,
+    latestPayrollNet: 0,
 }
 
 const emptyChartData: ChartData = {
@@ -136,6 +138,20 @@ export default async function DashboardPage() {
             iconBg: '#FBF5E6',
             iconColor: '#C9A84C',
         } : null,
+        canViewFinance ? {
+            label: 'Chi lương gần nhất',
+            value: kpis.latestPayrollNet > 0 ? formatCurrency(kpis.latestPayrollNet) : '—',
+            meta: 'Kỳ lương đã xác nhận',
+            icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <line x1="2" y1="10" x2="22" y2="10" />
+                    <path d="M12 14v3" /><path d="M8 14v1" /><path d="M16 14v1" />
+                </svg>
+            ),
+            iconBg: '#F5F3FF',
+            iconColor: '#8B5CF6',
+        } : null,
     ]
     const visibleKpis = kpiCandidates.filter((kpi): kpi is KpiCard => kpi !== null)
 
@@ -144,6 +160,7 @@ export default async function DashboardPage() {
         canEditSales ? { href: '/sale/new', label: 'Tạo báo giá', icon: '📄', color: '#FBF5E6' } : null,
         canEditProjects ? { href: '/projects', label: 'Dự án mới', icon: '🏗️', color: '#F0FDF4' } : null,
         canViewFinance ? { href: '/finance/invoices', label: 'Xuất hóa đơn', icon: '💳', color: '#FFF7ED' } : null,
+        canViewFinance ? { href: '/payroll', label: 'Bảng lương', icon: '💰', color: '#F5F3FF' } : null,
         canViewProjects ? { href: '/timesheets', label: 'Log timesheet', icon: '⏱️', color: '#EFF6FF' } : null,
         canViewReports ? { href: '/reports', label: 'Xem báo cáo', icon: '📊', color: '#F5F3FF' } : null,
     ]

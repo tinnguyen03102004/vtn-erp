@@ -9,14 +9,18 @@ interface DashboardKPIs {
     pendingInvoices: number
     totalEmployees: number
     totalLeads: number
+    latestPayrollNet: number
 }
 
 async function fetchDashboardKPIs(): Promise<ActionResult<DashboardKPIs>> {
-    const [projectsRes, invoicesRes, employeesRes, leadsRes] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = supabase as any
+    const [projectsRes, invoicesRes, employeesRes, leadsRes, payrollRes] = await Promise.all([
         supabase.from('projects').select('id', { count: 'exact' }).eq('state', 'ACTIVE'),
         supabase.from('invoices').select('amountTotal').in('state', ['DRAFT', 'POSTED']),
         supabase.from('employees').select('id', { count: 'exact' }),
         supabase.from('crm_leads').select('id', { count: 'exact' }),
+        db.from('payroll_periods').select('totalNet').in('state', ['CONFIRMED', 'PAID']).order('year', { ascending: false }).order('month', { ascending: false }).limit(1),
     ])
 
     if (projectsRes.error) return fail(projectsRes.error.message)
@@ -28,11 +32,14 @@ async function fetchDashboardKPIs(): Promise<ActionResult<DashboardKPIs>> {
         (s: number, i: Record<string, unknown>) => s + Number(i.amountTotal || 0), 0
     )
 
+    const latestPayroll = payrollRes?.data?.[0]
+
     return ok({
         activeProjects: projectsRes.count || 0,
         pendingInvoices: pendingAmount,
         totalEmployees: employeesRes.count || 0,
         totalLeads: leadsRes.count || 0,
+        latestPayrollNet: Number(latestPayroll?.totalNet || 0),
     })
 }
 
