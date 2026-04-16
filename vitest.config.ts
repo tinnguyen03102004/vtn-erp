@@ -17,6 +17,7 @@ export default defineConfig({
             '@vtn/auth': path.resolve(__dirname, 'packages/auth/src'),
             '@vtn/audit': path.resolve(__dirname, 'packages/audit/src'),
             '@vtn/vietnam': path.resolve(__dirname, 'packages/vietnam/src'),
+            '@vtn/logger': path.resolve(__dirname, 'packages/logger/src'),
         },
     },
 })

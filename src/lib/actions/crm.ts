@@ -5,6 +5,9 @@ import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createLeadSchema, updateLeadSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
+import { createLogger } from '@vtn/logger'
+
+const log = createLogger({ module: 'crm' })
 
 export async function getStages() {
     await requirePermission('crm.view')
@@ -44,6 +47,7 @@ export async function createLead(formData: unknown): Promise<ActionResult<Record
     const { data, error } = await supabase.from('crm_leads').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
+    log.info('Lead created', { leadId: data.id, name: data.name })
     await logAudit({ userId: user.id, action: 'create', entity: 'lead', entityId: data.id, details: `Tạo lead: ${data.name}` })
     return ok(data)
 }

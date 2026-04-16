@@ -5,6 +5,10 @@ import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createPaymentSchema, directInvoiceSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
+import { createLogger } from '@vtn/logger'
+import { calculateVat } from '@vtn/vietnam'
+
+const log = createLogger({ module: 'finance' })
 
 export async function getInvoices() {
     await requirePermission('finance.view')
@@ -45,12 +49,22 @@ export async function createInvoice(formData: unknown): Promise<ActionResult<Rec
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
     const name = `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
+    // Calculate VAT (10% standard) if only amountUntaxed provided
+    const amountUntaxed = Number(parsed.data.amountUntaxed || parsed.data.amountTotal || 0)
+    const vat = calculateVat(amountUntaxed, 10)
     const { data, error } = await supabase
         .from('invoices')
-        .insert({ ...parsed.data, name, state: 'DRAFT' })
+        .insert({
+            ...parsed.data,
+            name,
+            state: 'DRAFT',
+            amountUntaxed: vat.amountUntaxed,
+            amountTotal: parsed.data.amountTotal || vat.amountTotal,
+        })
         .select().single()
     if (error) return fail(error.message)
 
+    log.info('Invoice created', { invoiceId: data.id, name, amount: vat.amountTotal, vatRate: vat.vatRate })
     await logAudit({ userId: user.id, action: 'create', entity: 'invoice', entityId: data.id, details: `Tạo hóa đơn: ${name}` })
     return ok(data)
 }
@@ -86,6 +100,7 @@ export async function createPayment(formData: unknown): Promise<ActionResult<Rec
         await supabase.from('invoices').update({ state: 'PAID', updatedAt: new Date().toISOString() } as any).eq('id', parsed.data.invoiceId)
     }
 
+    log.info('Payment recorded', { paymentId: payment.id, invoiceId: parsed.data.invoiceId, amount: parsed.data.amount })
     await logAudit({ userId: user.id, action: 'create', entity: 'payment', entityId: payment.id, details: `Thanh toán ${parsed.data.amount}` })
     return ok(payment)
 }

@@ -2,8 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from '@/lib/supabase'
-import { formatCurrency, escapeHtml } from '@/lib/utils'
+import { escapeHtml } from '@/lib/utils'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
+import { formatVnd, numberToVietnameseWords, generateVietQrUrl } from '@vtn/vietnam'
 
 export async function generateInvoicePDF(invoiceId: string): Promise<ActionResult<{ html: string; invoiceName: string }>> {
   // Fetch invoice + payments
@@ -122,11 +123,14 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
         <tr>
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           <td>${e((invoice as any).description || invoice.name)}</td>
-          <td class="amount-col">${formatCurrency(Number(invoice.amountTotal || 0))}</td>
+          <td class="amount-col">${formatVnd(Number(invoice.amountTotal || 0))}</td>
         </tr>
         <tr class="total-row">
-          <td>T?NG C?NG</td>
-          <td class="amount-col">${formatCurrency(Number(invoice.amountTotal || 0))}</td>
+          <td>TỔNG CỘNG</td>
+          <td class="amount-col">${formatVnd(Number(invoice.amountTotal || 0))}</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="font-style:italic;font-size:12px;color:#4A5E78;">Bằng chữ: ${numberToVietnameseWords(Number(invoice.amountTotal || 0))}</td>
         </tr>
       </tbody>
     </table>
@@ -150,24 +154,40 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
           <td>${new Date(String(p.paymentDate)).toLocaleDateString('vi-VN')}</td>
           <td>${p.method === 'BANK' ? 'Chuy?n kho?n' : p.method === 'CASH' ? 'Ti?n m?t' : e(p.method || '-')}</td>
           <td>${e(p.note || '-')}</td>
-          <td class="amount-col">${formatCurrency(Number(p.amount || 0))}</td>
+          <td class="amount-col">${formatVnd(Number(p.amount || 0))}</td>
         </tr>`).join('')}
         <tr class="total-row">
           <td colspan="3">Ðã thanh toán</td>
-          <td class="amount-col">${formatCurrency(totalPaid)}</td>
+          <td class="amount-col">${formatVnd(totalPaid)}</td>
         </tr>
         ${remaining > 0 ? `
         <tr>
           <td colspan="3" style="font-weight:700;color:#EF4444;">Còn l?i</td>
-          <td class="amount-col" style="color:#EF4444;font-weight:700;">${formatCurrency(remaining)}</td>
+          <td class="amount-col" style="color:#EF4444;font-weight:700;">${formatVnd(remaining)}</td>
         </tr>` : ''}
       </tbody>
     </table>
   </div>
   ` : ''}
 
+  ${remaining > 0 && settingsMap['bankAccount'] ? `
+  <div class="section">
+    <div class="section-title">Thanh toán qua QR</div>
+    <div style="text-align:center;">
+      <img src="${generateVietQrUrl({
+        bankBin: settingsMap['bankBin'] || '970422',
+        accountNumber: settingsMap['bankAccount'],
+        accountName: settingsMap['companyName'],
+        amount: remaining,
+        memo: invoice.name,
+      })}" width="200" height="200" alt="VietQR" style="border-radius:8px;" />
+      <div style="font-size:11px;color:#4A5E78;margin-top:8px;">${e(settingsMap['bankName'] || '')} - ${e(settingsMap['bankAccount'])}</div>
+    </div>
+  </div>
+  ` : ''}
+
   <div class="footer">
-    ${e(settingsMap['companyName'] || 'Cty TNHH Võ Tr?ng Nghia')} - Hoá don du?c t?o t? d?ng b?i VTN ERP
+    ${e(settingsMap['companyName'] || 'Cty TNHH Võ Trọng Nghĩa')} - Hoá đơn được tạo tự động bởi VTN ERP
   </div>
 </body>
 </html>`

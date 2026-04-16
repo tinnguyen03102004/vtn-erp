@@ -5,6 +5,9 @@ import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createPhaseSchema, createTaskSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
+import { createLogger } from '@vtn/logger'
+
+const log = createLogger({ module: 'project' })
 
 export async function getProjects() {
     await requirePermission('project.view')
@@ -54,6 +57,7 @@ export async function updateProjectState(id: string, state: string): Promise<Act
         .from('projects').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
+    log.info('Project state changed', { projectId: id, state })
     await logAudit({ userId: user.id, action: 'update', entity: 'project', entityId: id, details: `Trạng thái → ${state}` })
     return ok(data)
 }

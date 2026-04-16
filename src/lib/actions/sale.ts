@@ -5,7 +5,11 @@ import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createOrderSchema, updateOrderSchema, orderLineSchema, milestoneSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
+import { createLogger } from '@vtn/logger'
+import { formatVnd } from '@vtn/vietnam'
 import type { OrderLineInput, MilestoneInput } from '@/lib/types'
+
+const log = createLogger({ module: 'sale' })
 
 // -- Quotations --
 export async function getQuotations() {
@@ -90,7 +94,8 @@ export async function createOrder(formData: unknown): Promise<ActionResult<Recor
     } as any).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'sale_order', entityId: data.id, details: `T?o báo giá: ${data.name}` })
+    log.info('Quotation created', { orderId: data.id, name: data.name, partner: parsed.data.partnerName })
+    await logAudit({ userId: user.id, action: 'create', entity: 'sale_order', entityId: data.id, details: `Tạo báo giá: ${data.name}` })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ok(data as any)
 }
@@ -198,7 +203,8 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
         }
     }
 
-    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: quotationId, details: `Quotation ? Contract ${contract.id}` })
+    log.info('Quotation converted to contract', { quotationId, contractId: contract.id, name, amount: formatVnd(Number(quotation.totalAmount || 0)) })
+    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: quotationId, details: `Quotation → Contract ${contract.id}` })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ok(contract as any)
 }
@@ -340,7 +346,8 @@ export async function convertOrderToProject(orderId: string): Promise<ActionResu
         await supabase.from('project_phases').insert(phases as any[])
     }
 
-    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: orderId, details: `Order ? Project ${project.id}` })
+    log.info('Order converted to project', { orderId, projectId: project.id, code, budget: formatVnd(Number(order.totalAmount || 0)) })
+    await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: orderId, details: `Order → Project ${project.id}` })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ok(project as any)
 }

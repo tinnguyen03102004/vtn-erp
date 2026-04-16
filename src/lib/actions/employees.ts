@@ -6,6 +6,10 @@ import { requireAuth, requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createEmployeeSchema, updateEmployeeSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
+import { createLogger } from '@vtn/logger'
+import { calculateInsurance, formatVnd } from '@vtn/vietnam'
+
+const log = createLogger({ module: 'hr' })
 
 export async function getEmployees() {
     await requirePermission('hr.view')
@@ -76,6 +80,7 @@ export async function createEmployee(formData: unknown): Promise<ActionResult<Re
         return fail(`Tạo nhân viên thất bại: ${empErr.message}`)
     }
 
+    log.info('Employee created', { empId: emp.id, name: parsed.data.name, department: parsed.data.department })
     await logAudit({ userId: user.id, action: 'create', entity: 'employee', entityId: emp.id, details: `Tạo nhân viên: ${parsed.data.name}` })
     return ok({ ...emp, user: newUser })
 }
