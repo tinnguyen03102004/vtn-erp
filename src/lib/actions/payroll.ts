@@ -230,3 +230,25 @@ export async function updateEmployeeSalary(employeeId: string, formData: unknown
     await logAudit({ userId: user.id, action: 'update', entity: 'employee_salary', entityId: employeeId, details: `Cập nhật lương: ${formatVnd(parsed.data.baseSalary)}` })
     return ok(data)
 }
+
+// ── Mark Payroll as Paid ──
+export async function markPayrollPaid(periodId: string, bankRef?: string): Promise<ActionResult<Record<string, unknown>>> {
+    const user = await requirePermission('finance.edit')
+
+    const { data: period } = await db.from('payroll_periods').select('*').eq('id', periodId).single()
+    if (!period) return fail('Kỳ lương không tồn tại')
+    if (period.state !== 'CONFIRMED') return fail('Chỉ có thể chi trả kỳ lương đã xác nhận')
+
+    const { data, error } = await db.from('payroll_periods').update({
+        state: 'PAID',
+        paidAt: new Date().toISOString(),
+        paidById: user.id,
+        bankRef: bankRef || null,
+        updatedAt: new Date().toISOString(),
+    }).eq('id', periodId).select().single()
+    if (error) return fail(error.message)
+
+    log.info('Payroll paid', { periodId, totalNet: formatVnd(Number(period.totalNet)), bankRef })
+    await logAudit({ userId: user.id, action: 'pay', entity: 'payroll_period', entityId: periodId, details: `Chi trả kỳ lương ${formatVnd(Number(period.totalNet))}${bankRef ? ` — Ref: ${bankRef}` : ''}` })
+    return ok(data)
+}

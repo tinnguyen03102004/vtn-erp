@@ -5,6 +5,7 @@ import { getProjects } from '@/lib/actions/projects'
 import { getInvoices } from '@/lib/actions/finance'
 import { getEmployees } from '@/lib/actions/employees'
 import { getLeadsByStage } from '@/lib/actions/crm'
+import { getPayrollPeriods } from '@/lib/actions/payroll'
 
 
 export const dynamic = 'force-dynamic'
@@ -20,11 +21,12 @@ export default async function ReportsPage() {
         redirect('/dashboard')
     }
 
-    const [projects, invoices, employees, stages] = await Promise.all([
+    const [projects, invoices, employees, stages, payrollPeriods] = await Promise.all([
         getProjects(),
         getInvoices(),
         getEmployees(),
         getLeadsByStage(),
+        getPayrollPeriods(),
     ])
 
     // Calculate real KPIs
@@ -240,6 +242,64 @@ export default async function ReportsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Row 3: Payroll Summary */}
+            {payrollPeriods.length > 0 && (
+                <div className="card" style={{ marginTop: 20 }}>
+                    <div className="card-header">
+                        <div className="card-title">💰 Tổng hợp Bảng lương</div>
+                        <span className="badge badge-muted">{payrollPeriods.length} kỳ lương</span>
+                    </div>
+                    <div className="card-body" style={{ overflowX: 'auto' }}>
+                        <table className="data-table" style={{ width: '100%' }}>
+                            <thead>
+                                <tr>
+                                    <th>Kỳ lương</th>
+                                    <th>Trạng thái</th>
+                                    <th>Số NV</th>
+                                    <th style={{ textAlign: 'right' }}>Tổng Gross</th>
+                                    <th style={{ textAlign: 'right' }}>Khấu trừ</th>
+                                    <th style={{ textAlign: 'right', fontWeight: 700 }}>Thực chi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {payrollPeriods.slice(0, 12).map((p: Record<string, unknown>) => {
+                                    const stMap: Record<string, { label: string; badge: string }> = {
+                                        DRAFT: { label: 'Nháp', badge: 'warning' },
+                                        CONFIRMED: { label: 'Xác nhận', badge: 'success' },
+                                        PAID: { label: 'Đã chi', badge: 'primary' },
+                                    }
+                                    const stInfo = stMap[String(p.state)] || { label: String(p.state), badge: 'muted' }
+                                    return (
+                                        <tr key={String(p.id)}>
+                                            <td style={{ fontWeight: 600 }}>T{String(p.month)}/{String(p.year)}</td>
+                                            <td><span className={`badge badge-${stInfo.badge}`}>{stInfo.label}</span></td>
+                                            <td>{String(p.slipCount || 0)}</td>
+                                            <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{formatCurrency(Number(p.totalGross || 0))}</td>
+                                            <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#EF4444' }}>{formatCurrency(Number(p.totalDeductions || 0))}</td>
+                                            <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: '#22C55E' }}>{formatCurrency(Number(p.totalNet || 0))}</td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                            <tfoot>
+                                <tr style={{ fontWeight: 700, borderTop: '2px solid #E2E8F0' }}>
+                                    <td colSpan={3}>Tổng cộng</td>
+                                    <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
+                                        {formatCurrency(payrollPeriods.reduce((s: number, p: Record<string, unknown>) => s + Number(p.totalGross || 0), 0))}
+                                    </td>
+                                    <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#EF4444' }}>
+                                        {formatCurrency(payrollPeriods.reduce((s: number, p: Record<string, unknown>) => s + Number(p.totalDeductions || 0), 0))}
+                                    </td>
+                                    <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#22C55E' }}>
+                                        {formatCurrency(payrollPeriods.reduce((s: number, p: Record<string, unknown>) => s + Number(p.totalNet || 0), 0))}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            )}
         </>
     )
 }

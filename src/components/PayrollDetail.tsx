@@ -1,10 +1,10 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
-import { generatePayrollSlips, confirmPayroll } from '@/lib/actions/payroll'
+import { generatePayrollSlips, confirmPayroll, markPayrollPaid } from '@/lib/actions/payroll'
 
 const monthNames = ['', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12']
 
@@ -37,19 +37,23 @@ interface Period {
     totalNet: number
     slipCount: number
     notes: string | null
+    paidAt: string | null
+    bankRef: string | null
     slips: Slip[]
 }
 
 const stateLabels: Record<string, { label: string; color: string; bg: string }> = {
     DRAFT: { label: 'Nháp', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },
     CONFIRMED: { label: 'Đã xác nhận', color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' },
-    PAID: { label: 'Đã chi', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' },
+    PAID: { label: 'Đã chi trả', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' },
     CANCELLED: { label: 'Đã hủy', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' },
 }
 
 export function PayrollDetail({ period }: { period: Period }) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
+    const [showPayModal, setShowPayModal] = useState(false)
+    const [bankRef, setBankRef] = useState('')
 
     async function handleGenerate() {
         if (!confirm('Tạo phiếu lương cho tất cả nhân viên? (Phiếu cũ sẽ bị xóa)')) return
@@ -69,6 +73,17 @@ export function PayrollDetail({ period }: { period: Period }) {
             alert(result.error || 'Lỗi xác nhận')
             return
         }
+        startTransition(() => router.refresh())
+    }
+
+    async function handlePay() {
+        const result = await markPayrollPaid(period.id, bankRef || undefined)
+        if (!result.success) {
+            alert(result.error || 'Lỗi chi trả')
+            return
+        }
+        setShowPayModal(false)
+        setBankRef('')
         startTransition(() => router.refresh())
     }
 
@@ -97,7 +112,21 @@ export function PayrollDetail({ period }: { period: Period }) {
                     </div>
                     <p className="page-subtitle">{period.slipCount || 0} phiếu lương</p>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {/* PDF Export — always available when slips exist */}
+                    {slips.length > 0 && (
+                        <a
+                            href={`/api/payroll/pdf/${period.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-outline btn-sm"
+                            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                        >
+                            📄 Xuất PDF
+                        </a>
+                    )}
+
+                    {/* Draft actions */}
                     {period.state === 'DRAFT' && (
                         <>
                             <button className="btn btn-primary" onClick={handleGenerate} disabled={isPending}>
@@ -109,6 +138,26 @@ export function PayrollDetail({ period }: { period: Period }) {
                                 </button>
                             )}
                         </>
+                    )}
+
+                    {/* Confirmed → Pay */}
+                    {period.state === 'CONFIRMED' && (
+                        <button
+                            className="btn"
+                            onClick={() => setShowPayModal(true)}
+                            disabled={isPending}
+                            style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.3)' }}
+                        >
+                            💳 Chi trả lương
+                        </button>
+                    )}
+
+                    {/* Paid info */}
+                    {period.state === 'PAID' && period.paidAt && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#3B82F6' }}>
+                            <span>💳 Đã chi trả {new Date(period.paidAt).toLocaleDateString('vi-VN')}</span>
+                            {period.bankRef && <span style={{ color: '#8FA3BF' }}>• Ref: {period.bankRef}</span>}
+                        </div>
                     )}
                 </div>
             </div>
@@ -135,7 +184,7 @@ export function PayrollDetail({ period }: { period: Period }) {
                     <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
                     <p>Chưa có phiếu lương nào.</p>
                     {period.state === 'DRAFT' && (
-                        <p style={{ fontSize: 14 }}>Bấm <strong>"⚡ Tạo phiếu lương"</strong> để hệ thống tự động tính lương cho tất cả nhân viên.</p>
+                        <p style={{ fontSize: 14 }}>Bấm <strong>&quot;⚡ Tạo phiếu lương&quot;</strong> để hệ thống tự động tính lương cho tất cả nhân viên.</p>
                     )}
                 </div>
             ) : (
@@ -185,6 +234,44 @@ export function PayrollDetail({ period }: { period: Period }) {
                             </tr>
                         </tfoot>
                     </table>
+                </div>
+            )}
+
+            {/* Pay Modal */}
+            {showPayModal && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => setShowPayModal(false)}>
+                    <div style={{ background: '#1E293B', borderRadius: 14, padding: 28, width: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.3)', border: '1px solid rgba(148,163,184,0.2)' }}
+                        onClick={e => e.stopPropagation()}>
+                        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#E2E8F0', margin: '0 0 8px' }}>💳 Xác nhận chi trả</h2>
+                        <p style={{ fontSize: 13, color: '#8FA3BF', margin: '0 0 20px' }}>
+                            Tổng chi trả: <strong style={{ color: '#10B981' }}>{formatCurrency(Number(period.totalNet || 0))}</strong> cho {period.slipCount} nhân viên
+                        </p>
+                        <div style={{ marginBottom: 16 }}>
+                            <label style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', display: 'block', marginBottom: 6 }}>
+                                Mã tham chiếu ngân hàng (tuỳ chọn)
+                            </label>
+                            <input
+                                type="text"
+                                value={bankRef}
+                                onChange={e => setBankRef(e.target.value)}
+                                placeholder="VD: VCB-2026041600001"
+                                className="form-input"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setShowPayModal(false)}>Huỷ</button>
+                            <button
+                                className="btn"
+                                onClick={handlePay}
+                                disabled={isPending}
+                                style={{ background: '#3B82F6', color: '#fff', border: 'none' }}
+                            >
+                                {isPending ? '⏳' : '✅ Xác nhận đã chi trả'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
