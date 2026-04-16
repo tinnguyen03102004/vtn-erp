@@ -36,9 +36,10 @@ type Props = {
     entityId: string
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialFiles?: any[]
+    canManageFiles?: boolean
 }
 
-export default function AttachmentPanel({ entityType, entityId, initialFiles = [] }: Props) {
+export default function AttachmentPanel({ entityType, entityId, initialFiles = [], canManageFiles = true }: Props) {
     const { toasts, addToast } = useToast()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [files, setFiles] = useState<any[]>(initialFiles)
@@ -125,6 +126,7 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                         </div>
                         <div style={{ flex: 1, overflow: 'auto' }}>
                             {previewType.startsWith('image/') ? (
+                                // eslint-disable-next-line @next/next/no-img-element
                                 <img src={previewUrl} alt="Preview" style={{ maxWidth: '100%', display: 'block', margin: '0 auto' }} />
                             ) : previewType === 'application/pdf' ? (
                                 <iframe src={previewUrl} style={{ width: '100%', height: '100%', border: 'none' }} />
@@ -146,33 +148,35 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                 <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>📎 Tài liệu đính kèm</div>
 
                 {/* Drop Zone */}
-                <div
-                    onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={e => { e.preventDefault(); setDragOver(false); handleUpload(e.dataTransfer.files) }}
-                    onClick={() => inputRef.current?.click()}
-                    style={{
-                        border: `2px dashed ${dragOver ? '#3B82F6' : '#CBD5E1'}`,
-                        borderRadius: 12,
-                        padding: uploading ? '16px' : '24px',
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        background: dragOver ? '#EFF6FF' : '#FAFBFC',
-                        transition: 'all .2s ease',
-                        marginBottom: files.length > 0 ? 16 : 0,
-                    }}
-                >
-                    <input ref={inputRef} type="file" multiple hidden onChange={e => handleUpload(e.target.files)} accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp" />
-                    {uploading ? (
-                        <div style={{ color: '#3B82F6', fontWeight: 600, fontSize: 13 }}>⏳ Đang upload...</div>
-                    ) : (
-                        <>
-                            <div style={{ fontSize: 28, marginBottom: 6 }}>📤</div>
-                            <div style={{ fontSize: 13, color: '#4A5E78', fontWeight: 500 }}>Kéo thả file hoặc <span style={{ color: '#3B82F6', fontWeight: 700 }}>nhấn để chọn</span></div>
-                            <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 4 }}>PDF, Word, Excel, Ảnh — Tối đa 10MB</div>
-                        </>
-                    )}
-                </div>
+                {canManageFiles && (
+                    <div
+                        onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={e => { e.preventDefault(); setDragOver(false); handleUpload(e.dataTransfer.files) }}
+                        onClick={() => inputRef.current?.click()}
+                        style={{
+                            border: `2px dashed ${dragOver ? '#3B82F6' : '#CBD5E1'}`,
+                            borderRadius: 12,
+                            padding: uploading ? '16px' : '24px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            background: dragOver ? '#EFF6FF' : '#FAFBFC',
+                            transition: 'all .2s ease',
+                            marginBottom: files.length > 0 ? 16 : 0,
+                        }}
+                    >
+                        <input ref={inputRef} type="file" multiple hidden onChange={e => handleUpload(e.target.files)} accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp" />
+                        {uploading ? (
+                            <div style={{ color: '#3B82F6', fontWeight: 600, fontSize: 13 }}>⏳ Đang upload...</div>
+                        ) : (
+                            <>
+                                <div style={{ fontSize: 28, marginBottom: 6 }}>📤</div>
+                                <div style={{ fontSize: 13, color: '#4A5E78', fontWeight: 500 }}>Kéo thả file hoặc <span style={{ color: '#3B82F6', fontWeight: 700 }}>nhấn để chọn</span></div>
+                                <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 4 }}>PDF, Word, Excel, Ảnh — Tối đa 10MB</div>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 {/* File List */}
                 {files.length > 0 && (
@@ -197,7 +201,7 @@ export default function AttachmentPanel({ entityType, entityId, initialFiles = [
                                         <button onClick={() => handlePreview(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12 }}>👁️</button>
                                     )}
                                     <button onClick={() => handleDownload(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12 }}>⬇️</button>
-                                    <button onClick={() => handleDelete(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12, color: '#EF4444' }}>🗑️</button>
+                                    {canManageFiles && <button onClick={() => handleDelete(f)} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 12, color: '#EF4444' }}>🗑️</button>}
                                 </div>
                             </div>
                         ))}

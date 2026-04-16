@@ -2,6 +2,40 @@ import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
 import { toolDefinitions, executeTool } from '@/lib/ai/tools'
 import { SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
+import { requireAuth } from '@/lib/auth-guard'
+
+// File content extraction helpers
+async function extractTextFromPDF(base64: string): Promise<string> {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pdfModule = await import('pdf-parse') as any
+        const pdfParse = pdfModule.default || pdfModule
+        const buffer = Buffer.from(base64, 'base64')
+        const data = await pdfParse(buffer)
+        return data.text?.slice(0, 15000) || 'Không thể đọc nội dung PDF.'
+    } catch {
+        return 'Không thể trích xuất text từ PDF. Vui lòng thử file khác.'
+    }
+}
+
+async function extractTextFromDOCX(base64: string): Promise<string> {
+    try {
+        const mammoth = await import('mammoth')
+        const buffer = Buffer.from(base64, 'base64')
+        const result = await mammoth.extractRawText({ buffer })
+        return result.value?.slice(0, 15000) || 'Không thể đọc nội dung DOCX.'
+    } catch {
+        return 'Không thể trích xuất text từ DOCX. Vui lòng thử file khác.'
+    }
+}
+
+interface Attachment {
+    name: string
+    type: string
+    size: number
+    content: string
+    isImage: boolean
+}
 
 // ── BUG-07 FIX: Simple in-memory rate limiter ──
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
@@ -74,6 +108,12 @@ function formatSuccessMessage(toolName: string, args: Record<string, any>, resul
 
 export async function POST(req: NextRequest) {
     try {
+        try {
+            await requireAuth()
+        } catch {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
         // Rate limit check
         const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
         if (!checkRateLimit(ip)) {
@@ -95,9 +135,36 @@ export async function POST(req: NextRequest) {
             return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
 
-        const { messages, confirmAction } = body
+        const { messages, confirmAction, attachment } = body
         if (!messages || !Array.isArray(messages)) {
             return Response.json({ error: 'messages must be an array' }, { status: 400 })
+        }
+
+        // ── Process attachment if present ──
+        let fileContext = ''
+        let imageContent: OpenAI.Chat.Completions.ChatCompletionContentPart | null = null
+
+        if (attachment) {
+            const att = attachment as Attachment
+            if (att.isImage) {
+                // For images: use GPT-4o vision with image_url
+                imageContent = {
+                    type: 'image_url',
+                    image_url: {
+                        url: `data:${att.type};base64,${att.content}`,
+                        detail: 'low', // cost-efficient
+                    },
+                }
+            } else if (att.type === 'text/plain' || att.type === 'text/csv') {
+                // Text files: content is already text
+                fileContext = `\n\n--- NỘI DUNG FILE: ${att.name} ---\n${att.content.slice(0, 15000)}\n--- HẾT FILE ---`
+            } else if (att.type === 'application/pdf') {
+                const text = await extractTextFromPDF(att.content)
+                fileContext = `\n\n--- NỘI DUNG PDF: ${att.name} ---\n${text}\n--- HẾT FILE ---`
+            } else if (att.type.includes('word') || att.type.includes('document')) {
+                const text = await extractTextFromDOCX(att.content)
+                fileContext = `\n\n--- NỘI DUNG DOCX: ${att.name} ---\n${text}\n--- HẾT FILE ---`
+            }
         }
 
         // ── BUG-05 FIX: If user confirmed a pending action, execute it ──
@@ -118,10 +185,32 @@ export async function POST(req: NextRequest) {
             return Response.json({ role: 'assistant', content })
         }
 
+        // Build messages for OpenAI
+        const systemMsg = SYSTEM_PROMPT + (fileContext ? `\n\nUser đã đính kèm tài liệu. Hãy phân tích nội dung file và trả lời câu hỏi dựa trên nó.${fileContext}` : '')
+
         const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...messages,
+            { role: 'system', content: systemMsg },
         ]
+
+        // Add conversation history
+        for (const m of messages) {
+            chatMessages.push(m)
+        }
+
+        // If there's an image attachment, modify the LAST user message to include image
+        if (imageContent && chatMessages.length > 0) {
+            const lastMsg = chatMessages[chatMessages.length - 1]
+            if (lastMsg.role === 'user') {
+                const textContent = typeof lastMsg.content === 'string' ? lastMsg.content : ''
+                chatMessages[chatMessages.length - 1] = {
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: textContent || `Phân tích hình ảnh đính kèm: ${(attachment as Attachment).name}` },
+                        imageContent,
+                    ],
+                }
+            }
+        }
 
         // First call — may include function calls
         let response = await openai.chat.completions.create({

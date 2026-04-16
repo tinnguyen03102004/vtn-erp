@@ -16,9 +16,9 @@ async function loginAsDirector(page: Page) {
  * Authenticated test fixture: every test starts logged in.
  */
 export const test = base.extend<{ authedPage: Page }>({
-    authedPage: async ({ page }, use) => {
+    authedPage: async ({ page }, runWithPage) => {
         await loginAsDirector(page)
-        await use(page)
+        await runWithPage(page)
     },
 })
 

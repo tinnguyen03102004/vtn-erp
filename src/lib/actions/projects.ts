@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
@@ -7,6 +7,7 @@ import { createPhaseSchema, createTaskSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 
 export async function getProjects() {
+    await requirePermission('project.view')
     const { data: projects } = await supabase
         .from('projects')
         .select('*')
@@ -23,6 +24,7 @@ export async function getProjects() {
 }
 
 export async function getProject(id: string) {
+    await requirePermission('project.view')
     const { data: project } = await supabase.from('projects').select('*').eq('id', id).single()
     if (!project) return null
 

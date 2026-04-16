@@ -1,6 +1,8 @@
 import Link from 'next/link'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { getProjects } from '@/lib/actions/projects'
+import { requirePagePermission } from '@/lib/page-guard'
+import { hasPermission } from '@/lib/rbac'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +14,10 @@ const stateLabels: Record<string, string> = {
 }
 
 export default async function ProjectsPage() {
+    const user = await requirePagePermission('project.view')
+
     const projects = await getProjects()
+    const canCreateProject = hasPermission(user.role, 'project.edit')
 
     const activeCount = projects.filter(p => p.state === 'ACTIVE').length
     const totalBudget = projects.reduce((s, p) => s + Number(p.budget ?? 0), 0)
@@ -24,14 +29,16 @@ export default async function ProjectsPage() {
                     <h1 className="page-title">Dự án</h1>
                     <p className="page-subtitle">{projects.length} dự án — {activeCount} đang chạy</p>
                 </div>
-                <div className="page-actions">
-                    <button className="btn btn-primary btn-sm">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        Tạo dự án
-                    </button>
-                </div>
+                {canCreateProject && (
+                    <div className="page-actions">
+                        <button className="btn btn-primary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Tạo dự án
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* KPIs */}

@@ -42,7 +42,7 @@ export default function NewSalePage() {
         setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l))
     }
 
-    async function handleSave(state: string) {
+    async function handleSave(_state: string) {
         if (!partnerName.trim()) { setError('Vui lòng nhập tên khách hàng'); return }
         if (totalAmount <= 0) { setError('Tổng giá trị phải lớn hơn 0'); return }
 

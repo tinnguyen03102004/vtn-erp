@@ -103,6 +103,7 @@ describe('createPayment', () => {
         const r = await createPayment({
             invoiceId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
             amount: 5000000,
+            paymentDate: '2026-03-11',
         })
         expect(r.success).toBe(true)
     })
@@ -111,6 +112,7 @@ describe('createPayment', () => {
         const r = await createPayment({
             invoiceId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
             amount: 5000000,
+            paymentDate: '2026-03-11',
         })
         expect(r.success).toBe(false)
     })

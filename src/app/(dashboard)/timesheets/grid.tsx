@@ -30,7 +30,7 @@ interface Props {
 const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
 const projectColors = ['#1F3A5F', '#C9A84C', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#14B8A6']
 
-export default function TimesheetGrid({ weekDates, monday, timesheets, projects, employeeId }: Props) {
+export default function TimesheetGrid({ weekDates, monday: _monday, timesheets, projects, employeeId }: Props) {
     const { toasts, addToast } = useToast()
     const [saving, setSaving] = useState(false)
 
@@ -79,7 +79,11 @@ export default function TimesheetGrid({ weekDates, monday, timesheets, projects,
                     allEntries.push({ projectId, date: weekDates[Number(dayIdx)], hours })
                 }
             }
-            await saveWeekTimesheets(employeeId, allEntries)
+            const result = await saveWeekTimesheets(employeeId, allEntries)
+            if (!result.success) {
+                addToast(result.error || 'Luu timesheet that bai', 'error')
+                return
+            }
             addToast(`Đã lưu ${totalHours}h tuần này`)
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }
         finally { setSaving(false) }

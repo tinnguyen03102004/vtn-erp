@@ -2,7 +2,7 @@
 
 import { formatCurrency, formatDate } from '@/lib/utils'
 
-type Milestone = { id?: string; name: string; percent: number; dueDate: string; state: string; amount?: number }
+type Milestone = { id?: string; name: string; percent: number; dueDate: string | null; state: string; amount?: number }
 
 const msStateLabels: Record<string, string> = { PAID: 'Đã thanh toán', INVOICED: 'Đã xuất HĐ', PENDING: 'Chưa đến hạn' }
 
@@ -13,6 +13,7 @@ interface SaleMilestonesProps {
     setMilestones: React.Dispatch<React.SetStateAction<Milestone[]>>
     isContract: boolean
     isQuotation: boolean
+    canEdit: boolean
     editing: boolean
     setEditing: (v: boolean) => void
     saving: boolean
@@ -20,13 +21,13 @@ interface SaleMilestonesProps {
 }
 
 export default function SaleMilestones({
-    order, milestones, setMilestones, isContract, isQuotation, editing, setEditing, saving, onSave,
+    order, milestones, setMilestones, isContract, isQuotation, canEdit, editing, setEditing, saving, onSave,
 }: SaleMilestonesProps) {
     return (
         <div className="card" style={{ padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>Milestones</div>
-                {isContract && (
+                {isContract && canEdit && (
                     <button className="btn btn-ghost btn-sm" onClick={() => { if (editing) onSave(); else setEditing(true) }}>
                         {saving ? '⏳' : editing ? '💾 Lưu' : '✏️ Sửa'}
                     </button>

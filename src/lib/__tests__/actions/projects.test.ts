@@ -93,7 +93,11 @@ describe('deletePhase', () => {
 describe('createTask', () => {
     it('creates with valid data', async () => {
         set({ id: 'T1', name: 'Floor plan' })
-        const r = await createTask({ name: 'Floor plan', phaseId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' })
+        const r = await createTask({
+            name: 'Floor plan',
+            projectId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+            phaseId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        })
         expect(r.success).toBe(true)
     })
     it('fails validation', async () => {

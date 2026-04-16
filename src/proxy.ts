@@ -3,6 +3,7 @@ import { verifySignature, SESSION_COOKIE_NAME } from '@/lib/session'
 
 export function proxy(req: NextRequest) {
     const path = req.nextUrl.pathname
+    const isApiRoute = path.startsWith('/api/')
 
     // Public paths
     const publicPaths = ['/login', '/api/auth']
@@ -18,6 +19,9 @@ export function proxy(req: NextRequest) {
     // Note: We only verify signature here (fast), not DB lookup (that's in auth-guard)
     const cookieValue = req.cookies.get(SESSION_COOKIE_NAME)?.value
     if (!cookieValue || !verifySignature(cookieValue)) {
+        if (isApiRoute) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
         return NextResponse.redirect(new URL('/login', req.url))
     }
 

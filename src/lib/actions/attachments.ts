@@ -1,9 +1,14 @@
 'use server'
 
 import { supabase } from '@/lib/supabase'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAuth, requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { logAudit } from '@/lib/audit'
+import {
+    getAttachmentEntityTypesForRead,
+    getAttachmentPermission,
+    normalizeAttachmentEntityType,
+} from '@/lib/attachment-access'
 
 // ── Allowed file types & size limits ──
 const ALLOWED_TYPES = [
@@ -17,7 +22,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 // ── Types ──
 export interface UploadAttachmentInput {
-    entityType: 'lead' | 'order' | 'project' | 'invoice' | 'employee'
+    entityType: 'lead' | 'order' | 'project' | 'invoice' | 'employee' | 'sale_order' | 'quotation' | 'contract'
     entityId: string
     fileName: string
     fileType: string
@@ -28,10 +33,15 @@ export interface UploadAttachmentInput {
 // ── Read ──
 export async function getAttachments(entityType: string, entityId: string) {
     await requireAuth()
+    const permission = getAttachmentPermission(entityType, 'view')
+    if (!permission) throw new Error(`Unsupported attachment entityType: ${entityType}`)
+    await requirePermission(permission)
+
+    const entityTypes = getAttachmentEntityTypesForRead(entityType)
     const { data } = await supabase
         .from('attachments')
         .select('*')
-        .eq('entityType', entityType)
+        .in('entityType', entityTypes)
         .eq('entityId', entityId)
         .order('createdAt', { ascending: false })
 
@@ -41,6 +51,12 @@ export async function getAttachments(entityType: string, entityId: string) {
 // ── Upload ──
 export async function uploadAttachment(input: UploadAttachmentInput): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requireAuth()
+    const canonicalEntityType = normalizeAttachmentEntityType(input.entityType)
+    if (!canonicalEntityType) return fail(`entityType không hợp lệ: ${input.entityType}`)
+
+    const permission = getAttachmentPermission(canonicalEntityType, 'edit')
+    if (!permission) return fail(`Không thể xác định quyền cho entityType: ${input.entityType}`)
+    await requirePermission(permission)
 
     // Validate file type
     if (!ALLOWED_TYPES.includes(input.fileType)) {
@@ -53,7 +69,7 @@ export async function uploadAttachment(input: UploadAttachmentInput): Promise<Ac
     }
 
     // Upload to Supabase Storage
-    const storagePath = `${input.entityType}/${input.entityId}/${Date.now()}-${input.fileName}`
+    const storagePath = `${canonicalEntityType}/${input.entityId}/${Date.now()}-${input.fileName}`
     const fileBuffer = Buffer.from(input.fileBase64, 'base64')
 
     const { error: uploadErr } = await supabase.storage
@@ -63,7 +79,7 @@ export async function uploadAttachment(input: UploadAttachmentInput): Promise<Ac
 
     // Save metadata to DB
     const { data, error: dbErr } = await supabase.from('attachments').insert({
-        entityType: input.entityType,
+        entityType: canonicalEntityType,
         entityId: input.entityId,
         fileName: input.fileName,
         fileSize: input.fileSize,
@@ -96,6 +112,10 @@ export async function deleteAttachment(id: string): Promise<ActionResult<void>> 
         .single()
 
     if (!attachment) return fail('Attachment không tồn tại')
+
+    const permission = getAttachmentPermission(attachment.entityType, 'edit')
+    if (!permission) return fail(`Unsupported attachment entityType: ${attachment.entityType}`)
+    await requirePermission(permission)
 
     // Delete from storage
     await supabase.storage.from('documents').remove([attachment.storagePath])

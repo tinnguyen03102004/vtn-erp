@@ -16,7 +16,7 @@ const roleLabels: Record<string, { label: string; badge: string }> = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function UserManagement({ initialUsers }: { initialUsers: any[] }) {
-    const router = useRouter()
+    const _router = useRouter()
     const { toasts, addToast } = useToast()
     const [users, setUsers] = useState(initialUsers)
     const [showModal, setShowModal] = useState(false)
@@ -33,11 +33,19 @@ export default function UserManagement({ initialUsers }: { initialUsers: any[] }
         if (!data.name || !data.email) { addToast('Tên và email bắt buộc', 'error'); return }
         try {
             if (editUser) {
-                const updated = await updateUser(editUser.id, data)
+                const result = await updateUser(editUser.id, data)
+                if ('success' in result && !result.success) {
+                    addToast(result.error || 'Cập nhật thất bại', 'error'); return
+                }
+                const updated = 'data' in result ? result.data : result
                 setUsers(prev => prev.map(u => u.id === editUser.id ? updated : u))
                 addToast('Đã cập nhật')
             } else {
-                const newUser = await createUser(data)
+                const result = await createUser(data)
+                if ('success' in result && !result.success) {
+                    addToast(result.error || 'Tạo thất bại', 'error'); return
+                }
+                const newUser = 'data' in result ? result.data : result
                 setUsers(prev => [...prev, newUser])
                 addToast(`Đã tạo tài khoản ${data.name}`)
             }
@@ -51,7 +59,11 @@ export default function UserManagement({ initialUsers }: { initialUsers: any[] }
         const action = user.isActive ? 'khoá' : 'mở khoá'
         if (!confirm(`${action} tài khoản "${user.name}"?`)) return
         try {
-            const updated = await toggleUserActive(user.id, !user.isActive)
+            const result = await toggleUserActive(user.id, !user.isActive)
+            if ('success' in result && !result.success) {
+                addToast(result.error || 'Lỗi', 'error'); return
+            }
+            const updated = 'data' in result ? result.data : result
             setUsers(prev => prev.map(u => u.id === user.id ? updated : u))
             addToast(`Đã ${action} tài khoản`)
         } catch (err: unknown) { addToast(err instanceof Error ? err.message : 'Lỗi', 'error') }

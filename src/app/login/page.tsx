@@ -128,6 +128,7 @@ export default function LoginPage() {
 
                     <div className="login-demo-accounts">
                         <p className="login-demo-title">Tài khoản demo:</p>
+                        <p className="login-demo-password">Demo password: <strong>password123</strong></p>
                         <div className="login-demo-grid">
                             {[
                                 { role: 'Director', email: 'director@vtn.vn', color: '#1F3A5F' },
@@ -305,6 +306,11 @@ export default function LoginPage() {
           color: var(--color-text-muted);
           text-transform: uppercase;
           letter-spacing: 0.05em;
+          margin-bottom: 10px;
+        }
+        .login-demo-password {
+          font-size: 12px;
+          color: var(--color-text-secondary);
           margin-bottom: 10px;
         }
         .login-demo-grid {

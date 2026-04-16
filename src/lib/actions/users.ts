@@ -8,6 +8,7 @@ import { createUserSchema, updateUserSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 
 export async function getUsers() {
+    await requirePermission('users.manage')
     const { data } = await supabase.from('users').select('id, name, email, role, isActive, createdAt').order('name')
     return data || []
 }

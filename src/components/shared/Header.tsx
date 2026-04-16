@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { getInitials } from '@/lib/utils'
 import { useAuth } from '@/lib/auth-context'
+import { hasPermission } from '@/lib/rbac'
 import GlobalSearch from '@/components/GlobalSearch'
 
 interface HeaderProps {
@@ -30,6 +31,7 @@ export function Header({ title: _title, user }: HeaderProps) {
     const { logout } = useAuth()
     const role = user?.role || 'ARCHITECT'
     const roleInfo = roleLabels[role] || { label: role, color: '#8FA3BF' }
+    const canViewSettings = hasPermission(role, 'settings.view')
     const initials = getInitials(user?.name || 'User')
     const avatarColor = avatarColors[initials.charCodeAt(0) % avatarColors.length]
 
@@ -91,12 +93,12 @@ export function Header({ title: _title, user }: HeaderProps) {
                                 </svg>
                                 Hồ sơ cá nhân
                             </Link>
-                            <Link href="/settings" className="user-dropdown-item">
+                            {canViewSettings && <Link href="/settings" className="user-dropdown-item">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <circle cx="12" cy="12" r="3" /><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
                                 </svg>
                                 Cài đặt
-                            </Link>
+                            </Link>}
                             <hr className="divider" style={{ margin: '8px 0' }} />
                             <button onClick={logout} className="user-dropdown-item" style={{ width: '100%', color: '#EF4444' }}>
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

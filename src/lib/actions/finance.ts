@@ -1,12 +1,13 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
-import { createInvoiceSchema, createPaymentSchema, directInvoiceSchema, parseInput } from '@/lib/schemas'
+import { createPaymentSchema, directInvoiceSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 
 export async function getInvoices() {
+    await requirePermission('finance.view')
     const { data: invoices } = await supabase
         .from('invoices')
         .select('*')
@@ -21,6 +22,7 @@ export async function getInvoices() {
 }
 
 export async function getInvoice(id: string) {
+    await requirePermission('finance.view')
     const { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single()
     if (!invoice) return null
 

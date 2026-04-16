@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
-    updateOrder, deleteOrder, updateOrderState, saveOrderLines, saveMilestones,
+    deleteOrder, updateOrderState, saveOrderLines, saveMilestones,
     convertOrderToProject, sendQuotation, approveQuotation, rejectQuotation,
     convertToContract, signContract,
 } from '@/lib/actions/sale'
@@ -431,7 +431,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
             {/* Attachments */}
             <div style={{ marginTop: 20 }}>
                 <AttachmentPanel
-                    entityType={isQuotation ? 'quotation' : 'contract'}
+                    entityType="sale_order"
                     entityId={initOrder.id}
                     initialFiles={initialAttachments}
                 />

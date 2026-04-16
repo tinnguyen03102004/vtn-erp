@@ -15,6 +15,7 @@ import SaleStateActions from './SaleStateActions'
 import SaleOrderInfo from './SaleOrderInfo'
 import SaleOrderLines from './SaleOrderLines'
 import SaleMilestones from './SaleMilestones'
+import type { OrderLineInput, MilestoneInput } from '@/lib/types'
 
 const allStateColors: Record<string, string> = {
     DRAFT: 'muted', SENT: 'info', APPROVED: 'success', REJECTED: 'danger', EXPIRED: 'warning',
@@ -25,14 +26,51 @@ const allStateLabels: Record<string, string> = {
     NEGOTIATING: 'Đang đàm phán', SIGNED: 'Đã ký HĐ', DONE: 'Hoàn thành', CANCEL: 'Huỷ', SALE: 'Đã ký',
 }
 
-type Line = { id?: string; description: string; qty: number; unitPrice: number }
-type Milestone = { id?: string; name: string; percent: number; dueDate: string; state: string; amount?: number }
+type Line = { id?: string; description: string; qty: number; unitPrice: number; subtotal?: number }
+type Milestone = { id?: string; name: string; percent: number; dueDate: string | null; state: string; amount?: number }
+type SaleAttachment = {
+    id: string
+    fileName: string
+    fileType: string
+    fileSize: number
+    storagePath: string
+    createdAt: string
+}
+type SaleQuotationLink = {
+    id: string
+    name: string
+    partnerName: string
+    totalAmount: number | string
+}
+type SaleDetailOrder = {
+    id: string
+    name: string
+    state: string
+    docType: string | null
+    partnerName: string | null
+    totalAmount: number | string | null
+    lines?: Line[]
+    milestones?: Milestone[]
+    quotation?: SaleQuotationLink | null
+    [key: string]: unknown
+}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function SaleDetail({ order: initOrder, initialAttachments = [] }: { order: any; initialAttachments?: any[] }) {
+export default function SaleDetail({
+    order: initOrder,
+    initialAttachments = [],
+    canEditSale,
+    canApproveSale,
+    canCreateProject,
+}: {
+    order: SaleDetailOrder
+    initialAttachments?: SaleAttachment[]
+    canEditSale: boolean
+    canApproveSale: boolean
+    canCreateProject: boolean
+}) {
     const router = useRouter()
     const { toasts, addToast } = useToast()
-    const [order, setOrder] = useState(initOrder)
+    const [order, setOrder] = useState<SaleDetailOrder>(initOrder)
     const [editingLines, setEditingLines] = useState(false)
     const [editingMS, setEditingMS] = useState(false)
     const [lines, setLines] = useState<Line[]>(initOrder.lines || [])
@@ -45,8 +83,7 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
     const totalPaid = milestones.filter(m => m.state === 'PAID').reduce((s, m) => s + Number(m.amount || 0), 0)
     const paidPercent = Number(order.totalAmount) > 0 ? Math.round(totalPaid / Number(order.totalAmount) * 100) : 0
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateOrder = (data: any) => setOrder((prev: any) => ({ ...prev, ...data }))
+    const updateOrder = (data: Partial<SaleDetailOrder>) => setOrder(prev => ({ ...prev, ...data }))
 
     async function handleSend() {
         if (!confirm(`Gửi báo giá "${order.name}" cho CĐT?`)) return
@@ -89,16 +126,21 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
     }
     async function handleSaveLines() {
         setSaving(true)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = await saveOrderLines(order.id, lines as any)
+        const result = await saveOrderLines(order.id, lines.map((line) => ({
+            orderId: order.id,
+            ...line,
+        })) satisfies OrderLineInput[])
         setSaving(false)
         if (!result.success) { addToast(result.error, 'error'); return }
         updateOrder({ totalAmount }); setEditingLines(false); addToast('Đã cập nhật dịch vụ')
     }
     async function handleSaveMS() {
         setSaving(true)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = await saveMilestones(order.id, milestones as any)
+        const result = await saveMilestones(order.id, milestones.map((milestone) => ({
+            orderId: order.id,
+            ...milestone,
+            dueDate: milestone.dueDate ?? undefined,
+        })) satisfies MilestoneInput[])
         setSaving(false)
         if (!result.success) { addToast(result.error, 'error'); return }
         setEditingMS(false); addToast('Đã cập nhật milestones')
@@ -138,12 +180,15 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                     <p className="page-subtitle">{order.partnerName} • Tổng: {formatCurrency(Number(order.totalAmount))}</p>
                 </div>
                 <div className="page-actions" style={{ flexWrap: 'wrap' }}>
-                    <SaleStateActions order={order}
+                    <SaleStateActions order={{ ...order, docType: order.docType ?? '' }}
+                        canEditSale={canEditSale}
+                        canApproveSale={canApproveSale}
+                        canCreateProject={canCreateProject}
                         onSend={handleSend} onApprove={handleApprove} onReject={handleReject}
                         onConvertToContract={isQuotation ? handleConvertToContract : handleConvertToProject}
                         onSign={handleSign} onDone={handleDone} onStateChange={handleStateChange} />
                     <a href={`/api/pdf/${initOrder.id}`} target="_blank" className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>📄 Xuất PDF</a>
-                    <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={handleDelete}>Xóa</button>
+                    {canEditSale && <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={handleDelete}>Xóa</button>}
                 </div>
             </div>
 
@@ -177,17 +222,24 @@ export default function SaleDetail({ order: initOrder, initialAttachments = [] }
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <SaleOrderInfo order={order} isQuotation={isQuotation} />
                     <SaleOrderLines order={order} lines={lines} setLines={setLines}
+                        canEdit={canEditSale}
                         editing={editingLines} setEditing={setEditingLines}
                         saving={saving} onSave={handleSaveLines} totalAmount={totalAmount} />
                 </div>
                 <SaleMilestones order={order} milestones={milestones} setMilestones={setMilestones}
                     isContract={isContract} isQuotation={isQuotation}
+                    canEdit={canEditSale}
                     editing={editingMS} setEditing={setEditingMS}
                     saving={saving} onSave={handleSaveMS} />
             </div>
 
             <div style={{ marginTop: 20 }}>
-                <AttachmentPanel entityType={isQuotation ? 'quotation' : 'contract'} entityId={initOrder.id} initialFiles={initialAttachments} />
+                <AttachmentPanel
+                    entityType="sale_order"
+                    entityId={initOrder.id}
+                    initialFiles={initialAttachments}
+                    canManageFiles={canEditSale}
+                />
             </div>
         </>
     )

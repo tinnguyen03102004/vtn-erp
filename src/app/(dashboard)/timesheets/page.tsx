@@ -1,13 +1,13 @@
 import { getTimesheets } from '@/lib/actions/timesheets'
 import { getProjects } from '@/lib/actions/projects'
-import { getEmployees } from '@/lib/actions/employees'
-import { requireAuth } from '@/lib/auth-guard'
+import { getCurrentEmployee } from '@/lib/actions/employees'
+import { requirePagePermission } from '@/lib/page-guard'
 import TimesheetGrid from './grid'
 
 export const dynamic = 'force-dynamic'
 
 export default async function TimesheetPage() {
-    const user = await requireAuth()
+    await requirePagePermission('project.view')
 
     const today = new Date()
     const dayOfWeek = today.getDay()
@@ -16,14 +16,16 @@ export default async function TimesheetPage() {
     const saturday = new Date(monday)
     saturday.setDate(monday.getDate() + 5)
 
-    const [timesheets, allProjects, employees] = await Promise.all([
-        getTimesheets({
-            startDate: monday.toISOString().split('T')[0],
-            endDate: saturday.toISOString().split('T')[0],
-        }),
+    const [currentEmployee, allProjects] = await Promise.all([
+        getCurrentEmployee(),
         getProjects(),
-        getEmployees(),
     ])
+    const currentEmployeeId = currentEmployee?.id
+    const timesheets = currentEmployeeId ? await getTimesheets({
+        employeeId: currentEmployeeId,
+        startDate: monday.toISOString().split('T')[0],
+        endDate: saturday.toISOString().split('T')[0],
+    }) : []
 
     const weekDates: string[] = []
     for (let i = 0; i < 6; i++) {
@@ -45,11 +47,6 @@ export default async function TimesheetPage() {
         hours: t.hours,
         description: t.description,
     }))
-
-    // Find the employee record linked to the logged-in user
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const currentEmployee = employees.find((e: any) => e.userId === user.id)
-    const currentEmployeeId = currentEmployee?.id
 
     return (
         <TimesheetGrid

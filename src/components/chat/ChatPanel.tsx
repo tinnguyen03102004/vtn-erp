@@ -1,10 +1,33 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Bot, X, Send, Loader2, Maximize2, Minimize2, Trash2, ChevronRight } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Bot, X, Send, Loader2, Maximize2, Minimize2, Trash2, ChevronRight, Paperclip, FileText, Image as ImageIcon } from 'lucide-react'
 import type { Message, PendingAction } from './chatConstants'
 import { loadMessages, saveMessages, WELCOME, QUICK_ACTIONS, S, KEYFRAMES } from './chatConstants'
 import ChatMessages from './ChatMessages'
+
+interface AttachedFile {
+    name: string
+    type: string
+    size: number
+    content: string // text content or base64
+    isImage: boolean
+}
+
+const ALLOWED_TYPES = [
+    'text/plain', 'text/csv',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/png', 'image/jpeg', 'image/webp',
+]
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 export default function ChatPanel() {
     const [isOpen, setIsOpen] = useState(false)
@@ -14,8 +37,11 @@ export default function ChatPanel() {
     const [isLoading, setIsLoading] = useState(false)
     const [hydrated, setHydrated] = useState(false)
     const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+    const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null)
+    const [fileError, setFileError] = useState('')
     const endRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const stored = loadMessages()
@@ -35,14 +61,59 @@ export default function ChatPanel() {
         if (isOpen) setTimeout(() => inputRef.current?.focus(), 100)
     }, [isOpen])
 
+    const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setFileError('')
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setFileError('Loại file không hỗ trợ. Chấp nhận: PDF, DOCX, TXT, CSV, PNG, JPG, WEBP')
+            return
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            setFileError(`File quá lớn (tối đa ${MAX_FILE_SIZE / 1024 / 1024}MB)`)
+            return
+        }
+
+        const isImage = file.type.startsWith('image/')
+        const isText = file.type === 'text/plain' || file.type === 'text/csv'
+
+        if (isText) {
+            const text = await file.text()
+            setAttachedFile({ name: file.name, type: file.type, size: file.size, content: text, isImage: false })
+        } else {
+            // For images, PDF, DOCX: read as base64
+            const reader = new FileReader()
+            reader.onload = () => {
+                const base64 = (reader.result as string).split(',')[1] // remove data:...;base64, prefix
+                setAttachedFile({ name: file.name, type: file.type, size: file.size, content: base64, isImage })
+            }
+            reader.readAsDataURL(file)
+        }
+        // Reset input so same file can be re-selected
+        e.target.value = ''
+    }, [])
+
     const sendMessage = async (text?: string) => {
         const msg = text || input
-        if (!msg.trim() || isLoading) return
+        if (!msg.trim() && !attachedFile) return
+        if (isLoading) return
 
-        const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: msg, timestamp: Date.now() }
+        // Build display message
+        let displayContent = msg.trim()
+        if (attachedFile) {
+            displayContent = displayContent
+                ? `📎 ${attachedFile.name}\n\n${displayContent}`
+                : `📎 ${attachedFile.name}`
+        }
+
+        const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: displayContent || '📎 File đính kèm', timestamp: Date.now() }
         const updated = [...messages, userMsg]
         setMessages(updated)
         setInput('')
+        const currentFile = attachedFile
+        setAttachedFile(null)
+        setFileError('')
         setIsLoading(true)
         setPendingAction(null)
 
@@ -50,12 +121,24 @@ export default function ChatPanel() {
         const timeoutId = setTimeout(() => controller.abort(), 30_000)
 
         try {
+            const payload: Record<string, unknown> = {
+                messages: updated.slice(-20).map(m => ({ role: m.role, content: m.content })),
+            }
+            // Attach file data if present
+            if (currentFile) {
+                payload.attachment = {
+                    name: currentFile.name,
+                    type: currentFile.type,
+                    size: currentFile.size,
+                    content: currentFile.content,
+                    isImage: currentFile.isImage,
+                }
+            }
+
             const res = await fetch('/api/ai/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: updated.slice(-20).map(m => ({ role: m.role, content: m.content })),
-                }),
+                body: JSON.stringify(payload),
                 signal: controller.signal,
             })
 
@@ -219,12 +302,47 @@ export default function ChatPanel() {
 
                     {/* Input */}
                     <div style={S.inputArea}>
+                        {/* File preview */}
+                        {attachedFile && (
+                            <div style={S.fileChip}>
+                                {attachedFile.isImage ? <ImageIcon size={14} /> : <FileText size={14} />}
+                                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {attachedFile.name}
+                                </span>
+                                <span style={{ color: '#9ca3af', fontSize: 11 }}>{formatFileSize(attachedFile.size)}</span>
+                                <button onClick={() => setAttachedFile(null)} style={S.fileChipRemove}>
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        )}
+                        {fileError && (
+                            <div style={{ fontSize: 11, color: '#ef4444', padding: '4px 0' }}>{fileError}</div>
+                        )}
                         <form onSubmit={(e) => { e.preventDefault(); sendMessage() }} style={S.inputForm}>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileSelect}
+                                accept=".pdf,.doc,.docx,.txt,.csv,.png,.jpg,.jpeg,.webp"
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isLoading}
+                                style={{
+                                    ...S.attachBtn,
+                                    opacity: isLoading ? 0.5 : 1,
+                                }}
+                                title="Đính kèm tài liệu"
+                            >
+                                <Paperclip size={16} />
+                            </button>
                             <input
                                 ref={inputRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="Hỏi AI bất kỳ \u0111iều gì..."
+                                placeholder={attachedFile ? 'Hỏi về tài liệu...' : 'Hỏi AI bất kỳ điều gì...'}
                                 disabled={isLoading}
                                 maxLength={2000}
                                 style={{
@@ -234,11 +352,11 @@ export default function ChatPanel() {
                             />
                             <button
                                 type="submit"
-                                disabled={isLoading || !input.trim()}
+                                disabled={isLoading || (!input.trim() && !attachedFile)}
                                 style={{
                                     ...S.sendBtn,
-                                    opacity: (isLoading || !input.trim()) ? 0.5 : 1,
-                                    cursor: (isLoading || !input.trim()) ? 'not-allowed' : 'pointer',
+                                    opacity: (isLoading || (!input.trim() && !attachedFile)) ? 0.5 : 1,
+                                    cursor: (isLoading || (!input.trim() && !attachedFile)) ? 'not-allowed' : 'pointer',
                                 }}
                             >
                                 <Send size={16} />

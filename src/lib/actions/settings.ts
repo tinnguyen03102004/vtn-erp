@@ -7,6 +7,7 @@ import { settingsSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 
 export async function getSettings(): Promise<Record<string, string>> {
+    await requirePermission('settings.view')
     const { data } = await supabase.from('settings').select('key, value')
     const result: Record<string, string> = {}
     for (const row of data || []) {

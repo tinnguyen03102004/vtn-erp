@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -53,3 +54,9 @@ next-env.d.ts
 
 tmp/
 .agent/spawn_agent_tasks/output-*
+.app-server-db-password.tmp
+.codex-*.log
+.gitnexus
+.npm-cache-gitnexus*/
+.next-dev.*
+.claude/

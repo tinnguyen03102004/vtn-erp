@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { getSessionFromCookies } from '@/lib/session'
 import { formatCurrency } from '@/lib/utils'
 import { getProjects } from '@/lib/actions/projects'
 import { getInvoices } from '@/lib/actions/finance'
@@ -8,6 +10,16 @@ import { getLeadsByStage } from '@/lib/actions/crm'
 export const dynamic = 'force-dynamic'
 
 export default async function ReportsPage() {
+    const user = await getSessionFromCookies()
+
+    if (!user) {
+        redirect('/login')
+    }
+
+    if (user.role !== 'DIRECTOR') {
+        redirect('/dashboard')
+    }
+
     const [projects, invoices, employees, stages] = await Promise.all([
         getProjects(),
         getInvoices(),

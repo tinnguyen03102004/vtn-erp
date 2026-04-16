@@ -18,7 +18,7 @@ const avatarColors = ['#1F3A5F', '#2A4D7F', '#C9A84C', '#22C55E', '#8B5CF6', '#E
 function getInitials(name: string) { return name.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase() }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function EmployeesGrid({ initialEmployees }: { initialEmployees: any[] }) {
+export default function EmployeesGrid({ initialEmployees, canManageEmployees }: { initialEmployees: any[]; canManageEmployees: boolean }) {
     const router = useRouter()
     const { toasts, addToast } = useToast()
     const [employees, setEmployees] = useState(initialEmployees)
@@ -29,6 +29,11 @@ export default function EmployeesGrid({ initialEmployees }: { initialEmployees: 
     const editEmp = editId ? employees.find(e => e.id === editId) : null
 
     async function handleSubmit(fd: FormData) {
+        if (!canManageEmployees) {
+            addToast('Bạn không có quyền chỉnh sửa nhân viên', 'error')
+            return
+        }
+
         const data = {
             name: fd.get('name') as string,
             email: fd.get('email') as string,
@@ -41,10 +46,17 @@ export default function EmployeesGrid({ initialEmployees }: { initialEmployees: 
         setSaving(true)
         try {
             if (editId) {
-                await updateEmployee(editId, data)
+                const result = await updateEmployee(editId, data)
+                if ('success' in result && !result.success) {
+                    addToast(result.error || 'Cập nhật thất bại', 'error'); return
+                }
                 addToast('Đã cập nhật nhân viên')
             } else {
-                const newEmp = await createEmployee(data)
+                const result = await createEmployee(data)
+                if ('success' in result && !result.success) {
+                    addToast(result.error || 'Thêm thất bại', 'error'); return
+                }
+                const newEmp = 'data' in result ? result.data : result
                 setEmployees(prev => [...prev, newEmp])
                 addToast(`Đã thêm ${data.name}`)
             }
@@ -67,14 +79,14 @@ export default function EmployeesGrid({ initialEmployees }: { initialEmployees: 
                     <h1 className="page-title">Nhân viên</h1>
                     <p className="page-subtitle">{employees.length} nhân sự tại Cty TNHH Võ Trọng Nghĩa</p>
                 </div>
-                <div className="page-actions">
+                {canManageEmployees && <div className="page-actions">
                     <button className="btn btn-primary btn-sm" onClick={() => { setEditId(null); setShowModal(true) }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                         </svg>
                         Thêm nhân viên
                     </button>
-                </div>
+                </div>}
             </div>
 
             <div className="grid-4" style={{ marginBottom: 24 }}>
@@ -104,8 +116,16 @@ export default function EmployeesGrid({ initialEmployees }: { initialEmployees: 
                     const utilizationRate = Math.round(hoursThisMonth / 168 * 100)
                     const color = avatarColors[idx % avatarColors.length]
                     return (
-                        <div key={emp.id} className="card" style={{ padding: 20, cursor: 'pointer', transition: 'all 0.15s ease' }}
-                            onClick={() => { setEditId(emp.id); setShowModal(true) }}>
+                        <div
+                            key={emp.id}
+                            className="card"
+                            style={{ padding: 20, cursor: canManageEmployees ? 'pointer' : 'default', transition: 'all 0.15s ease' }}
+                            onClick={() => {
+                                if (!canManageEmployees) return
+                                setEditId(emp.id)
+                                setShowModal(true)
+                            }}
+                        >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
                                 <div className="avatar avatar-lg" style={{ background: color }}>{getInitials(emp.user?.name ?? '')}</div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -138,7 +158,7 @@ export default function EmployeesGrid({ initialEmployees }: { initialEmployees: 
             </div>
 
             {/* Modal */}
-            {showModal && (
+            {canManageEmployees && showModal && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => { setShowModal(false); setEditId(null) }}>
                     <div style={{ background: '#fff', borderRadius: 14, padding: 28, width: 480, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}

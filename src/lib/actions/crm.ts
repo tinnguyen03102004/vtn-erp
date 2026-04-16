@@ -1,22 +1,25 @@
-﻿'use server'
+'use server'
 
 import { supabase } from '@/lib/supabase'
-import { requirePermission, requireAuth } from '@/lib/auth-guard'
+import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createLeadSchema, updateLeadSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 
 export async function getStages() {
+    await requirePermission('crm.view')
     const { data } = await supabase.from('crm_stages').select('*').order('sequence')
     return data || []
 }
 
 export async function getLeads() {
+    await requirePermission('crm.view')
     const { data } = await supabase.from('crm_leads').select('*').order('createdAt', { ascending: false })
     return data || []
 }
 
 export async function getLeadsByStage() {
+    await requirePermission('crm.view')
     const { data: stages } = await supabase.from('crm_stages').select('*').order('sequence')
     const { data: leads } = await supabase.from('crm_leads').select('*')
 
@@ -27,6 +30,7 @@ export async function getLeadsByStage() {
 }
 
 export async function getLead(id: string) {
+    await requirePermission('crm.view')
     const { data } = await supabase.from('crm_leads').select('*').eq('id', id).single()
     return data
 }

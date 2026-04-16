@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock next/cache - unstable_cache should just pass through the function
 vi.mock('next/cache', () => ({
-    unstable_cache: (fn: Function) => fn,
+    unstable_cache: <T extends (...args: never[]) => unknown>(fn: T) => fn,
 }))
 
 // ── Per-table mock results for Promise.all concurrent queries ──

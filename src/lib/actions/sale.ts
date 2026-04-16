@@ -9,6 +9,7 @@ import type { OrderLineInput, MilestoneInput } from '@/lib/types'
 
 // -- Quotations --
 export async function getQuotations() {
+    await requirePermission('sale.view')
     const { data: orders } = await supabase
         .from('sale_orders')
         .select('*')
@@ -20,6 +21,7 @@ export async function getQuotations() {
 
 // -- Contracts --
 export async function getContracts() {
+    await requirePermission('sale.view')
     const { data: orders } = await supabase
         .from('sale_orders')
         .select('*')
@@ -38,6 +40,7 @@ export async function getContracts() {
 
 // -- All orders (for backward compat) --
 export async function getOrders() {
+    await requirePermission('sale.view')
     const { data: orders } = await supabase
         .from('sale_orders')
         .select('*')
@@ -54,6 +57,7 @@ export async function getOrders() {
 }
 
 export async function getOrder(id: string) {
+    await requirePermission('sale.view')
     const { data: order } = await supabase.from('sale_orders').select('*').eq('id', id).single()
     if (!order) return null
 
@@ -76,8 +80,10 @@ export async function createOrder(formData: unknown): Promise<ActionResult<Recor
     const parsed = parseInput(createOrderSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
+    const orderName = parsed.data.name || `BG-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
     const { data, error } = await supabase.from('sale_orders').insert({ 
         ...parsed.data,
+        name: orderName,
         docType: 'QUOTATION',
         state: 'DRAFT',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -301,7 +307,7 @@ export async function saveMilestones(orderId: string, milestones: MilestoneInput
 
 // -- Convert Sale ? Project --
 export async function convertOrderToProject(orderId: string): Promise<ActionResult<Record<string, unknown>>> {
-    const user = await requirePermission('sale.edit')
+    const user = await requirePermission('project.edit')
     const { data: order } = await supabase.from('sale_orders').select('*').eq('id', orderId).single()
     if (!order) return fail('Ðon hàng không t?n t?i')
 

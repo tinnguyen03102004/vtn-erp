@@ -4,6 +4,28 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
+type SaleQuotation = {
+    id: string
+    name: string
+    partnerName: string
+    state: string
+    totalAmount: number | string | null
+    createdAt: string
+    validityDate?: string | null
+}
+
+type SaleContract = {
+    id: string
+    name: string
+    partnerName: string
+    state: string
+    totalAmount: number | string | null
+    signedAt?: string | null
+    _count?: {
+        milestones?: number
+    }
+}
+
 const quotationStateColors: Record<string, string> = {
     DRAFT: 'muted', SENT: 'info', APPROVED: 'success', REJECTED: 'danger', EXPIRED: 'warning', CANCEL: 'danger',
 }
@@ -18,8 +40,15 @@ const contractStateLabels: Record<string, string> = {
     NEGOTIATING: 'Đang đàm phán', SIGNED: 'Đã ký HĐ', DONE: 'Hoàn thành', CANCEL: 'Huỷ',
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function SalePageTabs({ quotations, contracts }: { quotations: any[]; contracts: any[] }) {
+export default function SalePageTabs({
+    quotations,
+    contracts,
+    canCreateQuotation,
+}: {
+    quotations: SaleQuotation[]
+    contracts: SaleContract[]
+    canCreateQuotation: boolean
+}) {
     const [tab, setTab] = useState<'quotation' | 'contract'>('quotation')
 
     // Quotation KPIs
@@ -41,14 +70,16 @@ export default function SalePageTabs({ quotations, contracts }: { quotations: an
                     <h1 className="page-title">Báo giá & Hợp đồng</h1>
                     <p className="page-subtitle">{quotations.length} báo giá — {contracts.length} hợp đồng</p>
                 </div>
-                <div className="page-actions">
-                    <Link href="/sale/new" className="btn btn-primary btn-sm">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        Tạo báo giá
-                    </Link>
-                </div>
+                {canCreateQuotation && (
+                    <div className="page-actions">
+                        <Link href="/sale/new" className="btn btn-primary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Tạo báo giá
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* Tabs */}

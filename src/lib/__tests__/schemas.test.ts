@@ -28,7 +28,11 @@ describe('CRM Schemas', () => {
         })
 
         it('accepts valid lead', () => {
-            const result = parseInput(createLeadSchema, { name: 'Công ty ABC', email: 'abc@test.com' })
+            const result = parseInput(createLeadSchema, {
+                name: 'Công ty ABC',
+                partnerName: 'Nguyen Van A',
+                email: 'abc@test.com',
+            })
             expect(result.success).toBe(true)
         })
 
@@ -39,7 +43,11 @@ describe('CRM Schemas', () => {
         })
 
         it('allows empty email', () => {
-            const result = parseInput(createLeadSchema, { name: 'Test', email: '' })
+            const result = parseInput(createLeadSchema, {
+                name: 'Test',
+                partnerName: 'Khach hang Test',
+                email: '',
+            })
             expect(result.success).toBe(true)
         })
     })
@@ -196,7 +204,9 @@ describe('Project Schemas', () => {
 
         it('accepts valid task', () => {
             const result = parseInput(createTaskSchema, {
-                phaseId: '550e8400-e29b-41d4-a716-446655440000', name: 'Vẽ mặt bằng',
+                projectId: '550e8400-e29b-41d4-a716-446655440000',
+                phaseId: '550e8400-e29b-41d4-a716-446655440000',
+                name: 'Vẽ mặt bằng',
             })
             expect(result.success).toBe(true)
         })

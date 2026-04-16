@@ -6,11 +6,12 @@ import { z } from 'zod'
 // ── CRM ──
 export const createLeadSchema = z.object({
     name: z.string().min(1, 'Tên lead là bắt buộc'),
-    contactName: z.string().optional(),
+    partnerName: z.string().min(1, 'Tên đối tác là bắt buộc'),
     email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
     phone: z.string().optional(),
-    expectedRevenue: z.coerce.number().min(0, 'Doanh thu phải >= 0').optional(),
-    stageId: z.string().uuid('Stage ID không hợp lệ').optional(),
+    expectedValue: z.coerce.number().min(0, 'Giá trị phải >= 0').optional(),
+    probability: z.coerce.number().min(0).max(100).optional(),
+    stageId: z.string().uuid('Stage ID không hợp lệ').optional().or(z.literal('').transform(() => undefined)).or(z.null().transform(() => undefined)),
     source: z.string().optional(),
     notes: z.string().optional(),
 })
@@ -19,6 +20,7 @@ export const updateLeadSchema = createLeadSchema.partial()
 
 // ── Sale Orders ──
 export const createOrderSchema = z.object({
+    name: z.string().optional(), // Auto-generated if not provided
     partnerName: z.string().min(1, 'Tên khách hàng là bắt buộc'),
     partnerEmail: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
     partnerPhone: z.string().optional(),
@@ -52,9 +54,10 @@ export const createInvoiceSchema = z.object({
 export const createPaymentSchema = z.object({
     invoiceId: z.string().uuid('Hóa đơn không hợp lệ'),
     amount: z.coerce.number().min(1, 'Số tiền phải > 0'),
+    paymentDate: z.string().min(1, 'Ngày thanh toán là bắt buộc'),
     method: z.enum(['CASH', 'BANK_TRANSFER', 'CREDIT_CARD']).optional(),
     reference: z.string().optional(),
-    notes: z.string().optional(),
+    note: z.string().optional(),
 })
 
 // ── Employees ──
@@ -87,6 +90,7 @@ export const createPhaseSchema = z.object({
 })
 
 export const createTaskSchema = z.object({
+    projectId: z.string().uuid('Dự án không hợp lệ'),
     phaseId: z.string().uuid(),
     name: z.string().min(1, 'Tên công việc là bắt buộc'),
     assigneeId: z.string().uuid().optional().nullable(),

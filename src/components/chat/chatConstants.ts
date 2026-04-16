@@ -200,6 +200,25 @@ export const S = {
         border: 'none', background: '#e5e7eb', color: '#374151', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
     } as CSSProperties,
+    fileChip: {
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '6px 10px', marginBottom: 8,
+        background: 'linear-gradient(135deg, #f0f4ff, #e8f0fe)',
+        borderRadius: 8, border: '1px solid #c7d2fe',
+        fontSize: 12, color: '#4338ca', fontWeight: 500,
+    } as CSSProperties,
+    fileChipRemove: {
+        padding: 2, borderRadius: 4, border: 'none',
+        background: 'transparent', color: '#6366f1',
+        cursor: 'pointer', display: 'flex', alignItems: 'center',
+        transition: 'background 0.15s',
+    } as CSSProperties,
+    attachBtn: {
+        padding: '8px', borderRadius: 8, border: '1px solid #e5e7eb',
+        background: '#fff', color: '#6b7280',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.15s',
+    } as CSSProperties,
 }
 
 export const KEYFRAMES = `

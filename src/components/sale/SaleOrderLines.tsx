@@ -9,6 +9,7 @@ interface SaleOrderLinesProps {
     order: any
     lines: Line[]
     setLines: React.Dispatch<React.SetStateAction<Line[]>>
+    canEdit: boolean
     editing: boolean
     setEditing: (v: boolean) => void
     saving: boolean
@@ -17,15 +18,17 @@ interface SaleOrderLinesProps {
 }
 
 export default function SaleOrderLines({
-    order, lines, setLines, editing, setEditing, saving, onSave, totalAmount,
+    order, lines, setLines, canEdit, editing, setEditing, saving, onSave, totalAmount,
 }: SaleOrderLinesProps) {
     return (
         <div className="card" style={{ padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>Chi tiết dịch vụ</div>
-                <button className="btn btn-ghost btn-sm" onClick={() => { if (editing) onSave(); else setEditing(true) }}>
-                    {saving ? '⏳' : editing ? '💾 Lưu' : '✏️ Sửa'}
-                </button>
+                {canEdit && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => { if (editing) onSave(); else setEditing(true) }}>
+                        {saving ? '⏳' : editing ? '💾 Lưu' : '✏️ Sửa'}
+                    </button>
+                )}
             </div>
 
             {editing ? (

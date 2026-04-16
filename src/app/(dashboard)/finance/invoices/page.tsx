@@ -1,5 +1,6 @@
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { getInvoices } from '@/lib/actions/finance'
+import { requirePagePermission } from '@/lib/page-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,6 +8,8 @@ const stateColors: Record<string, string> = { DRAFT: 'muted', POSTED: 'info', PA
 const stateLabels: Record<string, string> = { DRAFT: 'Nháp', POSTED: 'Đã xuất', PAID: 'Đã thanh toán', CANCELLED: 'Huỷ' }
 
 export default async function InvoicesPage() {
+    await requirePagePermission('finance.view')
+
     const invoices = await getInvoices()
 
     const totalAmount = invoices.reduce((s, i) => s + Number(i.amountTotal), 0)

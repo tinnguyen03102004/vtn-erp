@@ -4,6 +4,9 @@ import { useState } from 'react'
 
 interface SaleStateActionsProps {
     order: { id: string; name: string; state: string; docType: string }
+    canEditSale: boolean
+    canApproveSale: boolean
+    canCreateProject: boolean
     onSend: () => Promise<void>
     onApprove: () => Promise<void>
     onReject: (reason: string) => Promise<void>
@@ -14,7 +17,7 @@ interface SaleStateActionsProps {
 }
 
 export default function SaleStateActions({
-    order, onSend, onApprove, onReject, onConvertToContract, onSign, onDone, onStateChange,
+    order, canEditSale, canApproveSale, canCreateProject, onSend, onApprove, onReject, onConvertToContract, onSign, onDone, onStateChange,
 }: SaleStateActionsProps) {
     const [rejectReason, setRejectReason] = useState('')
     const [showRejectDialog, setShowRejectDialog] = useState(false)
@@ -25,6 +28,7 @@ export default function SaleStateActions({
         if (isQuotation) {
             switch (order.state) {
                 case 'DRAFT':
+                    if (!canEditSale) return null
                     return (
                         <>
                             <button className="btn btn-sm" style={{ background: '#3B82F6', color: '#fff', border: 'none' }} onClick={onSend}>{'📤'} Gửi CĐT</button>
@@ -32,21 +36,22 @@ export default function SaleStateActions({
                         </>
                     )
                 case 'SENT':
+                    if (!canEditSale && !canApproveSale) return null
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={onApprove}>{'✅'} CĐT duyệt</button>
-                            <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={() => setShowRejectDialog(true)}>{'❌'} Từ chối</button>
-                            <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('DRAFT')}>{'↩'} Về nháp</button>
+                            {canApproveSale && <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={onApprove}>{'✅'} CĐT duyệt</button>}
+                            {canEditSale && <button className="btn btn-sm" style={{ background: '#EF4444', color: '#fff', border: 'none' }} onClick={() => setShowRejectDialog(true)}>{'❌'} Từ chối</button>}
+                            {canEditSale && <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('DRAFT')}>{'↩'} Về nháp</button>}
                         </>
                     )
                 case 'APPROVED':
-                    return (
+                    return canEditSale ? (
                         <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={onConvertToContract}>{'📝'} Chuyển sang Hợp Đồng</button>
-                    )
+                    ) : null
                 case 'REJECTED': case 'EXPIRED': case 'CANCEL':
-                    return (
+                    return canEditSale ? (
                         <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('DRAFT')}>{'↩'} Mở lại</button>
-                    )
+                    ) : null
                 default: return null
             }
         }
@@ -54,6 +59,7 @@ export default function SaleStateActions({
         if (isContract) {
             switch (order.state) {
                 case 'NEGOTIATING':
+                    if (!canEditSale) return null
                     return (
                         <>
                             <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', border: 'none' }} onClick={onSign}>{'✅'} Ký hợp đồng</button>
@@ -61,14 +67,15 @@ export default function SaleStateActions({
                         </>
                     )
                 case 'SIGNED':
+                    if (!canEditSale && !canCreateProject) return null
                     return (
                         <>
-                            <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={onDone}>{'🏁'} Hoàn thành</button>
-                            <button className="btn btn-accent btn-sm" onClick={onConvertToContract}>{'🗒️'} Tạo dự án</button>
+                            {canEditSale && <button className="btn btn-sm" style={{ background: '#6366F1', color: '#fff', border: 'none' }} onClick={onDone}>{'🏁'} Hoàn thành</button>}
+                            {canCreateProject && <button className="btn btn-accent btn-sm" onClick={onConvertToContract}>{'🗒️'} Tạo dự án</button>}
                         </>
                     )
                 case 'CANCEL':
-                    return <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('NEGOTIATING')}>{'↩'} Mở lại</button>
+                    return canEditSale ? <button className="btn btn-ghost btn-sm" onClick={() => onStateChange('NEGOTIATING')}>{'↩'} Mở lại</button> : null
                 default: return null
             }
         }
