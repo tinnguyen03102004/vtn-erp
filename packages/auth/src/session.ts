@@ -7,7 +7,7 @@
  * NOTE: This module requires a configured Supabase client to be passed
  * via `initSessionClient()` before any session operations.
  */
-
+import 'server-only'
 import crypto from 'crypto'
 
 const SESSION_LIFETIME_DAYS = 7
