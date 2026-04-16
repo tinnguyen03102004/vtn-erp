@@ -17,29 +17,29 @@ import { useToast, ToastContainer } from '@/components/Toast'
 interface ProjectPhase {
     id: string
     name: string
-    state: string
-    sequence: number
+    state: string | null
+    sequence: number | null
     projectId: string
 }
 
 interface ProjectTask {
     id: string
     name: string
-    state: string
-    priority: string
+    state: string | null
+    priority: string | null
     phaseId: string | null
     projectId: string
 }
 
 interface ProjectTimesheet {
-    hours: number | string
+    hours: number | string | null
 }
 
 interface ProjectInvoice {
     id: string
-    name: string
-    state: string
-    amountTotal: number | string
+    name: string | null
+    state: string | null
+    amountTotal: number | string | null
     invoiceDate?: string | null
 }
 
@@ -47,7 +47,7 @@ interface ProjectData {
     id: string
     name: string
     code?: string | null
-    state: string
+    state: string | null
     budget?: number | string | null
     partnerName?: string | null
     manager?: { name: string | null } | null
@@ -113,7 +113,7 @@ export default function ProjectDetail({
     const [showAddPhase, setShowAddPhase] = useState(false)
     const [showAddTask, setShowAddTask] = useState<string | null>(null)
 
-    const transitions = stateFlow[project.state] || []
+    const transitions = stateFlow[project.state ?? 'DRAFT'] || []
     const totalHours = (project.timesheets || []).reduce((sum: number, timesheet: ProjectTimesheet) => sum + Number(timesheet.hours || 0), 0)
     const doneCount = tasks.filter((task: ProjectTask) => task.state === 'DONE').length
     const progress = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0
@@ -260,7 +260,7 @@ export default function ProjectDetail({
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                         <h1 className="page-title" style={{ marginBottom: 0 }}>{project.name}</h1>
-                        <span className={`badge badge-${stateColors[project.state]}`}>{stateLabels[project.state]}</span>
+                        <span className={`badge badge-${stateColors[project.state ?? 'DRAFT']}`}>{stateLabels[project.state ?? 'DRAFT']}</span>
                         {project.code && <span style={{ fontSize: 12, color: '#8FA3BF' }}>{project.code}</span>}
                     </div>
                     <p className="page-subtitle">{project.partnerName ?? project.manager?.name ?? '-'} | Budget: {formatCurrency(Number(project.budget ?? 0))}</p>
@@ -321,7 +321,7 @@ export default function ProjectDetail({
                                     <span style={{ fontWeight: 700, fontSize: 14 }}>{phase.name}</span>
                                     {canEditProject ? (
                                         <select
-                                            value={phase.state}
+                                            value={phase.state ?? 'TODO'}
                                             onChange={(event) => handlePhaseState(phase.id, event.target.value)}
                                             style={{ fontSize: 11, border: '1px solid #CBD5E1', borderRadius: 6, padding: '2px 6px', cursor: 'pointer' }}
                                         >
@@ -330,7 +330,7 @@ export default function ProjectDetail({
                                             <option value="DONE">Xong</option>
                                         </select>
                                     ) : (
-                                        <span className="badge badge-muted">{phaseLabels[phase.state] ?? phase.state}</span>
+                                        <span className="badge badge-muted">{phaseLabels[phase.state ?? ''] ?? phase.state}</span>
                                     )}
                                 </div>
 
@@ -382,7 +382,7 @@ export default function ProjectDetail({
                                             {canEditProject ? (
                                                 <>
                                                     <select
-                                                        value={task.state}
+                                                        value={task.state ?? 'TODO'}
                                                         onChange={(event) => handleTaskState(task.id, event.target.value)}
                                                         style={{ fontSize: 11, border: '1px solid #E2E8F0', borderRadius: 4, padding: '1px 4px' }}
                                                     >
@@ -399,7 +399,7 @@ export default function ProjectDetail({
                                                     </button>
                                                 </>
                                             ) : (
-                                                <span className="badge badge-muted">{taskLabels[task.state] ?? task.state}</span>
+                                                <span className="badge badge-muted">{taskLabels[task.state ?? ''] ?? task.state}</span>
                                             )}
                                         </div>
                                     </div>

@@ -75,7 +75,7 @@ export default async function InvoicesPage() {
                                     <td><span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1F3A5F', fontSize: 13 }}>{inv.name}</span></td>
                                     <td style={{ fontWeight: 600, fontSize: 13 }}>{inv.partnerName}</td>
                                     <td style={{ fontSize: 13, color: '#4A5E78' }}>{inv.project?.name ?? '—'}</td>
-                                    <td><span className={`badge badge-${stateColors[inv.state]}`}>{stateLabels[inv.state]}</span></td>
+                                    <td><span className={`badge badge-${stateColors[inv.state ?? ''] ?? 'muted'}`}>{stateLabels[inv.state ?? ''] ?? inv.state}</span></td>
                                     <td style={{ color: '#8FA3BF', fontSize: 13 }}>{inv.invoiceDate ? formatDate(String(inv.invoiceDate).split('T')[0]) : '—'}</td>
                                     <td style={{ color: '#8FA3BF', fontSize: 13 }}>{inv.dueDate ? formatDate(String(inv.dueDate).split('T')[0]) : '—'}</td>
                                     <td style={{ fontWeight: 700, color: '#1F3A5F' }}>{formatCurrency(Number(inv.amountTotal))}</td>

@@ -104,7 +104,7 @@ export async function convertLeadToOrder(leadId: string): Promise<ActionResult<R
             partnerEmail: lead.email,
             partnerPhone: lead.phone,
             state: 'DRAFT',
-            totalAmount: Number(lead.expectedValue || 0),
+            totalAmount: Number(lead.expectedRevenue || 0),
         })
         .select()
         .single()

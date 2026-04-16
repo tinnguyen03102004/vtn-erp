@@ -6,12 +6,56 @@ import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createOrderSchema, updateOrderSchema, orderLineSchema, milestoneSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 import { createLogger } from '@vtn/logger'
-import { formatVnd } from '@vtn/vietnam'
+import { formatVnd, calculateVat } from '@vtn/vietnam'
 import type { OrderLineInput, MilestoneInput } from '@/lib/types'
 
 const log = createLogger({ module: 'sale' })
 
-// -- Quotations --
+// ── Helpers ──
+
+/** Recalculate order totals from lines, then apply order-level discount + VAT */
+async function recalcOrderTotals(orderId: string) {
+    const { data: lines } = await supabase.from('sale_order_lines').select('*').eq('orderId', orderId)
+    const { data: order } = await supabase.from('sale_orders').select('discountPercent, vatRate').eq('id', orderId).single()
+    if (!order) return
+
+    // Sum line subtotals (each line already has its own discount applied)
+    const totalAmount = (lines || []).reduce((s: number, l: Record<string, unknown>) => s + Number(l.subtotal || 0), 0)
+
+    const discountPct = Number(order.discountPercent || 0)
+    const discountAmount = Math.round(totalAmount * discountPct / 100)
+    const afterDiscount = totalAmount - discountAmount
+
+    const vatRate = Number(order.vatRate ?? 10) as 0 | 5 | 8 | 10
+    const vat = calculateVat(afterDiscount, vatRate)
+    const grandTotal = afterDiscount + vat.vatAmount
+
+    await supabase.from('sale_orders').update({
+        totalAmount,
+        discountAmount,
+        vatAmount: vat.vatAmount,
+        grandTotal,
+        updatedAt: new Date().toISOString(),
+    }).eq('id', orderId)
+}
+
+/** Calculate single line subtotal with per-line discount */
+function calcLineSubtotal(qty: number, unitPrice: number, discountPercent: number = 0): number {
+    const raw = qty * unitPrice
+    return Math.round(raw * (1 - discountPercent / 100))
+}
+
+// ── CRM Contacts for Quotation picker ──
+export async function getCrmContacts() {
+    await requirePermission('sale.view')
+    const { data } = await supabase
+        .from('crm_leads')
+        .select('id, name, partnerName, email, phone')
+        .order('createdAt', { ascending: false })
+    return data || []
+}
+
+// ── Quotations ──
 export async function getQuotations() {
     await requirePermission('sale.view')
     const { data: orders } = await supabase
@@ -23,7 +67,7 @@ export async function getQuotations() {
     return orders || []
 }
 
-// -- Contracts --
+// ── Contracts ──
 export async function getContracts() {
     await requirePermission('sale.view')
     const { data: orders } = await supabase
@@ -42,7 +86,7 @@ export async function getContracts() {
     }))
 }
 
-// -- All orders (for backward compat) --
+// ── All orders ──
 export async function getOrders() {
     await requirePermission('sale.view')
     const { data: orders } = await supabase
@@ -75,21 +119,42 @@ export async function getOrder(id: string) {
         quotation = data
     }
 
-    return { ...order, lines: lines || [], milestones: milestones || [], quotation }
+    // If linked to a CRM lead, fetch lead info
+    let lead = null
+    if (order.leadId) {
+        const { data } = await supabase.from('crm_leads').select('id, name, partnerName, email, phone').eq('id', order.leadId).single()
+        lead = data
+    }
+
+    return { ...order, lines: lines || [], milestones: milestones || [], quotation, lead }
 }
 
-// -- Create (always starts as Quotation-DRAFT) --
+// ── Create (always starts as Quotation-DRAFT) ──
 export async function createOrder(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const parsed = parseInput(createOrderSchema, formData)
     if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
 
     const orderName = parsed.data.name || `BG-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
-    const { data, error } = await supabase.from('sale_orders').insert({ 
+
+    // Calculate totals with VAT
+    const totalAmount = Number(parsed.data.totalAmount || 0)
+    const discountPct = Number(parsed.data.discountPercent || 0)
+    const discountAmt = Math.round(totalAmount * discountPct / 100)
+    const afterDiscount = totalAmount - discountAmt
+    const vatRate = Number(parsed.data.vatRate ?? 10) as 0 | 5 | 8 | 10
+    const vat = calculateVat(afterDiscount, vatRate)
+
+    const { data, error } = await supabase.from('sale_orders').insert({
         ...parsed.data,
         name: orderName,
         docType: 'QUOTATION',
         state: 'DRAFT',
+        discountAmount: discountAmt,
+        vatAmount: vat.vatAmount,
+        grandTotal: afterDiscount + vat.vatAmount,
+        revision: 1,
+        createdById: user.id,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).select().single()
     if (error) return fail(error.message)
@@ -111,6 +176,11 @@ export async function updateOrder(id: string, formData: unknown): Promise<Action
         .eq('id', id).select().single()
     if (error) return fail(error.message)
 
+    // Recalc totals if discount or VAT changed
+    if (parsed.data.discountPercent !== undefined || parsed.data.vatRate !== undefined) {
+        await recalcOrderTotals(id)
+    }
+
     await logAudit({ userId: user.id, action: 'update', entity: 'sale_order', entityId: id })
     return ok(data)
 }
@@ -126,7 +196,7 @@ export async function deleteOrder(id: string): Promise<ActionResult<void>> {
     return ok(undefined as void)
 }
 
-// -- Quotation State Transitions --
+// ── Quotation State Transitions ──
 export async function sendQuotation(id: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const { data, error } = await supabase.from('sale_orders')
@@ -134,7 +204,7 @@ export async function sendQuotation(id: string): Promise<ActionResult<Record<str
         .eq('id', id).eq('docType', 'QUOTATION').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'send', entity: 'sale_order', entityId: id, details: 'G?i báo giá' })
+    await logAudit({ userId: user.id, action: 'send', entity: 'sale_order', entityId: id, details: 'Gửi báo giá cho CĐT' })
     return ok(data)
 }
 
@@ -145,7 +215,7 @@ export async function approveQuotation(id: string): Promise<ActionResult<Record<
         .eq('id', id).eq('docType', 'QUOTATION').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'approve', entity: 'sale_order', entityId: id, details: 'Duy?t báo giá' })
+    await logAudit({ userId: user.id, action: 'approve', entity: 'sale_order', entityId: id, details: 'CĐT duyệt báo giá' })
     return ok(data)
 }
 
@@ -156,17 +226,79 @@ export async function rejectQuotation(id: string, reason?: string): Promise<Acti
         .eq('id', id).eq('docType', 'QUOTATION').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'reject', entity: 'sale_order', entityId: id, details: `T? ch?i: ${reason || ''}` })
+    await logAudit({ userId: user.id, action: 'reject', entity: 'sale_order', entityId: id, details: `Từ chối: ${reason || ''}` })
     return ok(data)
 }
 
-// -- Convert Quotation ? Contract --
+// ── Revision: Create new version of Quotation ──
+export async function reviseQuotation(quotationId: string): Promise<ActionResult<Record<string, unknown>>> {
+    const user = await requirePermission('sale.edit')
+    const { data: original } = await supabase.from('sale_orders').select('*').eq('id', quotationId).single()
+    if (!original) return fail('Báo giá không tồn tại')
+
+    const newRevision = (Number(original.revision) || 1) + 1
+    const baseName = String(original.name).replace(/ v\d+$/, '')
+    const newName = `${baseName} v${newRevision}`
+
+    // Create new revision
+    const { data: revised, error } = await supabase.from('sale_orders').insert({
+        name: newName,
+        docType: 'QUOTATION',
+        state: 'DRAFT',
+        quotationId: quotationId, // link to original
+        leadId: original.leadId,
+        partnerName: original.partnerName,
+        partnerEmail: original.partnerEmail,
+        partnerPhone: original.partnerPhone,
+        partnerAddress: original.partnerAddress,
+        partnerTaxCode: original.partnerTaxCode,
+        totalAmount: original.totalAmount,
+        discountPercent: original.discountPercent,
+        discountAmount: original.discountAmount,
+        vatRate: original.vatRate,
+        vatAmount: original.vatAmount,
+        grandTotal: original.grandTotal,
+        notes: original.notes,
+        revision: newRevision,
+        createdById: user.id,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any).select().single()
+    if (error) return fail(error.message)
+
+    // Copy lines
+    const { data: lines } = await supabase.from('sale_order_lines').select('*').eq('orderId', quotationId)
+    if (lines && lines.length > 0) {
+        const newLines = lines.map((l: Record<string, unknown>) => ({
+            orderId: revised.id,
+            description: l.description,
+            qty: l.qty,
+            unit: l.unit,
+            unitPrice: l.unitPrice,
+            discountPercent: l.discountPercent,
+            vatRate: l.vatRate,
+            subtotal: l.subtotal,
+            sequence: l.sequence,
+        }))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await supabase.from('sale_order_lines').insert(newLines as any[])
+    }
+
+    // Mark original as superseded
+    await supabase.from('sale_orders').update({ state: 'EXPIRED', updatedAt: new Date().toISOString() }).eq('id', quotationId)
+
+    log.info('Quotation revised', { originalId: quotationId, revisedId: revised.id, revision: newRevision })
+    await logAudit({ userId: user.id, action: 'create', entity: 'sale_order', entityId: revised.id, details: `Tạo phiên bản mới: ${newName} (từ ${original.name})` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(revised as any)
+}
+
+// ── Convert Quotation → Contract ──
 export async function convertToContract(quotationId: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const { data: quotation } = await supabase.from('sale_orders').select('*').eq('id', quotationId).single()
-    if (!quotation) return fail('Báo giá không t?n t?i')
+    if (!quotation) return fail('Báo giá không tồn tại')
 
-    const name = `HÐ-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
+    const name = `HĐ-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
     const { data: contract, error } = await supabase.from('sale_orders').insert({
         name,
         docType: 'CONTRACT',
@@ -176,9 +308,16 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
         partnerName: quotation.partnerName,
         partnerEmail: quotation.partnerEmail,
         partnerPhone: quotation.partnerPhone,
+        partnerAddress: quotation.partnerAddress,
+        partnerTaxCode: quotation.partnerTaxCode,
         totalAmount: quotation.totalAmount,
+        discountPercent: quotation.discountPercent,
+        discountAmount: quotation.discountAmount,
+        vatRate: quotation.vatRate,
+        vatAmount: quotation.vatAmount,
+        grandTotal: quotation.grandTotal,
         notes: quotation.notes,
-        createdById: quotation.createdById,
+        createdById: user.id,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).select().single()
     if (error) return fail(error.message)
@@ -190,16 +329,18 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
             orderId: contract.id,
             description: l.description,
             qty: l.qty,
+            unit: l.unit,
             unitPrice: l.unitPrice,
+            discountPercent: l.discountPercent,
+            vatRate: l.vatRate,
             subtotal: l.subtotal,
             sequence: l.sequence,
         }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: lineErr } = await supabase.from('sale_order_lines').insert(newLines as any[])
         if (lineErr) {
-            // Compensating rollback: delete orphaned contract
             await supabase.from('sale_orders').delete().eq('id', contract.id)
-            return fail(`Chuy?n báo giá th?t b?i: ${lineErr.message}`)
+            return fail(`Chuyển báo giá thất bại: ${lineErr.message}`)
         }
     }
 
@@ -209,7 +350,7 @@ export async function convertToContract(quotationId: string): Promise<ActionResu
     return ok(contract as any)
 }
 
-// -- Contract State Transitions --
+// ── Contract State Transitions ──
 export async function signContract(id: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const { data, error } = await supabase.from('sale_orders')
@@ -217,7 +358,7 @@ export async function signContract(id: string): Promise<ActionResult<Record<stri
         .eq('id', id).eq('docType', 'CONTRACT').select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'sign', entity: 'sale_order', entityId: id, details: 'Ký h?p d?ng' })
+    await logAudit({ userId: user.id, action: 'sign', entity: 'sale_order', entityId: id, details: 'Ký hợp đồng' })
     return ok(data)
 }
 
@@ -230,15 +371,14 @@ export async function updateOrderState(id: string, state: string): Promise<Actio
     const { data, error } = await supabase.from('sale_orders').update(extra).eq('id', id).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order', entityId: id, details: `Chuy?n tr?ng thái ? ${state}` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order', entityId: id, details: `Chuyển trạng thái → ${state}` })
     return ok(data)
 }
 
-// -- Order Lines --
+// ── Order Lines (with per-line discount) ──
 export async function saveOrderLines(orderId: string, lines: OrderLineInput[]): Promise<ActionResult<void>> {
     const user = await requirePermission('sale.edit')
 
-    // Validate each line
     for (const line of lines) {
         const parsed = parseInput(orderLineSchema, line)
         if (!parsed.success) return fail(`Dòng "${line.description || ''}": ${parsed.error}`, parsed.fieldErrors)
@@ -250,22 +390,26 @@ export async function saveOrderLines(orderId: string, lines: OrderLineInput[]): 
             orderId,
             description: l.description,
             qty: l.qty || 1,
+            unit: l.unit || 'bộ',
             unitPrice: l.unitPrice || 0,
-            subtotal: (l.qty || 1) * (l.unitPrice || 0),
+            discountPercent: l.discountPercent || 0,
+            vatRate: l.vatRate ?? 10,
+            subtotal: calcLineSubtotal(l.qty || 1, l.unitPrice || 0, l.discountPercent || 0),
             sequence: i,
         }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await supabase.from('sale_order_lines').insert(rows as any[])
         if (error) return fail(error.message)
     }
-    const total = lines.reduce((s, l) => s + (l.qty || 1) * (l.unitPrice || 0), 0)
-    await supabase.from('sale_orders').update({ totalAmount: total, updatedAt: new Date().toISOString() }).eq('id', orderId)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order_lines', entityId: orderId, details: `C?p nh?t ${lines.length} dòng d?ch v?` })
+    // Recalculate order totals
+    await recalcOrderTotals(orderId)
+
+    await logAudit({ userId: user.id, action: 'update', entity: 'sale_order_lines', entityId: orderId, details: `Cập nhật ${lines.length} dòng dịch vụ` })
     return ok(undefined as void)
 }
 
-// -- Milestones --
+// ── Milestones ──
 export async function addMilestone(formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('sale.edit')
     const parsed = parseInput(milestoneSchema, formData)
@@ -275,7 +419,7 @@ export async function addMilestone(formData: unknown): Promise<ActionResult<Reco
     const { data, error } = await supabase.from('sale_milestones').insert(parsed.data as any).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'create', entity: 'sale_milestone', entityId: data.id, details: `Thêm m?c: ${data.name}` })
+    await logAudit({ userId: user.id, action: 'create', entity: 'sale_milestone', entityId: data.id, details: `Thêm mốc: ${data.name}` })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ok(data as any)
 }
@@ -283,16 +427,15 @@ export async function addMilestone(formData: unknown): Promise<ActionResult<Reco
 export async function saveMilestones(orderId: string, milestones: MilestoneInput[]): Promise<ActionResult<void>> {
     const user = await requirePermission('sale.edit')
 
-    // Validate each milestone
     for (const m of milestones) {
         const parsed = parseInput(milestoneSchema, m)
-        if (!parsed.success) return fail(`M?c "${m.name || ''}": ${parsed.error}`, parsed.fieldErrors)
+        if (!parsed.success) return fail(`Mốc "${m.name || ''}": ${parsed.error}`, parsed.fieldErrors)
     }
 
     await supabase.from('sale_milestones').delete().eq('orderId', orderId)
     if (milestones.length > 0) {
-        const { data: order } = await supabase.from('sale_orders').select('totalAmount').eq('id', orderId).single()
-        const total = Number(order?.totalAmount || 0)
+        const { data: order } = await supabase.from('sale_orders').select('grandTotal, totalAmount').eq('id', orderId).single()
+        const total = Number(order?.grandTotal || order?.totalAmount || 0)
         const rows = milestones.map((m, i) => ({
             orderId,
             name: m.name,
@@ -300,6 +443,7 @@ export async function saveMilestones(orderId: string, milestones: MilestoneInput
             amount: Math.round(total * (m.percent || 0) / 100),
             dueDate: m.dueDate || null,
             state: m.state || 'PENDING',
+            invoiceId: m.invoiceId || null,
             sequence: i,
         }))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -307,26 +451,72 @@ export async function saveMilestones(orderId: string, milestones: MilestoneInput
         if (error) return fail(error.message)
     }
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'sale_milestones', entityId: orderId, details: `C?p nh?t ${milestones.length} m?c thanh toán` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'sale_milestones', entityId: orderId, details: `Cập nhật ${milestones.length} mốc thanh toán` })
     return ok(undefined as void)
 }
 
-// -- Convert Sale ? Project --
+// ── Milestone → Invoice (auto-create invoice from milestone) ──
+export async function createInvoiceFromMilestone(milestoneId: string): Promise<ActionResult<Record<string, unknown>>> {
+    const user = await requirePermission('finance.edit')
+
+    const { data: milestone } = await supabase.from('sale_milestones').select('*').eq('id', milestoneId).single()
+    if (!milestone) return fail('Mốc thanh toán không tồn tại')
+    if (milestone.state === 'PAID') return fail('Mốc này đã được thanh toán')
+
+    const { data: order } = await supabase.from('sale_orders').select('*').eq('id', milestone.orderId).single()
+    if (!order) return fail('Đơn hàng không tồn tại')
+
+    const amount = Number(milestone.amount || 0)
+    const vatRate = Number(order.vatRate || 10) as 0 | 5 | 8 | 10
+    const vat = calculateVat(amount, vatRate)
+
+    // Create invoice
+    const invName = `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
+    const { data: invoice, error } = await supabase.from('invoices').insert({
+        name: invName,
+        partnerName: order.partnerName,
+        partnerAddress: order.partnerAddress,
+        partnerTaxId: order.partnerTaxCode,
+        amountUntaxed: amount,
+        vatAmount: vat.vatAmount,
+        amountTotal: amount + vat.vatAmount,
+        state: 'DRAFT',
+        invoiceDate: new Date().toISOString().split('T')[0],
+        dueDate: milestone.dueDate || null,
+        description: `${milestone.name} — ${order.name}`,
+        milestoneId: milestoneId,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any).select().single()
+    if (error) return fail(error.message)
+
+    // Link milestone to invoice
+    await supabase.from('sale_milestones').update({
+        invoiceId: invoice.id,
+        state: 'INVOICED',
+    }).eq('id', milestoneId)
+
+    log.info('Invoice created from milestone', { milestoneId, invoiceId: invoice.id, amount: formatVnd(amount) })
+    await logAudit({ userId: user.id, action: 'create', entity: 'invoice', entityId: invoice.id, details: `Tạo HĐ từ mốc: ${milestone.name} — ${formatVnd(amount)}` })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok(invoice as any)
+}
+
+// ── Convert Sale → Project ──
 export async function convertOrderToProject(orderId: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
     const { data: order } = await supabase.from('sale_orders').select('*').eq('id', orderId).single()
-    if (!order) return fail('Ðon hàng không t?n t?i')
+    if (!order) return fail('Đơn hàng không tồn tại')
 
     const code = `PRJ-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`
     const { data: project, error } = await supabase
         .from('projects')
         .insert({
-            name: `D? án ${order.partnerName}`,
+            name: `Dự án ${order.partnerName}`,
             code,
             saleOrderId: order.id,
             partnerName: order.partnerName,
             state: 'DRAFT',
-            budget: order.totalAmount,
+            budget: order.grandTotal || order.totalAmount,
         })
         .select()
         .single()
@@ -346,7 +536,7 @@ export async function convertOrderToProject(orderId: string): Promise<ActionResu
         await supabase.from('project_phases').insert(phases as any[])
     }
 
-    log.info('Order converted to project', { orderId, projectId: project.id, code, budget: formatVnd(Number(order.totalAmount || 0)) })
+    log.info('Order converted to project', { orderId, projectId: project.id, code, budget: formatVnd(Number(order.grandTotal || order.totalAmount || 0)) })
     await logAudit({ userId: user.id, action: 'convert', entity: 'sale_order', entityId: orderId, details: `Order → Project ${project.id}` })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ok(project as any)

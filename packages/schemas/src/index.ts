@@ -24,6 +24,12 @@ export const createOrderSchema = z.object({
     partnerName: z.string().min(1, 'Tên khách hàng là bắt buộc'),
     partnerEmail: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
     partnerPhone: z.string().optional(),
+    partnerAddress: z.string().optional(),
+    partnerTaxCode: z.string().optional(),
+    totalAmount: z.coerce.number().min(0).optional(),
+    discountPercent: z.coerce.number().min(0).max(100).optional(),
+    vatRate: z.coerce.number().min(0).max(100).optional(),
+    validityDate: z.string().optional(),
     leadId: z.string().uuid().optional().nullable(),
     notes: z.string().optional(),
 })
@@ -32,14 +38,21 @@ export const updateOrderSchema = createOrderSchema.partial()
 
 export const orderLineSchema = z.object({
     description: z.string().min(1, 'Mô tả hạng mục là bắt buộc'),
-    qty: z.coerce.number().min(1, 'Số lượng phải >= 1'),
+    qty: z.coerce.number().min(0.01, 'Số lượng phải > 0'),
+    unit: z.string().optional(),
     unitPrice: z.coerce.number().min(0, 'Đơn giá phải >= 0'),
+    discountPercent: z.coerce.number().min(0).max(100).optional(),
+    vatRate: z.coerce.number().min(0).max(100).optional(),
 })
 
 export const milestoneSchema = z.object({
     name: z.string().min(1, 'Tên mốc là bắt buộc'),
     percent: z.coerce.number().min(0).max(100, '% phải từ 0-100'),
-    dueDate: z.string().optional(),
+    amount: z.coerce.number().min(0).optional(),
+    dueDate: z.string().optional().nullable(),
+    state: z.string().optional(),
+    invoiceId: z.string().uuid().optional().nullable(),
+    sequence: z.coerce.number().min(0).optional(),
 })
 
 // ── Finance ──

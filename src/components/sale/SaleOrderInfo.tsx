@@ -13,6 +13,8 @@ export default function SaleOrderInfo({ order, isQuotation }: SaleOrderInfoProps
         { label: 'Khách hàng', value: order.partnerName },
         { label: 'Email', value: order.partnerEmail ?? '—' },
         { label: 'SĐT', value: order.partnerPhone ?? '—' },
+        ...(order.partnerAddress ? [{ label: 'Địa chỉ', value: order.partnerAddress }] : []),
+        ...(order.partnerTaxCode ? [{ label: 'MST', value: order.partnerTaxCode }] : []),
         { label: 'Ngày tạo', value: order.createdAt ? formatDate(String(order.createdAt).split('T')[0]) : '—' },
         ...(isQuotation ? [
             { label: 'Hiệu lực', value: order.validityDate ? formatDate(String(order.validityDate).split('T')[0]) : '—' },

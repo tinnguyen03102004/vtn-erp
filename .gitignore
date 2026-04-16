@@ -17,7 +17,11 @@
 
 # next.js
 /.next/
+src/.next/
 /out/
+
+# supabase
+supabase/.temp/
 
 # production
 /build

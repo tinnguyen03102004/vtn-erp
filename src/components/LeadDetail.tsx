@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from 'react'
@@ -28,7 +28,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
             email: form.email || null,
             phone: form.phone || null,
             source: form.source || null,
-            expectedValue: Number(form.expectedValue) || 0,
+            expectedRevenue: Number(form.expectedRevenue) || 0,
             notes: form.notes || null,
             updatedAt: new Date().toISOString(),
         })
@@ -64,7 +64,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
         { key: 'email', label: 'Email', type: 'email' },
         { key: 'phone', label: 'Điện thoại' },
         { key: 'source', label: 'Nguồn' },
-        { key: 'expectedValue', label: 'Giá trị ước tính', type: 'number' },
+        { key: 'expectedRevenue', label: 'Giá trị ước tính', type: 'number' },
     ] as const
 
     return (
@@ -84,7 +84,7 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                         <h1 className="page-title" style={{ marginBottom: 0 }}>{lead.name}</h1>
                         <span className="badge badge-info">{lead.source ?? '—'}</span>
                     </div>
-                    <p className="page-subtitle">{lead.partnerName} • {formatCurrency(Number(lead.expectedValue ?? 0))} • {lead.probability}% xác suất</p>
+                    <p className="page-subtitle">{lead.partnerName} • {formatCurrency(Number(lead.expectedRevenue ?? 0))} • {lead.probability}% xác suất</p>
                 </div>
                 <div className="page-actions">
                     <button className="btn btn-ghost btn-sm" style={{ color: '#EF4444' }} onClick={handleDelete}>Xóa</button>
@@ -154,9 +154,9 @@ export default function LeadDetail({ lead: initialLead }: { lead: Lead }) {
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Cơ hội kinh doanh</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             {[
-                                { label: 'Giá trị ước tính', value: formatCurrency(Number(lead.expectedValue ?? 0)), color: '#1F3A5F' },
+                                { label: 'Giá trị ước tính', value: formatCurrency(Number(lead.expectedRevenue ?? 0)), color: '#1F3A5F' },
                                 { label: 'Xác suất', value: `${lead.probability ?? 0}%`, color: '#C9A84C' },
-                                { label: 'Giá trị kỳ vọng', value: formatCurrency(Number(lead.expectedValue ?? 0) * Number(lead.probability ?? 0) / 100), color: '#22C55E' },
+                                { label: 'Giá trị kỳ vọng', value: formatCurrency(Number(lead.expectedRevenue ?? 0) * Number(lead.probability ?? 0) / 100), color: '#22C55E' },
                                 { label: 'Nguồn', value: lead.source ?? '—', color: '#4A5E78' },
                             ].map(({ label, value, color }) => (
                                 <div key={label} style={{ background: '#F8F9FB', borderRadius: 8, padding: '10px 12px' }}>

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 interface SaleStateActionsProps {
-    order: { id: string; name: string; state: string; docType: string }
+    order: { id: string; name: string | null; state: string | null; docType: string }
     canEditSale: boolean
     canApproveSale: boolean
     canCreateProject: boolean

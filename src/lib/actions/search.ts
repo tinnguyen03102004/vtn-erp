@@ -17,7 +17,7 @@ export async function globalSearch(query: string): Promise<ActionResult<SearchRe
     const results: SearchResult[] = []
 
     const [leads, orders, projects, invoices, employees] = await Promise.all([
-        supabase.from('crm_leads').select('id, name, partnerName, expectedValue').ilike('name', q).limit(5),
+        supabase.from('crm_leads').select('id, name, partnerName, expectedRevenue').ilike('name', q).limit(5),
         supabase.from('sale_orders').select('id, name, partnerName, totalAmount').ilike('name', q).limit(5),
         supabase.from('projects').select('id, name, code, partnerName').ilike('name', q).limit(5),
         supabase.from('invoices').select('id, name, partnerName, amountTotal').ilike('name', q).limit(5),

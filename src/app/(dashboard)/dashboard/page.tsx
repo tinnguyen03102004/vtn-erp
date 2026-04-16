@@ -289,7 +289,7 @@ export default async function DashboardPage() {
                                                 </div>
                                                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                                     <div style={{ fontSize: 12, fontWeight: 700, color: '#1F3A5F' }}>
-                                                        {formatCurrency(Number(lead.expectedValue ?? 0))}
+                                                        {formatCurrency(Number(lead.expectedRevenue ?? 0))}
                                                     </div>
                                                     <span className="badge badge-muted" style={{ marginTop: 4 }}>
                                                         {lead.source ?? '—'}

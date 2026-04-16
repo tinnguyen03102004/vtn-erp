@@ -78,7 +78,7 @@ const FIELD_LABELS: Record<string, string> = {
     partnerName: 'Khách hàng',
     email: 'Email',
     phone: 'SĐT',
-    expectedValue: 'Giá trị dự kiến',
+    expectedRevenue: 'Giá trị dự kiến',
     totalAmount: 'Tổng tiền',
     notes: 'Ghi chú',
     partnerEmail: 'Email KH',
@@ -98,7 +98,7 @@ const FIELD_LABELS: Record<string, string> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatArgValue(key: string, val: any): string {
     if (val === null || val === undefined) return '—'
-    if (typeof val === 'number' && ['expectedValue', 'totalAmount', 'salary', 'amount'].includes(key)) {
+    if (typeof val === 'number' && ['expectedRevenue', 'totalAmount', 'salary', 'amount'].includes(key)) {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(val)
     }
     return String(val)

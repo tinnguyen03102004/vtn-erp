@@ -74,7 +74,7 @@ function formatSuccessMessage(toolName: string, args: Record<string, any>, resul
             return `✅ Đã tạo lead **${args.partnerName}** thành công!` +
                 (args.email ? `\n• Email: ${args.email}` : '') +
                 (args.phone ? `\n• SĐT: ${args.phone}` : '') +
-                (args.expectedValue ? `\n• Giá trị dự kiến: ${fmtVND(args.expectedValue)}` : '') +
+                (args.expectedRevenue ? `\n• Giá trị dự kiến: ${fmtVND(args.expectedRevenue)}` : '') +
                 '\n\nBạn có thể xem lead mới trong **CRM & Leads**.'
 
         case 'create_quotation':

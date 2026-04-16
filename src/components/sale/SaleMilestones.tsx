@@ -2,7 +2,7 @@
 
 import { formatCurrency, formatDate } from '@/lib/utils'
 
-type Milestone = { id?: string; name: string; percent: number; dueDate: string | null; state: string; amount?: number }
+type Milestone = { id?: string; name: string; percent: number | null; dueDate: string | null; state: string | null; amount?: number | null; invoiceId?: string | null }
 
 const msStateLabels: Record<string, string> = { PAID: 'Đã thanh toán', INVOICED: 'Đã xuất HĐ', PENDING: 'Chưa đến hạn' }
 
@@ -45,7 +45,7 @@ export default function SaleMilestones({
                                     style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#EF4444' }}>✕</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 8 }}>
-                                <input className="form-input" type="number" value={ms.percent} placeholder="%"
+                                <input className="form-input" type="number" value={ms.percent ?? 0} placeholder="%"
                                     onChange={e => setMilestones(prev => prev.map((m, j) => j === i ? { ...m, percent: +e.target.value || 0 } : m))} />
                                 <input className="form-input" type="date" value={ms.dueDate || ''}
                                     onChange={e => setMilestones(prev => prev.map((m, j) => j === i ? { ...m, dueDate: e.target.value } : m))} />
@@ -54,8 +54,8 @@ export default function SaleMilestones({
                     ))}
                     <button onClick={() => setMilestones(prev => [...prev, { name: `Milestone ${prev.length + 1}`, percent: 0, dueDate: '', state: 'PENDING' }])}
                         className="btn btn-ghost btn-sm" style={{ border: '1.5px dashed #CBD5E1' }}>+ Thêm milestone</button>
-                    <div style={{ fontSize: 12, color: milestones.reduce((s, m) => s + m.percent, 0) === 100 ? '#22C55E' : '#EF4444', fontWeight: 600 }}>
-                        Tổng: {milestones.reduce((s, m) => s + m.percent, 0)}% {milestones.reduce((s, m) => s + m.percent, 0) !== 100 && '(cần = 100%)'}
+                    <div style={{ fontSize: 12, color: milestones.reduce((s, m) => s + (m.percent ?? 0), 0) === 100 ? '#22C55E' : '#EF4444', fontWeight: 600 }}>
+                        Tổng: {milestones.reduce((s, m) => s + (m.percent ?? 0), 0)}% {milestones.reduce((s, m) => s + (m.percent ?? 0), 0) !== 100 && '(cần = 100%)'}
                     </div>
                 </div>
             ) : (
@@ -78,7 +78,7 @@ export default function SaleMilestones({
                                     }}>{ms.state === 'PAID' ? '✓' : i + 1}</div>
                                     <span style={{ fontWeight: 700, fontSize: 13 }}>{ms.name}</span>
                                 </div>
-                                <span className={`badge badge-${ms.state === 'PAID' ? 'success' : 'muted'}`}>{msStateLabels[ms.state] || ms.state}</span>
+                                <span className={`badge badge-${ms.state === 'PAID' ? 'success' : 'muted'}`}>{msStateLabels[ms.state ?? ''] || ms.state}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <div style={{ fontSize: 18, fontWeight: 800, color: ms.state === 'PAID' ? '#22C55E' : '#1F3A5F' }}>

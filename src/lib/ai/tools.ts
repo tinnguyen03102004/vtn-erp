@@ -56,7 +56,7 @@ export const toolDefinitions = [
                     partnerName: { type: 'string', description: 'Tên khách hàng hoặc chủ đầu tư' },
                     email: { type: 'string', description: 'Email liên hệ' },
                     phone: { type: 'string', description: 'Số điện thoại' },
-                    expectedValue: { type: 'number', description: 'Giá trị dự kiến (VND)' },
+                    expectedRevenue: { type: 'number', description: 'Giá trị dự kiến (VND)' },
                     notes: { type: 'string', description: 'Ghi chú về lead' },
                 },
                 required: ['partnerName'],
@@ -268,7 +268,7 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
                 const leads = await getLeads()
                 return JSON.stringify(leads.slice(0, 20).map((l) => ({
                     id: l.id, name: l.partnerName, email: l.email,
-                    phone: l.phone, value: l.expectedValue, stage: l.stageId,
+                    phone: l.phone, value: l.expectedRevenue, stage: l.stageId,
                 })))
             }
             case 'create_lead': {
@@ -282,7 +282,7 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
                     partnerName: args.partnerName,
                     email: args.email || null,
                     phone: args.phone || null,
-                    expectedValue: args.expectedValue || 0,
+                    expectedRevenue: args.expectedRevenue || 0,
                     notes: args.notes || null,
                     stageId: defaultStageId,
                     probability: 10,

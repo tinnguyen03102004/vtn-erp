@@ -16,7 +16,7 @@ export interface CreateLeadInput {
     email?: string
     phone?: string
     source?: string
-    expectedValue?: number
+    expectedRevenue?: number
     stageId?: string
     assignedTo?: string
     note?: string
@@ -31,7 +31,14 @@ export interface CreateOrderInput {
     partnerEmail?: string
     partnerPhone?: string
     partnerAddress?: string
+    partnerTaxCode?: string
     totalAmount?: number
+    discountPercent?: number
+    discountAmount?: number
+    vatRate?: number
+    vatAmount?: number
+    grandTotal?: number
+    validityDate?: string
     leadId?: string
     notes?: string
 }
@@ -41,26 +48,31 @@ export type UpdateOrderInput = Partial<CreateOrderInput> & {
     sentAt?: string
     approvedAt?: string
     rejectedReason?: string
+    revision?: number
 }
 
 export interface OrderLineInput {
     id?: string
     orderId: string
     description: string
-    qty: number
-    unitPrice: number
-    subtotal?: number
-    sequence?: number
+    qty: number | null
+    unit?: string | null
+    unitPrice: number | null
+    discountPercent?: number | null
+    vatRate?: number | null
+    subtotal?: number | null
+    sequence?: number | null
 }
 
 export interface MilestoneInput {
     id?: string
     orderId: string
     name: string
-    percent: number
-    amount?: number
-    dueDate?: string
-    state?: string
+    percent: number | null
+    amount?: number | null
+    dueDate?: string | null
+    state?: string | null
+    invoiceId?: string | null
     sequence?: number
 }
 

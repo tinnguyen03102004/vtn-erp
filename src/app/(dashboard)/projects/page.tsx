@@ -91,7 +91,7 @@ export default async function ProjectsPage() {
                                         <td style={{ fontWeight: 600, fontSize: 13 }}>{project.name}</td>
                                         <td style={{ fontSize: 13, color: '#4A5E78' }}>{project.partnerName}</td>
                                         <td style={{ fontSize: 13 }}>{project.manager?.name ?? '—'}</td>
-                                        <td><span className={`badge badge-${stateColors[project.state]}`}>{stateLabels[project.state]}</span></td>
+                                        <td><span className={`badge badge-${stateColors[project.state ?? 'DRAFT']}`}>{stateLabels[project.state ?? 'DRAFT']}</span></td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                 <div className="progress" style={{ width: 60 }}>

@@ -6,19 +6,21 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 
 type SaleQuotation = {
     id: string
-    name: string
-    partnerName: string
-    state: string
+    name: string | null
+    partnerName: string | null
+    state: string | null
     totalAmount: number | string | null
-    createdAt: string
+    grandTotal?: number | string | null
+    revision?: number | null
+    createdAt: string | null
     validityDate?: string | null
 }
 
 type SaleContract = {
     id: string
-    name: string
-    partnerName: string
-    state: string
+    name: string | null
+    partnerName: string | null
+    state: string | null
     totalAmount: number | string | null
     signedAt?: string | null
     _count?: {
@@ -55,13 +57,13 @@ export default function SalePageTabs({
     const qDraft = quotations.filter(q => q.state === 'DRAFT').length
     const qSent = quotations.filter(q => q.state === 'SENT').length
     const qApproved = quotations.filter(q => q.state === 'APPROVED').length
-    const qTotal = quotations.reduce((s, q) => s + Number(q.totalAmount || 0), 0)
+    const qTotal = quotations.reduce((s, q) => s + Number(q.grandTotal || q.totalAmount || 0), 0)
 
     // Contract KPIs
     const cNegotiating = contracts.filter(c => c.state === 'NEGOTIATING').length
     const cSigned = contracts.filter(c => c.state === 'SIGNED').length
     const cDone = contracts.filter(c => c.state === 'DONE').length
-    const cTotal = contracts.filter(c => ['SIGNED', 'DONE'].includes(c.state)).reduce((s, c) => s + Number(c.totalAmount || 0), 0)
+    const cTotal = contracts.filter(c => ['SIGNED', 'DONE'].includes(c.state ?? '')).reduce((s, c) => s + Number(c.totalAmount || 0), 0)
 
     return (
         <>
@@ -160,9 +162,11 @@ export default function SalePageTabs({
                                     )}
                                     {quotations.map(q => (
                                         <tr key={q.id}>
-                                            <td><span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1F3A5F', fontSize: 13 }}>{q.name}</span></td>
+                                            <td><span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1F3A5F', fontSize: 13 }}>{q.name}</span>
+                                                {q.revision && q.revision > 1 && <span style={{ marginLeft: 6, fontSize: 10, background: '#FFF7ED', color: '#F97316', padding: '1px 5px', borderRadius: 3, fontWeight: 700 }}>v{q.revision}</span>}
+                                            </td>
                                             <td style={{ fontWeight: 600, fontSize: 13 }}>{q.partnerName}</td>
-                                            <td><span className={`badge badge-${quotationStateColors[q.state] || 'muted'}`}>{quotationStateLabels[q.state] || q.state}</span></td>
+                                            <td><span className={`badge badge-${quotationStateColors[q.state ?? ''] || 'muted'}`}>{quotationStateLabels[q.state ?? ''] || q.state}</span></td>
                                             <td style={{ fontWeight: 700, color: '#1F3A5F' }}>{formatCurrency(Number(q.totalAmount))}</td>
                                             <td style={{ color: '#8FA3BF', fontSize: 13 }}>{formatDate(String(q.createdAt).split('T')[0])}</td>
                                             <td style={{ color: '#8FA3BF', fontSize: 13 }}>{q.validityDate ? formatDate(String(q.validityDate).split('T')[0]) : '—'}</td>
@@ -223,7 +227,7 @@ export default function SalePageTabs({
                                         <tr key={c.id}>
                                             <td><span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1F3A5F', fontSize: 13 }}>{c.name}</span></td>
                                             <td style={{ fontWeight: 600, fontSize: 13 }}>{c.partnerName}</td>
-                                            <td><span className={`badge badge-${contractStateColors[c.state] || 'muted'}`}>{contractStateLabels[c.state] || c.state}</span></td>
+                                            <td><span className={`badge badge-${contractStateColors[c.state ?? ''] || 'muted'}`}>{contractStateLabels[c.state ?? ''] || c.state}</span></td>
                                             <td>
                                                 <span style={{ background: '#F0F2F5', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 700 }}>
                                                     {c._count?.milestones || 0} milestones

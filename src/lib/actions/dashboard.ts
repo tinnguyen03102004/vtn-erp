@@ -77,7 +77,7 @@ interface RecentLead {
     id: string
     name: string
     partnerName: string
-    expectedValue: number
+    expectedRevenue: number
     probability: number
     source: string
 }
@@ -85,7 +85,7 @@ interface RecentLead {
 async function fetchRecentLeads(): Promise<ActionResult<RecentLead[]>> {
     const { data, error } = await supabase
         .from('crm_leads')
-        .select('id, name, partnerName, expectedValue, probability, source')
+        .select('id, name, partnerName, expectedRevenue, probability, source')
         .order('createdAt', { ascending: false })
         .limit(5)
     if (error) return fail(error.message)
@@ -119,7 +119,7 @@ async function fetchChartData(): Promise<ActionResult<ChartData>> {
     if (projErr) return fail(projErr.message)
 
     const statusCounts: Record<string, number> = {}
-    for (const p of projects || []) { statusCounts[p.state] = (statusCounts[p.state] || 0) + 1 }
+    for (const p of projects || []) { const s = p.state ?? 'DRAFT'; statusCounts[s] = (statusCounts[s] || 0) + 1 }
     const statusMap: Record<string, { label: string; color: string }> = {
         ACTIVE: { label: '\u0110ang ch\u1EA1y', color: '#1F3A5F' },
         PAUSED: { label: 'T\u1EA1m d\u1EEBng', color: '#F59E0B' },

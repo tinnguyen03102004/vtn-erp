@@ -25,7 +25,7 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
   // Fetch settings
   const { data: settings } = await supabase.from('settings').select('key, value')
   const settingsMap: Record<string, string> = {}
-  for (const s of settings || []) settingsMap[s.key] = s.value
+  for (const s of settings || []) if (s.key) settingsMap[s.key] = s.value ?? ''
 
   const stateLabels: Record<string, string> = {
     DRAFT: 'Nháp', POSTED: 'Ðã g?i', PAID: 'Ðã thanh toán', CANCELLED: 'Ðã hu?'
@@ -88,11 +88,11 @@ export async function generateInvoicePDF(invoiceId: string): Promise<ActionResul
     </div>
     <div class="invoice-meta">
       <div class="invoice-title">HOÁ ÐON</div>
-      <div class="meta-row">S?: <span class="meta-value">${e(invoice.name)}</span></div>
-      <div class="meta-row">Ngày: <span class="meta-value">${new Date(invoice.invoiceDate || invoice.createdAt).toLocaleDateString('vi-VN')}</span></div>
+      <div class="meta-row">S?: <span class="meta-value">${e(invoice.name ?? '')}</span></div>
+      <div class="meta-row">Ngày: <span class="meta-value">${new Date(invoice.invoiceDate || invoice.createdAt || new Date()).toLocaleDateString('vi-VN')}</span></div>
       <div class="meta-row">H?n: <span class="meta-value">${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('vi-VN') : '-'}</span></div>
       <div style="margin-top: 8px;">
-        <span class="status status-${invoice.state}">${stateLabels[invoice.state] || invoice.state}</span>
+        <span class="status status-${invoice.state ?? 'DRAFT'}">${stateLabels[invoice.state ?? ''] || invoice.state}</span>
       </div>
     </div>
   </div>

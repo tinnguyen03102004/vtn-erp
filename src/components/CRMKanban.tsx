@@ -9,7 +9,7 @@ import { useToast, ToastContainer } from '@/components/Toast'
 import type { Tables } from '@/lib/supabase'
 
 type Lead = Tables<'crm_leads'>
-type Stage = { id: string; name: string; sequence: number; probability: number; leads: Lead[] }
+type Stage = { id: string; name: string; sequence: number | null; probability: number | null; leads: Lead[] }
 
 const stageColors: Record<string, string> = {
     'Leads mới': '#8FA3BF', 'Liên hệ': '#3B82F6', 'Đề xuất': '#F59E0B',
@@ -77,7 +77,7 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
             email: formData.get('email') as string || null,
             phone: formData.get('phone') as string || null,
             source: formData.get('source') as string || null,
-            expectedValue: parseFloat(formData.get('expectedValue') as string) || 0,
+            expectedRevenue: parseFloat(formData.get('expectedValue') as string) || 0,
             notes: formData.get('notes') as string || null,
             stageId: modalStageId!,
             probability: stages.find(s => s.id === modalStageId)?.probability ?? 0,
@@ -96,7 +96,7 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
     }
 
     const allLeads = stages.flatMap(s => s.leads)
-    const totalPipelineValue = allLeads.reduce((s, l) => s + Number(l.expectedValue ?? 0), 0)
+    const totalPipelineValue = allLeads.reduce((s, l) => s + Number(l.expectedRevenue ?? 0), 0)
 
     return (
         <>
@@ -170,7 +170,7 @@ export default function CRMKanban({ initialStages }: { initialStages: Stage[] })
                                                 <div style={{ fontSize: 12, color: '#8FA3BF', marginBottom: 10 }}>{lead.partnerName}</div>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <span style={{ fontSize: 12, fontWeight: 700, color: '#1F3A5F' }}>
-                                                        {formatCurrency(Number(lead.expectedValue ?? 0))}
+                                                        {formatCurrency(Number(lead.expectedRevenue ?? 0))}
                                                     </span>
                                                     <div className="progress" style={{ width: 48 }}>
                                                         <div className="progress-bar" style={{ width: `${lead.probability}%`, background: color }} />

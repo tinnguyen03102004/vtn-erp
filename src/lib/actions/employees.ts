@@ -24,12 +24,13 @@ export async function getEmployees() {
     })
 }
 
+
 export async function getEmployee(id: string) {
     await requirePermission('hr.view')
     const { data: emp } = await supabase.from('employees').select('*').eq('id', id).single()
     if (!emp) return null
 
-    const { data: user } = await supabase.from('users').select('id, name, email, role').eq('id', emp.userId).single()
+    const { data: user } = emp.userId ? await supabase.from('users').select('id, name, email, role').eq('id', emp.userId).single() : { data: null }
     return { ...emp, user }
 }
 
@@ -94,12 +95,14 @@ export async function updateEmployee(id: string, formData: unknown): Promise<Act
     if (!emp) return fail('Nhân viên không tồn tại')
 
     // Update user
-    await supabase.from('users').update({
-        name: parsed.data.name,
-        email: parsed.data.email,
-        role: parsed.data.role,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any).eq('id', emp.userId)
+    if (emp.userId) {
+        await supabase.from('users').update({
+            name: parsed.data.name,
+            email: parsed.data.email,
+            role: parsed.data.role,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any).eq('id', emp.userId)
+    }
 
     // Update employee
     const { data, error } = await supabase.from('employees').update({
