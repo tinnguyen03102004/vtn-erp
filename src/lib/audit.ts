@@ -9,6 +9,7 @@ export type AuditAction =
     | 'create' | 'update' | 'delete'
     | 'approve' | 'reject' | 'convert'
     | 'sign' | 'send' | 'login' | 'logout'
+    | 'generate' | 'confirm'
 
 interface AuditEntry {
     userId: string

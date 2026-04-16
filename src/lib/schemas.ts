@@ -8,6 +8,7 @@ export {
     createOrderSchema, updateOrderSchema, orderLineSchema, milestoneSchema,
     createInvoiceSchema, createPaymentSchema, directInvoiceSchema,
     createEmployeeSchema, updateEmployeeSchema,
+    createPayrollPeriodSchema, updateEmployeeSalarySchema,
     timesheetEntrySchema,
     createPhaseSchema, createTaskSchema,
     settingsSchema,

@@ -110,6 +110,18 @@ const navItems = [
                 roles: ['DIRECTOR', 'PROJECT_MANAGER'],
             },
             {
+                href: '/payroll',
+                label: 'Bảng lương',
+                icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                        <path d="M12 14v3" /><path d="M8 14v1" /><path d="M16 14v1" />
+                    </svg>
+                ),
+                roles: ['DIRECTOR', 'FINANCE'],
+            },
+            {
                 href: '/reports',
                 label: 'Báo cáo',
                 icon: (

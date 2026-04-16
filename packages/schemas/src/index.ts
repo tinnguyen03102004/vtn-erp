@@ -87,6 +87,20 @@ export const createEmployeeSchema = z.object({
 
 export const updateEmployeeSchema = createEmployeeSchema.partial()
 
+// ── Payroll ──
+export const createPayrollPeriodSchema = z.object({
+    month: z.coerce.number().min(1).max(12, 'Tháng phải từ 1-12'),
+    year: z.coerce.number().min(2020).max(2099),
+    notes: z.string().optional(),
+})
+
+export const updateEmployeeSalarySchema = z.object({
+    baseSalary: z.coerce.number().min(0, 'Lương phải >= 0'),
+    insurableSalary: z.coerce.number().min(0).optional(),
+    region: z.coerce.number().min(1).max(4).optional(),
+    dependents: z.coerce.number().min(0).max(10).optional(),
+})
+
 // ── Timesheets ──
 export const timesheetEntrySchema = z.object({
     projectId: z.string().uuid('Dự án không hợp lệ'),
