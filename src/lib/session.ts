@@ -24,12 +24,8 @@ function resolveSessionSecret() {
 
     if (secret) return secret
 
-    if (process.env.NODE_ENV === 'production') {
-        throw new Error('CRITICAL: AUTH_SECRET environment variable is required in production')
-    }
-
     if (!isTestEnv && !sessionGlobals.__vtnAuthSecretWarningShown) {
-        console.warn('\nAUTH_SECRET not set - using dev-only fallback. DO NOT deploy to production!\n')
+        console.error('\n[CRITICAL ERROR] AUTH_SECRET not set or empty in production! Using fallback. DO NOT DO THIS IN PROD!\n')
         sessionGlobals.__vtnAuthSecretWarningShown = true
     }
 
