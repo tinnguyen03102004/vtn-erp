@@ -1,16 +1,19 @@
 // RBAC permission map
-// Roles: DIRECTOR, PROJECT_MANAGER, ARCHITECT, FINANCE, SALES
+// Roles: ADMIN, DIRECTOR, PROJECT_MANAGER, ARCHITECT, FINANCE, SALES
 
 export type Permission = 'crm.view' | 'crm.edit' | 'sale.view' | 'sale.edit' | 'sale.approve'
     | 'project.view' | 'project.edit' | 'finance.view' | 'finance.edit'
     | 'hr.view' | 'hr.edit' | 'settings.view' | 'settings.edit' | 'users.manage'
 
+const ALL_PERMISSIONS: Permission[] = [
+    'crm.view', 'crm.edit', 'sale.view', 'sale.edit', 'sale.approve',
+    'project.view', 'project.edit', 'finance.view', 'finance.edit',
+    'hr.view', 'hr.edit', 'settings.view', 'settings.edit', 'users.manage',
+]
+
 const rolePermissions: Record<string, Permission[]> = {
-    DIRECTOR: [
-        'crm.view', 'crm.edit', 'sale.view', 'sale.edit', 'sale.approve',
-        'project.view', 'project.edit', 'finance.view', 'finance.edit',
-        'hr.view', 'hr.edit', 'settings.view', 'settings.edit', 'users.manage',
-    ],
+    ADMIN: ALL_PERMISSIONS,
+    DIRECTOR: ALL_PERMISSIONS,
     PROJECT_MANAGER: [
         'crm.view', 'crm.edit', 'sale.view', 'sale.edit',
         'project.view', 'project.edit',

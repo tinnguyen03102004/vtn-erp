@@ -39,6 +39,7 @@ model User {
 }
 
 enum UserRole {
+  ADMIN
   DIRECTOR
   PROJECT_MANAGER
   ARCHITECT

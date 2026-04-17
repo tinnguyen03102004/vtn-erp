@@ -7,6 +7,7 @@ import 'server-only'
  */
 
 import crypto from 'crypto'
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
@@ -100,7 +101,9 @@ export async function getSessionFromRequest(req: NextRequest): Promise<SessionUs
     return getSessionByToken(token)
 }
 
-export async function getSessionFromCookies(): Promise<SessionUser | null> {
+// Wrapped in React cache() to deduplicate DB lookups within the same request.
+// When layout.tsx and page.tsx both call this, only 1 DB round trip happens.
+export const getSessionFromCookies = cache(async (): Promise<SessionUser | null> => {
     const cookieStore = await cookies()
     const cookieValue = cookieStore.get(COOKIE_NAME)?.value
     if (!cookieValue) return null
@@ -109,7 +112,7 @@ export async function getSessionFromCookies(): Promise<SessionUser | null> {
     if (!token) return null
 
     return getSessionByToken(token)
-}
+})
 
 async function getSessionByToken(token: string): Promise<SessionUser | null> {
     const { data: session, error } = await supabase

@@ -39,6 +39,11 @@
             "phase": "BUILD",
             "timestamp": "2026-04-16T09:41:10",
             "action": "debug_session_completed - vercel deploy fix successful"
+        },
+        {
+            "phase": "BUILD",
+            "timestamp": "2026-04-17T01:31:00",
+            "action": "debug_session_completed - pg.Pool serverless optimization (max:1, timeouts, always-cache) fixes MaxClients + statement timeout"
         }
     ]
 }

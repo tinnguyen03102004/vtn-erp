@@ -149,13 +149,13 @@ export function Sidebar({ userRole }: { userRole?: string }) {
         .map(section => ({
             ...section,
             items: section.items.filter(item =>
-                !userRole || item.roles.includes(userRole)
+                !userRole || userRole === 'ADMIN' || item.roles.includes(userRole)
             ),
         }))
         .filter(section => section.items.length > 0)
 
     const settingsRoles = ['DIRECTOR', 'FINANCE']
-    const canSeeSettings = !userRole || settingsRoles.includes(userRole)
+    const canSeeSettings = !userRole || userRole === 'ADMIN' || settingsRoles.includes(userRole)
 
     return (
         <aside className="sidebar">
