@@ -66,7 +66,7 @@ export async function GET() {
     csv += `Mã HĐ,Số tiền (VNĐ),Ngày thanh toán,Phương thức,Ghi chú\r\n`
     for (const pay of payments || []) {
         const inv = (invoices || []).find(i => i.id === pay.invoiceId)
-        csv += `${inv?.name || pay.invoiceId},${formatCurrency(Number(pay.amount || 0))},${pay.paymentDate || ''},"${pay.method || ''}","${(pay.note || '').replace(/"/g, '""')}"\r\n`
+        csv += `${inv?.name || pay.invoiceId},${formatCurrency(Number(pay.amount || 0))},${pay.paymentDate || ''},"${pay.paymentMethod || ''}","${(pay.notes || '').replace(/"/g, '""')}"\r\n`
     }
 
     // ── Sheet 4: Employees ──
