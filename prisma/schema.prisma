@@ -102,8 +102,9 @@ model Employee {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user       User        @relation(fields: [userId], references: [id])
+  user       User          @relation(fields: [userId], references: [id])
   timesheets Timesheet[]
+  payrollSlips PayrollSlip[]
 
   @@map("employees")
 }
@@ -461,4 +462,76 @@ model AppSession {
   @@index([userId])
   @@index([expiresAt])
   @@map("app_sessions")
+}
+
+// ============================================================
+// PAYROLL
+// ============================================================
+
+model PayrollPeriod {
+  id            String    @id @default(cuid())
+  month         Int
+  year          Int
+  state         String    @default("DRAFT") // DRAFT | CONFIRMED | PAID
+  notes         String?   @db.Text
+  totalGross    Decimal?  @db.Decimal(15, 2) @default(0)
+  totalDeductions Decimal? @db.Decimal(15, 2) @default(0)
+  totalNet      Decimal?  @db.Decimal(15, 2) @default(0)
+  slipCount     Int?      @default(0)
+  confirmedAt   DateTime?
+  confirmedById String?
+  paidAt        DateTime?
+  paidById      String?
+  bankRef       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+
+  slips PayrollSlip[]
+
+  @@map("payroll_periods")
+}
+
+model PayrollSlip {
+  id                     String   @id @default(cuid())
+  periodId               String
+  employeeId             String
+  grossSalary            Decimal  @db.Decimal(15, 2) @default(0)
+  bhxhEmployee           Decimal? @db.Decimal(15, 2) @default(0)
+  bhytEmployee           Decimal? @db.Decimal(15, 2) @default(0)
+  bhtnEmployee           Decimal? @db.Decimal(15, 2) @default(0)
+  totalInsuranceEmployee Decimal? @db.Decimal(15, 2) @default(0)
+  bhxhEmployer           Decimal? @db.Decimal(15, 2) @default(0)
+  bhytEmployer           Decimal? @db.Decimal(15, 2) @default(0)
+  bhtnEmployer           Decimal? @db.Decimal(15, 2) @default(0)
+  totalInsuranceEmployer Decimal? @db.Decimal(15, 2) @default(0)
+  taxableIncome          Decimal? @db.Decimal(15, 2) @default(0)
+  assessableIncome       Decimal? @db.Decimal(15, 2) @default(0)
+  dependents             Int?     @default(0)
+  pitAmount              Decimal? @db.Decimal(15, 2) @default(0)
+  allowances             Decimal? @db.Decimal(15, 2) @default(0)
+  totalDeductions        Decimal? @db.Decimal(15, 2) @default(0)
+  netSalary              Decimal  @db.Decimal(15, 2) @default(0)
+  createdAt              DateTime @default(now())
+
+  period   PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  employee Employee      @relation(fields: [employeeId], references: [id])
+
+  @@map("payroll_slips")
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  details   String?  @db.Text
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
 }

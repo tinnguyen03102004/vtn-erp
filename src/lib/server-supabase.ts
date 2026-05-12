@@ -26,6 +26,9 @@ const tableToModel: Record<string, string> = {
     settings: 'setting',
     attachments: 'attachment',
     app_sessions: 'appSession',
+    payroll_periods: 'payrollPeriod',
+    payroll_slips: 'payrollSlip',
+    audit_logs: 'auditLog',
 }
 
 type Filter =
