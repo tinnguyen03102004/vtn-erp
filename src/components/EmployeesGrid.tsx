@@ -1,4 +1,4 @@
-'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -120,7 +120,7 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                 {[
                     { label: 'Tổng nhân sự', count: employees.length, icon: '👥' },
                     { label: 'Kiến trúc', count: deptCounts['Kiến trúc'] || 0, icon: '🏛️' },
-                    { label: 'Kinh doanh', count: deptCounts['Kinh doanh'] || 0, icon: '💼' },
+                    { label: 'Ban Giám đốc', count: deptCounts['Ban Giám đốc'] || 0, icon: '🏢' },
                     { label: 'Kế toán', count: deptCounts['Kế toán'] || 0, icon: '📊' },
                 ].map(k => (
                     <div key={k.label} className="kpi-card" style={{ padding: 16 }}>
@@ -135,66 +135,92 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                 ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
                 {employees.map((emp, idx) => {
                     const roleInfo = roleLabels[emp.user?.role] || { label: emp.user?.role || '—', badge: 'muted' }
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const hoursThisMonth = (emp.timesheets || []).reduce((s: number, t: any) => s + t.hours, 0)
-                    const utilizationRate = Math.round(hoursThisMonth / 168 * 100)
                     const color = avatarColors[idx % avatarColors.length]
+                    const name = emp.user?.name || '—'
                     return (
                         <div
                             key={emp.id}
                             className="card"
-                            style={{ padding: 20, cursor: canManageEmployees ? 'pointer' : 'default', transition: 'all 0.15s ease' }}
+                            style={{
+                                padding: 0,
+                                cursor: canManageEmployees ? 'pointer' : 'default',
+                                transition: 'all 0.2s ease',
+                                overflow: 'hidden',
+                                textAlign: 'center',
+                            }}
                             onClick={() => {
                                 if (!canManageEmployees) return
                                 setEditId(emp.id)
                                 setShowModal(true)
                             }}
                         >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                                <div className="avatar avatar-lg" style={{ background: color }}>{getInitials(emp.user?.name ?? '')}</div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontWeight: 700, fontSize: 14, color: '#0F1C2E', marginBottom: 2 }}>{emp.user?.name}</div>
-                                    <div style={{ fontSize: 12, color: '#8FA3BF', marginBottom: 6 }}>{emp.position}</div>
-                                    <span className={`badge badge-${roleInfo.badge}`}>{roleInfo.label}</span>
+                            {/* Avatar Section */}
+                            <div style={{
+                                padding: '24px 16px 16px',
+                                background: `linear-gradient(135deg, ${color}22, ${color}08)`,
+                            }}>
+                                <div
+                                    className="avatar"
+                                    style={{
+                                        background: color,
+                                        width: 72,
+                                        height: 72,
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: '0 auto 12px',
+                                        fontSize: 20,
+                                        fontWeight: 800,
+                                        color: '#fff',
+                                        border: '3px solid rgba(255,255,255,0.6)',
+                                        boxShadow: `0 4px 12px ${color}40`,
+                                    }}
+                                >
+                                    {getInitials(name)}
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: 14, color: '#0F1C2E', marginBottom: 2 }}>
+                                    {name}
+                                </div>
+                                <div style={{ fontSize: 12, color: '#8FA3BF', marginBottom: 8 }}>
+                                    {emp.position || '—'}
+                                </div>
+                                <span className={`badge badge-${roleInfo.badge}`}>{roleInfo.label}</span>
+                            </div>
+
+                            {/* Info Section */}
+                            <div style={{ padding: '12px 16px', borderTop: '1px solid #F0F2F5' }}>
+                                <div style={{ fontSize: 11, color: '#8FA3BF', marginBottom: 4 }}>
+                                    {emp.user?.email}
+                                </div>
+                                <div style={{ fontSize: 11, color: '#8FA3BF' }}>
+                                    📅 {emp.joinDate ? formatDate(String(emp.joinDate).split('T')[0]) : '—'}
                                 </div>
                             </div>
-                            <div style={{ marginBottom: 14 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 12 }}>
-                                    <span style={{ color: '#8FA3BF' }}>Utilization</span>
-                                    <span style={{ fontWeight: 700, color: utilizationRate >= 85 ? '#22C55E' : utilizationRate >= 65 ? '#C9A84C' : '#EF4444' }}>
-                                        {hoursThisMonth}h ({utilizationRate}%)
-                                    </span>
-                                </div>
-                                <div className="progress">
-                                    <div className="progress-bar" style={{
-                                        width: `${Math.min(100, utilizationRate)}%`,
-                                        background: utilizationRate >= 85 ? '#22C55E' : utilizationRate >= 65 ? '#C9A84C' : '#EF4444',
-                                    }} />
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#8FA3BF', borderTop: '1px solid #F0F2F5', paddingTop: 12 }}>
-                                <div>{emp.user?.email}</div>
-                                <div>📅 {emp.joinDate ? formatDate(String(emp.joinDate).split('T')[0]) : '—'}</div>
-                            </div>
+
+                            {/* Salary row for managers */}
                             {canManageEmployees && (
-                                <div style={{ display: 'flex', gap: 8, marginTop: 10, borderTop: '1px solid #F0F2F5', paddingTop: 10 }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 16px',
+                                    borderTop: '1px solid #F0F2F5',
+                                    fontSize: 11,
+                                }}>
                                     <button
                                         className="btn btn-ghost btn-sm"
-                                        style={{ fontSize: 11, flex: 1 }}
+                                        style={{ fontSize: 11, padding: '2px 8px' }}
                                         onClick={(e) => { e.stopPropagation(); setSalaryEmpId(emp.id) }}
                                     >
-                                        💰 Cài lương
+                                        💰 Lương
                                     </button>
-                                    <div style={{ fontSize: 11, color: '#8FA3BF', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                        {Number(emp.baseSalary || 0) > 0 ? (
-                                            <span style={{ color: '#22C55E', fontWeight: 600 }}>{formatCurrency(Number(emp.baseSalary))}</span>
-                                        ) : (
-                                            <span style={{ color: '#EF4444' }}>Chưa cài</span>
-                                        )}
-                                    </div>
+                                    <span style={{ color: Number(emp.baseSalary || 0) > 0 ? '#22C55E' : '#EF4444', fontWeight: 600 }}>
+                                        {Number(emp.baseSalary || 0) > 0 ? formatCurrency(Number(emp.baseSalary)) : 'Chưa cài'}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -202,7 +228,7 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                 })}
             </div>
 
-            {/* Modal */}
+            {/* Edit Modal */}
             {canManageEmployees && showModal && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => { setShowModal(false); setEditId(null) }}>
@@ -235,7 +261,6 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                                             <option value="">— Chọn —</option>
                                             <option>Ban Giám đốc</option>
                                             <option>Kiến trúc</option>
-                                            <option>Kinh doanh</option>
                                             <option>Kế toán</option>
                                             <option>Nhân sự</option>
                                         </select>
