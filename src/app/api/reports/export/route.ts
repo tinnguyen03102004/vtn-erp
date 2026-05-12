@@ -27,6 +27,7 @@ export async function GET() {
         { data: users },
         { data: tasks },
         { data: timesheets },
+        { data: phases },
     ] = await Promise.all([
         supabase.from('projects').select('*').order('createdAt', { ascending: false }),
         supabase.from('invoices').select('*').order('createdAt', { ascending: false }),
@@ -35,6 +36,7 @@ export async function GET() {
         supabase.from('users').select('id, name, email, role'),
         supabase.from('project_tasks').select('*'),
         supabase.from('timesheets').select('*'),
+        supabase.from('project_phases').select('id, projectId'),
     ])
 
     const now = new Date().toISOString().slice(0, 10)
@@ -50,7 +52,7 @@ export async function GET() {
         const pTasks = (tasks || []).filter(t => t.projectId === p.id)
         const doneTasks = pTasks.filter(t => t.state === 'DONE').length
         const progress = pTasks.length > 0 ? Math.round(doneTasks / pTasks.length * 100) : 0
-        const phaseCount = (projects || [].length) // simplified
+        const phaseCount = (phases || []).filter(ph => ph.projectId === p.id).length
         csv += `"${p.name}",${p.state},${formatCurrency(Number(p.budget || 0))},${phaseCount},${pTasks.length},${doneTasks},${progress}%\r\n`
     }
 

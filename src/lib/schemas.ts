@@ -11,6 +11,8 @@ export {
     createPayrollPeriodSchema, updateEmployeeSalarySchema,
     timesheetEntrySchema,
     createPhaseSchema, createTaskSchema,
+    updatePhaseSchema, updateTaskSchema,
+    projectStateSchema, invoiceStateSchema, milestoneStateSchema,
     settingsSchema,
     createUserSchema, updateUserSchema,
     parseInput,

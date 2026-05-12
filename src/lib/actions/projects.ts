@@ -3,7 +3,7 @@
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
-import { createPhaseSchema, createTaskSchema, parseInput } from '@/lib/schemas'
+import { createPhaseSchema, createTaskSchema, updatePhaseSchema, updateTaskSchema, projectStateSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 import { createLogger } from '@vtn/logger'
 
@@ -52,13 +52,15 @@ export async function getProject(id: string) {
 // ── Project State ──
 export async function updateProjectState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
+    const stateResult = projectStateSchema.safeParse(state)
+    if (!stateResult.success) return fail(`Trạng thái không hợp lệ: ${state}`)
     const { data, error } = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('projects').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
+        .from('projects').update({ state: stateResult.data, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
-    log.info('Project state changed', { projectId: id, state })
-    await logAudit({ userId: user.id, action: 'update', entity: 'project', entityId: id, details: `Trạng thái → ${state}` })
+    log.info('Project state changed', { projectId: id, state: stateResult.data })
+    await logAudit({ userId: user.id, action: 'update', entity: 'project', entityId: id, details: `Trạng thái → ${stateResult.data}` })
     return ok(data)
 }
 
@@ -78,7 +80,9 @@ export async function createPhase(formData: unknown): Promise<ActionResult<Recor
 
 export async function updatePhase(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
-    const { data, error } = await supabase.from('project_phases').update(formData as Record<string, unknown>).eq('id', id).select().single()
+    const parsed = parseInput(updatePhaseSchema, formData)
+    if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
+    const { data, error } = await supabase.from('project_phases').update(parsed.data as Record<string, unknown>).eq('id', id).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'project_phase', entityId: id })
@@ -111,8 +115,10 @@ export async function createTask(formData: unknown): Promise<ActionResult<Record
 
 export async function updateTask(id: string, formData: unknown): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('project.edit')
+    const parsed = parseInput(updateTaskSchema, formData)
+    if (!parsed.success) return fail(parsed.error, parsed.fieldErrors)
     const { data, error } = await supabase
-        .from('project_tasks').update({ ...(formData as Record<string, unknown>), updatedAt: new Date().toISOString() }).eq('id', id).select().single()
+        .from('project_tasks').update({ ...parsed.data, updatedAt: new Date().toISOString() }).eq('id', id).select().single()
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'update', entity: 'project_task', entityId: id })

@@ -129,6 +129,14 @@ export const createPhaseSchema = z.object({
     sequence: z.coerce.number().min(0).optional(),
 })
 
+export const updatePhaseSchema = z.object({
+    name: z.string().min(1).optional(),
+    sequence: z.coerce.number().min(0).optional(),
+    state: z.string().optional(),
+    startDate: z.string().optional().nullable(),
+    endDate: z.string().optional().nullable(),
+})
+
 export const createTaskSchema = z.object({
     projectId: z.string().uuid('Dự án không hợp lệ'),
     phaseId: z.string().uuid(),
@@ -136,6 +144,20 @@ export const createTaskSchema = z.object({
     assigneeId: z.string().uuid().optional().nullable(),
     deadline: z.string().optional(),
 })
+
+export const updateTaskSchema = z.object({
+    name: z.string().min(1).optional(),
+    assignedToId: z.string().uuid().optional().nullable(),
+    deadline: z.string().optional().nullable(),
+    state: z.enum(['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']).optional(),
+    description: z.string().optional(),
+    priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).optional(),
+})
+
+// ── State enums ──
+export const projectStateSchema = z.enum(['DRAFT', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'])
+export const invoiceStateSchema = z.enum(['DRAFT', 'POSTED', 'PAID', 'CANCELLED'])
+export const milestoneStateSchema = z.enum(['PENDING', 'INVOICED', 'PAID'])
 
 // ── Settings ──
 export const settingsSchema = z.record(z.string(), z.string())

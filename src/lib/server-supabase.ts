@@ -103,6 +103,11 @@ function getUniqueSelector(record: Record<string, unknown>) {
     return null
 }
 
+/** Columns that are NEVER returned in select queries, per table. */
+const SENSITIVE_COLUMNS: Record<string, string[]> = {
+    users: ['password'],
+}
+
 class ServerQueryBuilder {
     private operation: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select'
     private payload: unknown
@@ -113,6 +118,7 @@ class ServerQueryBuilder {
     private countExact = false
     private returning = false
     private onConflict?: string
+    private selectColumns?: string[]
 
     constructor(private readonly table: string) {}
 
@@ -120,7 +126,7 @@ class ServerQueryBuilder {
         return { data, error, count }
     }
 
-    select(_columns?: string, options?: { count?: 'exact' }) {
+    select(columns?: string, options?: { count?: 'exact' }) {
         if (this.operation === 'insert' || this.operation === 'update' || this.operation === 'delete' || this.operation === 'upsert') {
             this.returning = true
             return this
@@ -128,7 +134,55 @@ class ServerQueryBuilder {
 
         this.operation = 'select'
         this.countExact = options?.count === 'exact'
+
+        // Parse column projection: 'id, name, email' → ['id', 'name', 'email']
+        if (columns && columns !== '*') {
+            this.selectColumns = columns.split(',').map(c => c.trim()).filter(Boolean)
+        }
+
         return this
+    }
+
+    /** Build Prisma `select` object from parsed columns + deny-list. */
+    private buildSelect(): Record<string, true> | undefined {
+        const denyList = SENSITIVE_COLUMNS[this.table] || []
+        const cols = this.selectColumns
+
+        if (!cols && denyList.length === 0) return undefined
+
+        if (cols) {
+            // Explicit projection: only include requested columns, minus denied
+            const proj: Record<string, true> = {}
+            for (const col of cols) {
+                if (!denyList.includes(col)) {
+                    proj[col] = true
+                }
+            }
+            return Object.keys(proj).length > 0 ? proj : undefined
+        }
+
+        // No explicit columns but has deny-list: we can't use Prisma select
+        // to exclude fields without knowing all column names, so we strip
+        // sensitive fields post-query in stripSensitive().
+        return undefined
+    }
+
+    /** Remove sensitive columns from query results when no explicit projection. */
+    private stripSensitive<T>(data: T): T {
+        const denyList = SENSITIVE_COLUMNS[this.table]
+        if (!denyList || denyList.length === 0) return data
+
+        const strip = (obj: unknown): unknown => {
+            if (!obj || typeof obj !== 'object') return obj
+            if (Array.isArray(obj)) return obj.map(strip)
+            const cleaned = { ...obj as Record<string, unknown> }
+            for (const col of denyList) {
+                delete cleaned[col]
+            }
+            return cleaned
+        }
+
+        return strip(data) as T
     }
 
     insert(payload: unknown) {
@@ -231,21 +285,22 @@ class ServerQueryBuilder {
             const orderBy = buildOrderBy(this.ordering)
 
             if (this.operation === 'select') {
+                const selectProj = this.buildSelect()
+
                 if (this.expectSingle) {
-                    const record = await delegate.findFirst({
-                        where,
-                        orderBy,
-                    })
-                    return this.buildResponse(record ? toPlainData(record) : null, null, this.countExact ? 1 : null)
+                    const queryArgs: Record<string, unknown> = { where, orderBy }
+                    if (selectProj) queryArgs.select = selectProj
+                    const record = await delegate.findFirst(queryArgs)
+                    const safe = record ? this.stripSensitive(toPlainData(record)) : null
+                    return this.buildResponse(safe, null, this.countExact ? 1 : null)
                 }
 
-                const records = await delegate.findMany({
-                    where,
-                    orderBy,
-                    take: this.limitValue,
-                })
+                const queryArgs: Record<string, unknown> = { where, orderBy, take: this.limitValue }
+                if (selectProj) queryArgs.select = selectProj
+                const records = await delegate.findMany(queryArgs)
                 const count = this.countExact ? Number(await delegate.count({ where })) : null
-                return this.buildResponse(toPlainData(records), null, count)
+                const safe = this.stripSensitive(toPlainData(records))
+                return this.buildResponse(safe, null, count)
             }
 
             if (this.operation === 'insert') {

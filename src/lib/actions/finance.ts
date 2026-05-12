@@ -3,7 +3,7 @@
 import { supabase } from '@/lib/supabase'
 import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
-import { createPaymentSchema, directInvoiceSchema, parseInput } from '@/lib/schemas'
+import { createPaymentSchema, directInvoiceSchema, invoiceStateSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
 import { createLogger } from '@vtn/logger'
 import { calculateVat } from '@vtn/vietnam'
@@ -72,12 +72,14 @@ export async function createInvoice(formData: unknown): Promise<ActionResult<Rec
 // ── Invoice State ──
 export async function updateInvoiceState(id: string, state: string): Promise<ActionResult<Record<string, unknown>>> {
     const user = await requirePermission('finance.edit')
+    const stateResult = invoiceStateSchema.safeParse(state)
+    if (!stateResult.success) return fail(`Trạng thái không hợp lệ: ${state}`)
     const { data, error } = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('invoices').update({ state, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
+        .from('invoices').update({ state: stateResult.data, updatedAt: new Date().toISOString() } as any).eq('id', id).select().single()
     if (error) return fail(error.message)
 
-    await logAudit({ userId: user.id, action: 'update', entity: 'invoice', entityId: id, details: `Chuyển trạng thái → ${state}` })
+    await logAudit({ userId: user.id, action: 'update', entity: 'invoice', entityId: id, details: `Chuyển trạng thái → ${stateResult.data}` })
     return ok(data)
 }
 
