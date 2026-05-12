@@ -392,11 +392,13 @@ export const serverSupabase = {
  * queries return 0 rows — this RPC is the only safe path.
  * NEVER expose this function to user-facing APIs.
  */
-export async function getUserForAuth(email: string) {
-    const { data, error } = await storageClient
-        .rpc('get_user_for_auth', { lookup_email: email })
-    if (error || !data || data.length === 0) return null
-    return data[0] as { id: string; email: string; password: string | null; name: string | null; role: string; isActive: boolean }
+type AuthUser = { id: string; email: string; password: string | null; name: string | null; role: string; isActive: boolean }
+
+export async function getUserForAuth(email: string): Promise<AuthUser | null> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (storageClient as any).rpc('get_user_for_auth', { lookup_email: email })
+    if (error || !data || !Array.isArray(data) || data.length === 0) return null
+    return data[0] as AuthUser
 }
 
 export { toPlainData }
