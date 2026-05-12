@@ -132,7 +132,7 @@ export const createPhaseSchema = z.object({
 export const updatePhaseSchema = z.object({
     name: z.string().min(1).optional(),
     sequence: z.coerce.number().min(0).optional(),
-    state: z.string().optional(),
+    state: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional(),
     startDate: z.string().optional().nullable(),
     endDate: z.string().optional().nullable(),
 })
