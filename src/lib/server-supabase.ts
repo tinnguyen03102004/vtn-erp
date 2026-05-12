@@ -386,19 +386,17 @@ export const serverSupabase = {
 }
 
 /**
- * Auth-only user lookup. Uses raw Supabase client (storageClient)
- * directly — NOT the ServerQueryBuilder wrapper — to bypass the
- * SENSITIVE_COLUMNS deny-list and retrieve password hash.
+ * Auth-only user lookup. Calls a SECURITY DEFINER RPC function
+ * that bypasses RLS to retrieve password hash for bcrypt.compare.
+ * RLS is enabled on users table with no anon policies, so direct
+ * queries return 0 rows — this RPC is the only safe path.
  * NEVER expose this function to user-facing APIs.
  */
 export async function getUserForAuth(email: string) {
     const { data, error } = await storageClient
-        .from('users')
-        .select('id, email, password, name, role, isActive')
-        .eq('email', email)
-        .single()
-    if (error || !data) return null
-    return data as { id: string; email: string; password: string | null; name: string | null; role: string; isActive: boolean }
+        .rpc('get_user_for_auth', { lookup_email: email })
+    if (error || !data || data.length === 0) return null
+    return data[0] as { id: string; email: string; password: string | null; name: string | null; role: string; isActive: boolean }
 }
 
 export { toPlainData }
