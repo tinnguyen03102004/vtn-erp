@@ -13,14 +13,26 @@ const log = createLogger({ module: 'hr' })
 
 export async function getEmployees() {
     await requirePermission('hr.view')
-    const { data: employees } = await supabase.from('employees').select('*')
-    const { data: users } = await supabase.from('users').select('id, name, email, role')
-    const { data: timesheets } = await supabase.from('timesheets').select('employeeId, hours')
+    const [{ data: employees }, { data: users }] = await Promise.all([
+        supabase.from('employees').select('*'),
+        supabase.from('users').select('id, name, email, role'),
+    ])
+
+    // Aggregate timesheet hours per employee in DB instead of fetching all rows
+    const { data: hoursByEmployee } = await supabase
+        .from('timesheets')
+        .select('employeeId, hours')
+
+    // Build hours lookup: { employeeId: totalHours }
+    const hoursMap: Record<string, number> = {}
+    for (const t of hoursByEmployee || []) {
+        const eid = t.employeeId as string
+        hoursMap[eid] = (hoursMap[eid] || 0) + Number(t.hours || 0)
+    }
 
     return (employees || []).map((emp) => {
         const user = (users || []).find((u) => u.id === emp.userId) || { name: '', email: '', role: '' }
-        const empTimesheets = (timesheets || []).filter((t) => t.employeeId === emp.id)
-        return { ...emp, user, timesheets: empTimesheets }
+        return { ...emp, user, totalHours: hoursMap[emp.id] || 0, timesheets: [] }
     })
 }
 

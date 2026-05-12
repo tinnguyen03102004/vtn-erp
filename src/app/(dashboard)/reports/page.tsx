@@ -6,6 +6,7 @@ import { getInvoices } from '@/lib/actions/finance'
 import { getEmployees } from '@/lib/actions/employees'
 import { getLeadsByStage } from '@/lib/actions/crm'
 import { getPayrollPeriods } from '@/lib/actions/payroll'
+import { getReportAggregates } from '@/lib/actions/report-aggregates'
 
 
 
@@ -20,12 +21,14 @@ export default async function ReportsPage() {
         redirect('/dashboard')
     }
 
-    const [projects, invoices, employees, stages, payrollPeriods] = await Promise.all([
+    // Fetch all data in parallel (pool max=5 enables true parallelism)
+    const [projects, invoices, employees, stages, payrollPeriods, agg] = await Promise.all([
         getProjects(),
         getInvoices(),
         getEmployees(),
         getLeadsByStage(),
         getPayrollPeriods(),
+        getReportAggregates(),
     ])
 
     // Calculate real KPIs

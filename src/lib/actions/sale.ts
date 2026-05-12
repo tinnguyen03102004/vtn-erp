@@ -60,7 +60,7 @@ export async function getQuotations() {
     await requirePermission('sale.view')
     const { data: orders } = await supabase
         .from('sale_orders')
-        .select('*')
+        .select('id, name, partnerName, state, totalAmount, grandTotal, createdAt, sentAt, approvedAt, docType, revision')
         .eq('docType', 'QUOTATION')
         .order('createdAt', { ascending: false })
 
@@ -72,17 +72,29 @@ export async function getContracts() {
     await requirePermission('sale.view')
     const { data: orders } = await supabase
         .from('sale_orders')
-        .select('*')
+        .select('id, name, partnerName, state, totalAmount, grandTotal, createdAt, signedAt, docType')
         .eq('docType', 'CONTRACT')
         .order('createdAt', { ascending: false })
 
-    const { data: milestones } = await supabase.from('sale_milestones').select('orderId')
+    if (!orders || orders.length === 0) return []
 
-    return (orders || []).map((order) => ({
+    // Filter milestones by visible contract IDs only
+    const contractIds = orders.map((o) => o.id)
+    const { data: milestones } = await supabase
+        .from('sale_milestones')
+        .select('orderId')
+        .in('orderId', contractIds)
+
+    // Build count map
+    const countMap: Record<string, number> = {}
+    for (const m of milestones || []) {
+        const oid = m.orderId as string
+        countMap[oid] = (countMap[oid] || 0) + 1
+    }
+
+    return orders.map((order) => ({
         ...order,
-        _count: {
-            milestones: (milestones || []).filter((m) => m.orderId === order.id).length,
-        },
+        _count: { milestones: countMap[order.id] || 0 },
     }))
 }
 

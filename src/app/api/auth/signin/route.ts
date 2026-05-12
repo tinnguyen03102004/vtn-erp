@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getUserForAuth } from '@/lib/server-supabase'
 import bcrypt from 'bcryptjs'
 import { createSession, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/session'
 
@@ -12,14 +12,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ ok: false, error: 'Vui lòng nhập email và mật khẩu' }, { status: 400 })
         }
 
-        // Query user from Supabase
-        const { data: user, error } = await supabase
-            .from('users')
-            .select('id, email, password, name, role, isActive')
-            .eq('email', email as string)
-            .single()
+        // Query user via dedicated auth lookup (bypasses deny-list)
+        const user = await getUserForAuth(email as string)
 
-        if (error || !user || !user.password) {
+        if (!user || !user.password) {
             return NextResponse.json({ ok: false, error: 'Email không tồn tại' }, { status: 401 })
         }
 

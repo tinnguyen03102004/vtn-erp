@@ -9,15 +9,27 @@ import { createLogger } from '@vtn/logger'
 
 const log = createLogger({ module: 'project' })
 
+/** Lightweight project lookup for dropdowns/selectors — no phases/users join */
+export async function getActiveProjectOptions() {
+    await requirePermission('project.view')
+    const { data } = await supabase
+        .from('projects')
+        .select('id, name, code, state')
+        .in('state', ['ACTIVE', 'DRAFT'])
+        .order('name')
+    return (data || []).map((p) => ({ id: p.id, name: p.name as string, code: p.code as string, state: p.state as string }))
+}
+
 export async function getProjects() {
     await requirePermission('project.view')
-    const { data: projects } = await supabase
-        .from('projects')
-        .select('*')
-        .order('createdAt', { ascending: false })
-
-    const { data: phases } = await supabase.from('project_phases').select('id, projectId, state')
-    const { data: users } = await supabase.from('users').select('id, name')
+    const [{ data: projects }, { data: phases }, { data: users }] = await Promise.all([
+        supabase
+            .from('projects')
+            .select('id, code, name, state, partnerName, managerId, budget, createdAt')
+            .order('createdAt', { ascending: false }),
+        supabase.from('project_phases').select('id, projectId, state'),
+        supabase.from('users').select('id, name'),
+    ])
 
     return (projects || []).map((p) => ({
         ...p,

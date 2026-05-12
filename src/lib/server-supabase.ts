@@ -385,4 +385,17 @@ export const serverSupabase = {
     storage: storageClient.storage,
 }
 
+/**
+ * Auth-only user lookup. Bypasses SENSITIVE_COLUMNS deny-list
+ * to retrieve password hash for bcrypt.compare during signin.
+ * NEVER expose this function to user-facing APIs.
+ */
+export async function getUserForAuth(email: string) {
+    const user = await prisma.user.findFirst({
+        where: { email },
+        select: { id: true, email: true, password: true, name: true, role: true, isActive: true },
+    })
+    return user ? toPlainData(user) : null
+}
+
 export { toPlainData }

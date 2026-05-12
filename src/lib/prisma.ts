@@ -10,10 +10,15 @@ function createPrismaClient() {
   // PrismaPg adapter requires direct connection (port 5432), NOT pgBouncer (port 6543)
   const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL!
 
+  // Pool sizing:
+  // - Dev: higher (5) for Promise.all parallelism
+  // - Production serverless: lower (3) to stay within Supabase connection limits
+  // - Override via DB_POOL_MAX env when needed
+  const poolMax = Number(process.env.DB_POOL_MAX || (process.env.NODE_ENV === 'production' ? 3 : 5))
+
   const pool = new Pool({
     connectionString,
-    // Serverless-optimized settings:
-    max: 1,                      // Only 1 connection per serverless instance
+    max: poolMax,
     idleTimeoutMillis: 20_000,   // Close idle connections after 20s
     connectionTimeoutMillis: 10_000, // Fail fast if can't connect in 10s
   })

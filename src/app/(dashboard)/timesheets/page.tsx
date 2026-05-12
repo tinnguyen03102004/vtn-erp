@@ -1,5 +1,5 @@
 import { getTimesheets } from '@/lib/actions/timesheets'
-import { getProjects } from '@/lib/actions/projects'
+import { getActiveProjectOptions } from '@/lib/actions/projects'
 import { getCurrentEmployee } from '@/lib/actions/employees'
 import { requirePagePermission } from '@/lib/page-guard'
 import TimesheetGrid from './grid'
@@ -15,9 +15,9 @@ export default async function TimesheetPage() {
     const saturday = new Date(monday)
     saturday.setDate(monday.getDate() + 5)
 
-    const [currentEmployee, allProjects] = await Promise.all([
+    const [currentEmployee, activeProjects] = await Promise.all([
         getCurrentEmployee(),
-        getProjects(),
+        getActiveProjectOptions(),
     ])
     const currentEmployeeId = currentEmployee?.id
     const timesheets = currentEmployeeId ? await getTimesheets({
@@ -33,9 +33,7 @@ export default async function TimesheetPage() {
         weekDates.push(d.toISOString().split('T')[0])
     }
 
-    const activeProjects = allProjects
-        .filter(p => p.state === 'ACTIVE' || p.state === 'DRAFT')
-        .map(p => ({ id: p.id, name: p.name, code: p.code }))
+    // activeProjects already filtered and mapped by getActiveProjectOptions()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serializedTimesheets = timesheets.map((t: any) => ({
