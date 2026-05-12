@@ -20,9 +20,18 @@ const createTableChain = (table: string) => {
         return obj
     }
 
+    const makeSortable = (): Record<string, unknown> => {
+        const sortable: Record<string, unknown> = {
+            order: vi.fn().mockImplementation(() => makeSortable()),
+            limit: vi.fn().mockImplementation(() => makeThenable()),
+            then: (resolve: (v: unknown) => void) => { resolve(getResult()); return Promise.resolve(getResult()) },
+        }
+        return sortable
+    }
+
     chain.select = vi.fn().mockImplementation(() => makeThenable({
         eq: vi.fn().mockImplementation(() => makeThenable()),
-        in: vi.fn().mockImplementation(() => makeThenable()),
+        in: vi.fn().mockImplementation(() => makeSortable()),
         order: vi.fn().mockImplementation(() => makeThenable({
             limit: vi.fn().mockImplementation(() => makeThenable()),
         })),

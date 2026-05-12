@@ -69,3 +69,8 @@ tmp/
 .turbo/
 **/.turbo/
 dist/
+
+# scratch/test files
+test-*.mjs
+test-*.js
+vercel_*.txt
