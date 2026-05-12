@@ -11,6 +11,9 @@ const monthNames = ['', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 
 interface Slip {
     id: string
     grossSalary: number
+    fullGrossSalary?: number
+    workDays?: number | null
+    attendanceRatio?: number
     totalInsuranceEmployee: number
     pitAmount: number
     totalDeductions: number
@@ -194,6 +197,7 @@ export function PayrollDetail({ period }: { period: Period }) {
                             <tr>
                                 <th>Nhân viên</th>
                                 <th>Phòng ban</th>
+                                <th style={{ textAlign: 'center' }}>Ngày công</th>
                                 <th style={{ textAlign: 'right' }}>Gross</th>
                                 <th style={{ textAlign: 'right' }}>BHXH</th>
                                 <th style={{ textAlign: 'right' }}>BHYT</th>
@@ -211,6 +215,19 @@ export function PayrollDetail({ period }: { period: Period }) {
                                         <div style={{ fontSize: 12, color: '#8FA3BF' }}>{slip.employee?.position || ''}</div>
                                     </td>
                                     <td style={{ color: '#8FA3BF' }}>{slip.employee?.department || '—'}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        {slip.workDays != null ? (
+                                            <div>
+                                                <span style={{ fontWeight: 600, color: '#E2E8F0' }}>{slip.workDays}</span>
+                                                <span style={{ fontSize: 11, color: '#8FA3BF' }}>/24</span>
+                                                {slip.attendanceRatio != null && slip.attendanceRatio < 1 && (
+                                                    <div style={{ fontSize: 10, color: '#F59E0B' }}>{Math.round(slip.attendanceRatio * 100)}%</div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span style={{ color: '#475569', fontSize: 12 }}>—</span>
+                                        )}
+                                    </td>
                                     <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{formatCurrency(slip.grossSalary)}</td>
                                     <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#F59E0B' }}>{formatCurrency(slip.bhxhEmployee)}</td>
                                     <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#F59E0B' }}>{formatCurrency(slip.bhytEmployee)}</td>
@@ -223,7 +240,7 @@ export function PayrollDetail({ period }: { period: Period }) {
                         </tbody>
                         <tfoot>
                             <tr style={{ borderTop: '2px solid rgba(148, 163, 184, 0.2)', fontWeight: 700 }}>
-                                <td colSpan={2} style={{ color: '#E2E8F0' }}>Tổng cộng ({slips.length} người)</td>
+                                <td colSpan={3} style={{ color: '#E2E8F0' }}>Tổng cộng ({slips.length} người)</td>
                                 <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{formatCurrency(slips.reduce((s, sl) => s + sl.grossSalary, 0))}</td>
                                 <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#F59E0B' }}>{formatCurrency(slips.reduce((s, sl) => s + sl.bhxhEmployee, 0))}</td>
                                 <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#F59E0B' }}>{formatCurrency(slips.reduce((s, sl) => s + sl.bhytEmployee, 0))}</td>

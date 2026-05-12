@@ -43,6 +43,7 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
             department: fd.get('department') as string,
             position: fd.get('position') as string,
             phone: fd.get('phone') as string,
+            machineCode: fd.get('machineCode') as string || '',
         }
         if (!data.name || !data.email) { addToast('Tên và email bắt buộc', 'error'); return }
         setSaving(true)
@@ -196,8 +197,14 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                                 <div style={{ fontSize: 11, color: '#8FA3BF', marginBottom: 4 }}>
                                     {emp.user?.email}
                                 </div>
-                                <div style={{ fontSize: 11, color: '#8FA3BF' }}>
-                                    📅 {emp.joinDate ? formatDate(String(emp.joinDate).split('T')[0]) : '—'}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8FA3BF' }}>
+                                    <span>📅 {emp.joinDate ? formatDate(String(emp.joinDate).split('T')[0]) : '—'}</span>
+                                    {emp.machineCode && (
+                                        <span style={{
+                                            background: '#E2E8F0', padding: '1px 6px',
+                                            borderRadius: 4, fontSize: 10, fontWeight: 600, color: '#4A5E78',
+                                        }}>🔢 {emp.machineCode}</span>
+                                    )}
                                 </div>
                             </div>
 
@@ -281,6 +288,11 @@ export default function EmployeesGrid({ initialEmployees, canManageEmployees }: 
                                         <label className="form-label">SĐT</label>
                                         <input className="form-input" name="phone" defaultValue={editEmp?.phone ?? ''} />
                                     </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Mã máy chấm công</label>
+                                    <input className="form-input" name="machineCode" defaultValue={editEmp?.machineCode ?? ''} placeholder="VD: 364 (ID trên máy chấm công)" />
+                                    <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 2 }}>Nhập mã nhân viên trên máy chấm công để liên kết dữ liệu chấm công</div>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>

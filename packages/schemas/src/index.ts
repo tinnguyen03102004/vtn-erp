@@ -96,6 +96,7 @@ export const createEmployeeSchema = z.object({
     position: z.string().optional(),
     phone: z.string().optional(),
     joinDate: z.string().optional(),
+    machineCode: z.string().optional(),
 })
 
 export const updateEmployeeSchema = createEmployeeSchema.partial()

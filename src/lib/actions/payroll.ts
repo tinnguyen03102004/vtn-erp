@@ -105,15 +105,55 @@ export async function generatePayrollSlips(periodId: string): Promise<ActionResu
 
     if (activeEmployees.length === 0) return fail('Không có nhân viên nào có lương để tính')
 
+    // ── Attendance Integration: get work days if LOCKED period exists ──
+    const { data: attendancePeriod } = await db
+        .from('attendance_periods')
+        .select('id')
+        .eq('state', 'LOCKED')
+        .order('startDate', { ascending: false })
+        .limit(1)
+        .single()
+
+    // Build attendance work-days map: { employeeId: { workDays, standardDays, ratio } }
+    const attendanceMap = new Map<string, { workDays: number; ratio: number }>()
+    if (attendancePeriod) {
+        const { data: attRecords } = await db
+            .from('attendance_records')
+            .select('employeeId, workHours, state')
+            .eq('periodId', attendancePeriod.id)
+
+        const byEmployee = new Map<string, number>()
+        for (const r of (attRecords || [])) {
+            if (r.state === 'ORIGINAL' || r.state === 'APPROVED') {
+                if (Number(r.workHours) > 0) {
+                    byEmployee.set(r.employeeId, (byEmployee.get(r.employeeId) || 0) + 1)
+                }
+            }
+        }
+        const standardDays = 24 // TODO: configurable
+        for (const [empId, days] of byEmployee) {
+            attendanceMap.set(empId, {
+                workDays: days,
+                ratio: Math.min(1, Math.round((days / standardDays) * 1000) / 1000),
+            })
+        }
+    }
+
     // Generate slips
     const slips = activeEmployees.map((emp: Record<string, unknown>) => {
-        const gross = Number(emp.baseSalary || 0)
-        const insurableSalary = Number(emp.insurableSalary || gross)
+        const fullGross = Number(emp.baseSalary || 0)
+        const insurableSalary = Number(emp.insurableSalary || fullGross)
         const region = (emp.region || 1) as Region
         const dependents = Number(emp.dependents || 0)
         const allowances = Number(emp.allowances || 0)
 
-        // 1. Insurance calculation
+        // Prorate by attendance if available
+        const attendance = attendanceMap.get(emp.id as string)
+        const attendanceRatio = attendance?.ratio ?? 1
+        const workDays = attendance?.workDays ?? null
+        const gross = Math.round(fullGross * attendanceRatio)
+
+        // 1. Insurance calculation (always on full insurable salary)
         const insurance = calculateInsurance({ insurableSalary, region })
 
         // 2. PIT calculation
@@ -128,6 +168,9 @@ export async function generatePayrollSlips(periodId: string): Promise<ActionResu
             periodId,
             employeeId: emp.id,
             grossSalary: gross,
+            fullGrossSalary: fullGross,
+            workDays,
+            attendanceRatio,
             bhxhEmployee: insurance.employee.socialInsurance,
             bhytEmployee: insurance.employee.healthInsurance,
             bhtnEmployee: insurance.employee.unemploymentInsurance,

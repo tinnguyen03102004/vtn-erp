@@ -11,6 +11,10 @@ import { calculateInsurance, formatVnd } from '@vtn/vietnam'
 
 const log = createLogger({ module: 'hr' })
 
+// Untyped client for fields not yet in generated Supabase types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any
+
 export async function getEmployees() {
     await requirePermission('hr.view')
     const [{ data: employees }, { data: users }] = await Promise.all([
@@ -79,14 +83,14 @@ export async function createEmployee(formData: unknown): Promise<ActionResult<Re
     if (userErr) return fail(userErr.message)
 
     // Step 2: Create employee record (rollback user on failure)
-    const { data: emp, error: empErr } = await supabase.from('employees').insert({
+    const { data: emp, error: empErr } = await db.from('employees').insert({
         userId: newUser.id,
         department: parsed.data.department || null,
         position: parsed.data.position || null,
         phone: parsed.data.phone || null,
         joinDate: parsed.data.joinDate || new Date().toISOString(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any).select().single()
+        machineCode: parsed.data.machineCode || null,
+    }).select().single()
     if (empErr) {
         // Compensating rollback: delete orphaned user
         await supabase.from('users').delete().eq('id', newUser.id)
@@ -117,10 +121,11 @@ export async function updateEmployee(id: string, formData: unknown): Promise<Act
     }
 
     // Update employee
-    const { data, error } = await supabase.from('employees').update({
+    const { data, error } = await db.from('employees').update({
         department: parsed.data.department || null,
         position: parsed.data.position || null,
         phone: parsed.data.phone || null,
+        machineCode: parsed.data.machineCode || null,
         updatedAt: new Date().toISOString(),
     }).eq('id', id).select().single()
     if (error) return fail(error.message)
