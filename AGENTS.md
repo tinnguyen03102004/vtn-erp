@@ -88,14 +88,10 @@ Tất cả tài khoản dùng password: `password123`
 
 | Email | Role | Tên | Mô tả |
 |-------|------|-----|-------|
-| `director@vtn.vn` | DIRECTOR | Nguyễn Văn Nam | Ban giám đốc — full quyền |
-| `pm@vtn.vn` | PROJECT_MANAGER | Trần Minh Khoa | Quản lý dự án |
-| `arch@vtn.vn` | ARCHITECT | Lê Thu Hương | Kiến trúc sư |
-| `finance@vtn.vn` | FINANCE | Phạm Thị Khánh Linh | Kế toán / tài chính |
-| `sales@vtn.vn` | SALES | Đỗ Thị Hoàng Yến | Kinh doanh |
-| `dat@vtn.vn` | ARCHITECT | Bùi Quang Đạt | Kiến trúc sư |
-| `luan@vtn.vn` | ARCHITECT | Nguyễn Thành Luân | Kiến trúc sư |
-| `ha@vtn.vn` | ARCHITECT | Trần Thị Hà | Kiến trúc sư |
+| `hang@vtn.vn` | DIRECTOR | Trần Thị Hằng | Giám đốc — full quyền (như admin) |
+| `pm@vtn.vn` | PROJECT_MANAGER | Nguyễn Minh Khoa | Quản lý dự án |
+| `tung@vtn.vn` | ARCHITECT | Nguyễn Văn Tùng | Kiến trúc sư |
+| `quyen@vtn.vn` | FINANCE | Hà Thị Mỹ Quyên | Kế toán / tài chính |
 
 ## Environment Variables
 

@@ -131,10 +131,10 @@ export default function LoginPage() {
                         <p className="login-demo-password">Demo password: <strong>password123</strong></p>
                         <div className="login-demo-grid">
                             {[
-                                { role: 'Director', email: 'director@vtn.vn', color: '#1F3A5F' },
-                                { role: 'PM', email: 'pm@vtn.vn', color: '#2A4D7F' },
-                                { role: 'Architect', email: 'arch@vtn.vn', color: '#C9A84C' },
-                                { role: 'Finance', email: 'finance@vtn.vn', color: '#22C55E' },
+                                { role: 'Giám đốc', email: 'hang@vtn.vn', color: '#1F3A5F' },
+                                { role: 'Quản lý DA', email: 'pm@vtn.vn', color: '#2A4D7F' },
+                                { role: 'Kiến trúc sư', email: 'tung@vtn.vn', color: '#C9A84C' },
+                                { role: 'Kế toán', email: 'quyen@vtn.vn', color: '#22C55E' },
                             ].map(a => (
                                 <button
                                     key={a.email}
