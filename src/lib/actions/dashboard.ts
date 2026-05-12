@@ -77,7 +77,7 @@ interface RecentLead {
     id: string
     name: string
     partnerName: string
-    expectedRevenue: number
+    expectedValue: number
     probability: number
     source: string
 }
@@ -85,7 +85,7 @@ interface RecentLead {
 async function fetchRecentLeads(): Promise<ActionResult<RecentLead[]>> {
     const { data, error } = await supabase
         .from('crm_leads')
-        .select('id, name, partnerName, expectedRevenue, probability, source')
+        .select('id, name, partnerName, expectedValue, probability, source')
         .order('createdAt', { ascending: false })
         .limit(5)
     if (error) return fail(error.message)

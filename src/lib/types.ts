@@ -16,7 +16,7 @@ export interface CreateLeadInput {
     email?: string
     phone?: string
     source?: string
-    expectedRevenue?: number
+    expectedValue?: number
     stageId?: string
     assignedTo?: string
     note?: string
