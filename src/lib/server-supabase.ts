@@ -50,6 +50,16 @@ function toPlainData<T>(value: T): T {
 function buildWhere(filters: Filter[]) {
     if (filters.length === 0) return undefined
 
+    // Prisma requires full ISO-8601 for DateTime columns; Supabase JS accepts "YYYY-MM-DD".
+    // Auto-pad short dates so server-supabase stays drop-in compatible.
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/
+    const padDate = (v: unknown, end: boolean) => {
+        if (typeof v === 'string' && dateRe.test(v)) {
+            return end ? `${v}T23:59:59.999Z` : `${v}T00:00:00.000Z`
+        }
+        return v
+    }
+
     const andClauses = filters.map((filter) => {
         switch (filter.type) {
         case 'eq':
@@ -57,9 +67,9 @@ function buildWhere(filters: Filter[]) {
         case 'in':
             return { [filter.column]: { in: filter.value } }
         case 'gte':
-            return { [filter.column]: { gte: filter.value } }
+            return { [filter.column]: { gte: padDate(filter.value, false) } }
         case 'lte':
-            return { [filter.column]: { lte: filter.value } }
+            return { [filter.column]: { lte: padDate(filter.value, true) } }
         case 'ilike': {
             const pattern = filter.value
             const trimmed = pattern.replace(/^%+|%+$/g, '')
