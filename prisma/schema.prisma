@@ -92,15 +92,21 @@ model VerificationToken {
 // ============================================================
 
 model Employee {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  department String?
-  position   String?
-  phone      String?
-  joinDate   DateTime?
-  salary     Decimal? @db.Decimal(15, 2)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  department      String?
+  position        String?
+  phone           String?
+  joinDate        DateTime?
+  salary          Decimal? @db.Decimal(15, 2)
+  baseSalary      Decimal? @db.Decimal(15, 2)
+  insurableSalary Decimal? @db.Decimal(15, 2)
+  region          Int?
+  dependents      Int?
+  allowances      Decimal? @db.Decimal(15, 2)
+  machineCode     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   user       User          @relation(fields: [userId], references: [id])
   timesheets Timesheet[]
@@ -496,6 +502,9 @@ model PayrollSlip {
   periodId               String
   employeeId             String
   grossSalary            Decimal  @db.Decimal(15, 2) @default(0)
+  fullGrossSalary        Decimal? @db.Decimal(15, 2)
+  workDays               Int?
+  attendanceRatio        Decimal? @db.Decimal(5, 3)
   bhxhEmployee           Decimal? @db.Decimal(15, 2) @default(0)
   bhytEmployee           Decimal? @db.Decimal(15, 2) @default(0)
   bhtnEmployee           Decimal? @db.Decimal(15, 2) @default(0)

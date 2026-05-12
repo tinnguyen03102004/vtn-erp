@@ -380,8 +380,14 @@ class ServerQueryBuilder {
 
 export const serverSupabase = {
     from(table: string) {
+        // Tables not yet in Prisma schema: fall through to direct Supabase client
+        if (!tableToModel[table]) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return storageClient.from(table as any)
+        }
         return new ServerQueryBuilder(table)
     },
+    rpc: storageClient.rpc.bind(storageClient),
     storage: storageClient.storage,
 }
 
