@@ -8,7 +8,6 @@ import { getLeadsByStage } from '@/lib/actions/crm'
 import { getPayrollPeriods } from '@/lib/actions/payroll'
 
 
-export const dynamic = 'force-dynamic'
 
 export default async function ReportsPage() {
     const user = await getSessionFromCookies()

@@ -4,7 +4,6 @@ import { hasPermission } from '@/lib/rbac'
 import { notFound } from 'next/navigation'
 import ProjectDetail from '@/components/ProjectDetail'
 
-export const dynamic = 'force-dynamic'
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const user = await requirePagePermission('project.view')

@@ -4,7 +4,6 @@ import { getProjects } from '@/lib/actions/projects'
 import { requirePagePermission } from '@/lib/page-guard'
 import { hasPermission } from '@/lib/rbac'
 
-export const dynamic = 'force-dynamic'
 
 const stateColors: Record<string, string> = {
     ACTIVE: 'success', PAUSED: 'warning', DONE: 'primary', CANCELLED: 'danger', DRAFT: 'muted'

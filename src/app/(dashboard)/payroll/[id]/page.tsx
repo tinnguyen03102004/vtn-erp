@@ -2,7 +2,6 @@ import { getPayrollPeriod } from '@/lib/actions/payroll'
 import { PayrollDetail } from '@/components/PayrollDetail'
 import { notFound } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
 
 export default async function PayrollPeriodPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params

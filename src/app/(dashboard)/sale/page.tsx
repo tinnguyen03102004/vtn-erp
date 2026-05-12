@@ -4,7 +4,6 @@ import { requirePagePermission } from '@/lib/page-guard'
 import { hasPermission } from '@/lib/rbac'
 import SalePageTabs from '@/components/SalePageTabs'
 
-export const dynamic = 'force-dynamic'
 
 export default async function SalePage() {
     const user = await requirePagePermission('sale.view')

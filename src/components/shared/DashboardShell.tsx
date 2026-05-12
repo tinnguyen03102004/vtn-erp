@@ -3,6 +3,7 @@
 import { Sidebar } from '@/components/shared/Sidebar'
 import { Header } from '@/components/shared/Header'
 import ChatPanel from '@/components/chat/ChatPanel'
+import NavigationProgress from '@/components/shared/NavigationProgress'
 import type { SessionUser } from '@/lib/session'
 
 export default function DashboardShell({
@@ -14,6 +15,7 @@ export default function DashboardShell({
 }) {
     return (
         <div className="app-shell">
+            <NavigationProgress />
             <Sidebar userRole={user.role} />
             <div className="main-content">
                 <Header
