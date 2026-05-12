@@ -4,6 +4,9 @@ import 'server-only'
  *
  * Sessions live in the `app_sessions` table. The cookie only stores a
  * signed session token, so user data never leaves the server.
+ *
+ * Pure crypto functions (signToken, verifyAndExtractToken, verifySignature)
+ * are in session-crypto.ts so they can be tested without server-only.
  */
 
 import crypto from 'crypto'
@@ -11,29 +14,10 @@ import { cache } from 'react'
 import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { signToken, verifyAndExtractToken, verifySignature } from '@/lib/session-crypto'
 
 const SESSION_LIFETIME_DAYS = 7
 const COOKIE_NAME = 'vtn-session'
-const DEV_FALLBACK_SECRET = 'vtn-erp-dev-only-secret-DO-NOT-USE-IN-PROD'
-const sessionGlobals = globalThis as typeof globalThis & {
-    __vtnAuthSecretWarningShown?: boolean
-}
-
-function resolveSessionSecret() {
-    const secret = process.env.AUTH_SECRET?.trim()
-    const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true'
-
-    if (secret) return secret
-
-    if (!isTestEnv && !sessionGlobals.__vtnAuthSecretWarningShown) {
-        console.error('\n[CRITICAL ERROR] AUTH_SECRET not set or empty in production! Using fallback. DO NOT DO THIS IN PROD!\n')
-        sessionGlobals.__vtnAuthSecretWarningShown = true
-    }
-
-    return DEV_FALLBACK_SECRET
-}
-
-const SECRET = resolveSessionSecret()
 
 export type SessionUser = {
     id: string
@@ -42,32 +26,8 @@ export type SessionUser = {
     role: string
 }
 
-function signToken(token: string): string {
-    const signature = crypto
-        .createHmac('sha256', SECRET)
-        .update(token)
-        .digest('hex')
-
-    return `${token}:${signature}`
-}
-
-function verifyAndExtractToken(cookieValue: string): string | null {
-    const parts = cookieValue.split(':')
-    if (parts.length !== 2) return null
-
-    const [token, signature] = parts
-    const expectedSignature = crypto
-        .createHmac('sha256', SECRET)
-        .update(token)
-        .digest('hex')
-
-    if (signature.length !== expectedSignature.length) return null
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-        return null
-    }
-
-    return token
-}
+// Re-export crypto functions so existing imports continue to work
+export { signToken, verifyAndExtractToken, verifySignature }
 
 export async function createSession(
     userId: string,
@@ -159,10 +119,6 @@ export async function deleteSession(cookieValue: string): Promise<void> {
 
 export async function deleteAllUserSessions(userId: string): Promise<void> {
     await supabase.from('app_sessions').delete().eq('userId', userId)
-}
-
-export function verifySignature(cookieValue: string): boolean {
-    return verifyAndExtractToken(cookieValue) !== null
 }
 
 export function getSessionCookieOptions(expiresAt: Date) {

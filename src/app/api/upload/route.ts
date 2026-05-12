@@ -46,7 +46,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload to Supabase Storage
-    const storagePath = `${canonicalEntityType}/${entityId}/${Date.now()}-${file.name}`
+    // Upload to Supabase Storage — P2-05: sanitize filename
+    const safeName = (file.name || 'upload').replace(/[/\\:*?"<>|]/g, '_').replace(/[\x00-\x1f\x7f]/g, '').replace(/\.{2,}/g, '.').slice(-100)
+    const storagePath = `${canonicalEntityType}/${entityId}/${Date.now()}-${safeName}`
     const buffer = Buffer.from(await file.arrayBuffer())
 
     const { error: uploadError } = await supabase.storage

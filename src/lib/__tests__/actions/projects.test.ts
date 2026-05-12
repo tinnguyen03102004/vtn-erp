@@ -63,12 +63,15 @@ describe('getProject', () => {
 
 describe('updateProjectState', () => {
     it('updates', async () => {
-        set({ id: 'P1', state: 'PAUSED' })
-        expect((await updateProjectState('P1', 'PAUSED')).success).toBe(true)
+        set({ id: 'P1', state: 'ON_HOLD' })
+        expect((await updateProjectState('P1', 'ON_HOLD')).success).toBe(true)
+    })
+    it('rejects invalid state', async () => {
+        expect((await updateProjectState('P1', 'PAUSED')).success).toBe(false)
     })
     it('fails', async () => {
         set(null, { message: 'Error' })
-        expect((await updateProjectState('P1', 'X')).success).toBe(false)
+        expect((await updateProjectState('P1', 'ACTIVE')).success).toBe(false)
     })
 })
 

@@ -56,6 +56,29 @@ function checkRateLimit(ip: string): boolean {
     return true
 }
 
+// ── P2-07 FIX: Server-side nonce store for AI confirm actions ──
+import crypto from 'crypto'
+const pendingNonces = new Map<string, { toolName: string; args: Record<string, unknown>; expiresAt: number }>()
+const NONCE_TTL = 300_000 // 5 minutes
+
+function createActionNonce(toolName: string, args: Record<string, unknown>): string {
+    const nonce = crypto.randomUUID()
+    const now = Date.now()
+    for (const [key, val] of pendingNonces) {
+        if (val.expiresAt < now) pendingNonces.delete(key)
+    }
+    pendingNonces.set(nonce, { toolName, args, expiresAt: now + NONCE_TTL })
+    return nonce
+}
+
+function consumeNonce(nonce: string): { toolName: string; args: Record<string, unknown> } | null {
+    const entry = pendingNonces.get(nonce)
+    if (!entry) return null
+    pendingNonces.delete(nonce) // one-time use
+    if (entry.expiresAt < Date.now()) return null
+    return { toolName: entry.toolName, args: entry.args }
+}
+
 // ── Write tools that need confirmation ──
 const WRITE_TOOLS = new Set([
     'create_lead', 'create_quotation', 'send_quotation',
@@ -167,9 +190,17 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // ── BUG-05 FIX: If user confirmed a pending action, execute it ──
+        // ── P2-07 FIX: Verify nonce before executing confirmed action ──
         if (confirmAction) {
-            const { toolName, args } = confirmAction
+            const { nonce } = confirmAction
+            if (!nonce) {
+                return Response.json({ error: 'Missing confirmation nonce' }, { status: 400 })
+            }
+            const verified = consumeNonce(nonce)
+            if (!verified) {
+                return Response.json({ error: 'Invalid or expired confirmation nonce' }, { status: 403 })
+            }
+            const { toolName, args } = verified
             const result = await executeTool(toolName, args)
             const parsed = JSON.parse(result)
 
@@ -180,7 +211,6 @@ export async function POST(req: NextRequest) {
                 })
             }
 
-            // Format friendly success message per tool type
             const content = formatSuccessMessage(toolName, args, parsed)
             return Response.json({ role: 'assistant', content })
         }
@@ -227,7 +257,7 @@ export async function POST(req: NextRequest) {
         const maxIterations = 5
         let iteration = 0
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let pendingAction: { toolName: string; args: Record<string, any>; preview: string } | null = null
+        let pendingAction: { toolName: string; args: Record<string, any>; nonce: string; preview: string } | null = null
 
         while (message.tool_calls && message.tool_calls.length > 0 && iteration < maxIterations) {
             iteration++
@@ -254,9 +284,11 @@ export async function POST(req: NextRequest) {
 
                 // BUG-05: Write tools → return confirmation instead of executing
                 if (WRITE_TOOLS.has(toolCall.function.name)) {
+                    const nonce = createActionNonce(toolCall.function.name, args)
                     pendingAction = {
                         toolName: toolCall.function.name,
                         args,
+                        nonce,
                         preview: `Tool: **${toolCall.function.name}**\nDữ liệu: ${JSON.stringify(args, null, 2)}`,
                     }
                     // Tell AI the action needs confirmation

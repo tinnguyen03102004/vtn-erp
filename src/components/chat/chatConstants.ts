@@ -12,6 +12,7 @@ export interface Message {
 export interface PendingAction {
     toolName: string
     args: Record<string, string | number | boolean | null | undefined>
+    nonce: string
     preview: string
 }
 

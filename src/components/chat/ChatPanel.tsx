@@ -182,7 +182,7 @@ export default function ChatPanel() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: messages.slice(-5).map(m => ({ role: m.role, content: m.content })),
-                    confirmAction: { toolName: pendingAction.toolName, args: pendingAction.args },
+                    confirmAction: { nonce: pendingAction.nonce },
                 }),
                 signal: controller.signal,
             })

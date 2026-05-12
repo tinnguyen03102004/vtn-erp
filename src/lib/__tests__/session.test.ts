@@ -1,18 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
-// Mock supabase before importing session module
-vi.mock('@/lib/supabase', () => ({
-    supabase: {
-        from: () => ({
-            insert: () => ({ error: null }),
-            select: () => ({ eq: () => ({ single: () => ({ data: null, error: null }) }) }),
-            delete: () => ({ eq: () => Promise.resolve() }),
-            update: () => ({ eq: () => ({ then: (cb: () => void) => cb() }) }),
-        }),
-    },
-}))
-
-import { verifySignature } from '@/lib/session'
+import { verifySignature } from '@/lib/session-crypto'
 
 // ================================================================
 // Session Module Tests — HMAC signature verification
