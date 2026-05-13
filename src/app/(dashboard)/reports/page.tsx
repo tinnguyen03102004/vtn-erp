@@ -17,9 +17,15 @@ export default async function ReportsPage() {
         redirect('/login')
     }
 
-    if (user.role !== 'DIRECTOR') {
+    const allowedRoles = ['DIRECTOR', 'ADMIN', 'PROJECT_MANAGER', 'FINANCE']
+    if (!allowedRoles.includes(user.role)) {
         redirect('/dashboard')
     }
+
+    const isDirector = user.role === 'DIRECTOR' || user.role === 'ADMIN'
+    const canSeeFinance = isDirector || user.role === 'FINANCE'
+    const canSeeProjects = isDirector || user.role === 'PROJECT_MANAGER'
+    const canSeeCRM = isDirector || user.role === 'PROJECT_MANAGER'
 
     // Fetch all data in parallel (pool max=5 enables true parallelism)
     const [projects, invoices, employees, stages, payrollPeriods, agg] = await Promise.all([
@@ -89,13 +95,13 @@ export default async function ReportsPage() {
                     <p className="page-subtitle">Dữ liệu thực từ Database</p>
                 </div>
                 <div className="page-actions">
-                    <a href="/api/reports/export" download className="btn btn-outline btn-sm">
+                    {isDirector && <a href="/api/reports/export" download className="btn btn-outline btn-sm">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
                             <rect x="6" y="14" width="12" height="8" />
                         </svg>
                         Xuất Excel
-                    </a>
+                    </a>}
                 </div>
             </div>
 

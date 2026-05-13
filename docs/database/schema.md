@@ -4,7 +4,7 @@
 
 VTN ERP sử dụng PostgreSQL 17.6 hosted trên Supabase (ap-southeast-1).
 
-- **22 tables** với Row Level Security (RLS) enabled
+- **24 tables** với Row Level Security (RLS) enabled
 - **Primary key type**: `text` (UUID-like strings)
 - **Naming convention**: `snake_case` cho tables, `camelCase` cho columns
 
@@ -59,6 +59,13 @@ VTN ERP sử dụng PostgreSQL 17.6 hosted trên Supabase (ap-southeast-1).
 | `payroll_periods` | Pay periods | `month`, `year`, `state` |
 | `payroll_slips` | Individual pay slips | `periodId` → `payroll_periods`, `employeeId` → `employees` |
 
+### Attendance Tables
+
+| Table | Description | Key Columns |
+|-------|------------|-------------|
+| `attendance_periods` | Attendance periods | `name`, `startDate`, `endDate`, `state` (DRAFT/REVIEW/LOCKED) |
+| `attendance_records` | Individual attendance records | `periodId` → `attendance_periods`, `employeeId` → `employees`, `checkIn`, `checkOut`, `workHours`, `source`, `state` |
+
 ## Entity Relationships
 
 ```
@@ -86,6 +93,9 @@ invoices ──1:N──→ payments
 
 payroll_periods ──1:N──→ payroll_slips
 employees ──1:N──→ payroll_slips
+
+attendance_periods ──1:N──→ attendance_records
+employees ──1:N──→ attendance_records
 ```
 
 ## Migrations
@@ -97,3 +107,5 @@ Migrations are managed via Supabase Dashboard and tracked in `CHANGELOG.md`.
 | 2026-03 | Initial schema | Core 18 tables |
 | 2026-05 | `create_payroll_tables` | `payroll_periods`, `payroll_slips` |
 | 2026-05 | `add_employee_salary_fields` | Salary, allowance, insurance columns |
+| 2026-05 | `create_attendance_tables` | `attendance_periods`, `attendance_records` |
+| 2026-05 | `enable_rls_all_tables` | RLS enabled on all 24 tables |

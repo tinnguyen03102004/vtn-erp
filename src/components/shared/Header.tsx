@@ -6,6 +6,7 @@ import { getInitials } from '@/lib/utils'
 import { useAuth } from '@/lib/auth-context'
 import { hasPermission } from '@/lib/rbac'
 import GlobalSearch from '@/components/GlobalSearch'
+import { NotificationBell } from '@/components/NotificationBell'
 
 interface HeaderProps {
     title: string
@@ -41,12 +42,7 @@ export function Header({ title: _title, user }: HeaderProps) {
 
             <div className="header-actions">
                 {/* Notifications */}
-                <button className="btn btn-ghost btn-icon" title="Thông báo">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 01-3.46 0" />
-                    </svg>
-                </button>
+                <NotificationBell />
 
                 {/* Quick add */}
                 <button className="btn btn-outline btn-sm" onClick={() => { }}>

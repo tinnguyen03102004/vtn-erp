@@ -26,7 +26,7 @@ VTN ERP là một **modular monolith** chạy trên Next.js 16 App Router, kết
 ┌──────────────────────▼──────────────────────────────────────┐
 │                    PostgreSQL 17.6                            │
 │              Supabase (ap-southeast-1)                       │
-│     22 tables │ RLS enabled │ Audit logging                  │
+│     24 tables │ RLS enabled │ Audit logging                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 

@@ -8,11 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- VietQR integration in payroll pay modal — scan QR to bank transfer salary
+- Role-based reports — PM and FINANCE can now view reports (filtered by role)
+- Attendance module RLS — all tables now have Row Level Security enabled
 - Payroll module — `payroll_periods` + `payroll_slips` database tables
 - Employee salary columns (`baseSalary`, `insurableSalary`, `region`, `dependents`, `allowances`)
 - Root documentation: CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, ROADMAP, BRANDING, LICENSE
 - CI/CD GitHub Actions pipeline
 - Docker development environment
+- **Unit tests**: 283 tests across 22 test files covering all 15 server action modules
+- **API documentation**: `docs/api/README.md` — full action catalog with permissions + API routes
+- **Database schema docs**: Updated to 24 tables with attendance + ER diagrams
+- **ADR-004 to ADR-006**: Payroll calculation, Attendance workflow, RLS strategy
+- **Contributing guide**: `docs/guides/contributing.md` — coding standards, test patterns, workflows
 
 ### Fixed
 - Dashboard test mock missing `.order()` chaining after `.in()`

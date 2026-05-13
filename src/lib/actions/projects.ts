@@ -5,6 +5,7 @@ import { requirePermission } from '@/lib/auth-guard'
 import { ok, fail, type ActionResult } from '@/lib/action-result'
 import { createPhaseSchema, createTaskSchema, updatePhaseSchema, updateTaskSchema, projectStateSchema, parseInput } from '@/lib/schemas'
 import { logAudit } from '@/lib/audit'
+import { createNotification } from '@/lib/actions/notifications'
 import { createLogger } from '@vtn/logger'
 
 const log = createLogger({ module: 'project' })
@@ -122,6 +123,18 @@ export async function createTask(formData: unknown): Promise<ActionResult<Record
     if (error) return fail(error.message)
 
     await logAudit({ userId: user.id, action: 'create', entity: 'project_task', entityId: data.id, details: `Tạo task: ${data.name}` })
+
+    // Notify assignee
+    if (data.assignedToId && data.assignedToId !== user.id) {
+        createNotification({
+            userId: data.assignedToId as string,
+            type: 'task',
+            title: `Bạn được giao task mới: ${data.name}`,
+            message: `Được giao bởi ${user.name}`,
+            link: `/projects`,
+        }).catch(() => { /* fire and forget */ })
+    }
+
     return ok(data)
 }
 
