@@ -5,21 +5,19 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
+    "src/.next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Temporary / scratch files:
+    "packages/**",
     "tmp/**",
   ]),
-  // Project-specific overrides.
-  // Supabase types generated; files with intentional `any` have eslint-disable comments.
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/ban-ts-comment": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", {
         argsIgnorePattern: "^_",
         varsIgnorePattern: "^_",

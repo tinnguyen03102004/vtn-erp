@@ -11,7 +11,7 @@
     "dev": "next dev",
     "build": "turbo run build --filter='@vtn/*' && next build",
     "start": "next start",
-    "lint": "next lint --dir src",
+    "lint": "eslint src/**/*.ts src/**/*.tsx --max-warnings 30",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

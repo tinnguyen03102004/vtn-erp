@@ -41,6 +41,7 @@ export default function NavigationProgress() {
 
     useEffect(() => {
         if (pathname !== prevPathRef.current) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional cascade for progress animation
             done()
             prevPathRef.current = pathname
         }

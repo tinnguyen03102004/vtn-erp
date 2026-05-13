@@ -3,6 +3,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getNotifications, getUnreadCount, markNotificationRead, markAllRead, type Notification } from '@/lib/actions/notifications'
 
+function timeAgo(date: string) {
+    const diff = Date.now() - new Date(date).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'Vừa xong'
+    if (mins < 60) return `${mins} phút trước`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours} giờ trước`
+    return `${Math.floor(hours / 24)} ngày trước`
+}
+
+const TYPE_ICONS: Record<string, string> = {
+    task: '📋', invoice: '📄', lead: '🤝', success: '✅',
+    warning: '⚠️', error: '❌', info: 'ℹ️',
+}
+
 export function NotificationBell() {
     const [open, setOpen] = useState(false)
     const [notifications, setNotifications] = useState<Notification[]>([])
@@ -17,6 +32,7 @@ export function NotificationBell() {
     }, [])
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: fetch + setState on mount
         fetchCount()
         const interval = setInterval(fetchCount, 30_000) // Poll every 30s
         return () => clearInterval(interval)
@@ -38,7 +54,7 @@ export function NotificationBell() {
         await markNotificationRead(id)
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
         setUnreadCount(prev => Math.max(0, prev - 1))
-        if (link) window.location.href = link
+        if (link) window.location.assign(link)
     }
 
     const handleMarkAllRead = async () => {
@@ -47,20 +63,6 @@ export function NotificationBell() {
         setUnreadCount(0)
     }
 
-    const typeIcons: Record<string, string> = {
-        task: '📋', invoice: '📄', lead: '🤝', success: '✅',
-        warning: '⚠️', error: '❌', info: 'ℹ️',
-    }
-
-    const timeAgo = (date: string) => {
-        const diff = Date.now() - new Date(date).getTime()
-        const mins = Math.floor(diff / 60000)
-        if (mins < 1) return 'Vừa xong'
-        if (mins < 60) return `${mins} phút trước`
-        const hours = Math.floor(mins / 60)
-        if (hours < 24) return `${hours} giờ trước`
-        return `${Math.floor(hours / 24)} ngày trước`
-    }
 
     return (
         <div style={{ position: 'relative' }}>
@@ -108,7 +110,7 @@ export function NotificationBell() {
                                         className={`notification-item ${n.isRead ? '' : 'unread'}`}
                                         onClick={() => handleRead(n.id, n.link)}
                                     >
-                                        <span className="notification-icon">{typeIcons[n.type] || 'ℹ️'}</span>
+                                        <span className="notification-icon">{TYPE_ICONS[n.type] || 'ℹ️'}</span>
                                         <div className="notification-content">
                                             <div className="notification-title">{n.title}</div>
                                             {n.message && <div className="notification-message">{n.message}</div>}
