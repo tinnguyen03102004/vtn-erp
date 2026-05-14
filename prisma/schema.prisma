@@ -108,11 +108,52 @@ model Employee {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user       User          @relation(fields: [userId], references: [id])
-  timesheets Timesheet[]
-  payrollSlips PayrollSlip[]
+  user              User          @relation(fields: [userId], references: [id])
+  timesheets        Timesheet[]
+  payrollSlips      PayrollSlip[]
+  attendanceRecords AttendanceRecord[]
 
   @@map("employees")
+}
+
+// ============================================================
+// ATTENDANCE MODULE
+// ============================================================
+
+model AttendancePeriod {
+  id         String   @id @default(cuid())
+  name       String
+  startDate  DateTime @db.Date
+  endDate    DateTime @db.Date
+  state      String   @default("DRAFT") // DRAFT | CONFIRMED
+  importedBy String?
+  importedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  records AttendanceRecord[]
+
+  @@map("attendance_periods")
+}
+
+model AttendanceRecord {
+  id         String   @id @default(cuid())
+  periodId   String
+  employeeId String
+  date       DateTime @db.Date
+  checkIn    String?  // time stored as text in DB
+  checkOut   String?
+  workHours  Decimal? @db.Decimal(5, 2) @default(0)
+  source     String   @default("MACHINE")
+  note       String?
+  state      String   @default("ORIGINAL") // ORIGINAL | MANUAL | ADJUSTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  period   AttendancePeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  employee Employee         @relation(fields: [employeeId], references: [id])
+
+  @@map("attendance_records")
 }
 
 // ============================================================
