@@ -44,10 +44,12 @@ export async function getTimesheets(filters?: { employeeId?: string; projectId?:
     if (filters?.startDate) query = query.gte('date', filters.startDate)
     if (filters?.endDate) query = query.lte('date', filters.endDate)
 
-    const { data } = await query
-    const { data: projects } = await supabase.from('projects').select('id, name')
-    const { data: employees } = await supabase.from('employees').select('id, userId')
-    const { data: users } = await supabase.from('users').select('id, name')
+    const [{ data }, { data: projects }, { data: employees }, { data: users }] = await Promise.all([
+        query,
+        supabase.from('projects').select('id, name'),
+        supabase.from('employees').select('id, userId'),
+        supabase.from('users').select('id, name'),
+    ])
 
     return (data || []).map((timesheet) => {
         const emp = (employees || []).find((e) => e.id === timesheet.employeeId)
@@ -79,8 +81,8 @@ export async function saveWeekTimesheets(employeeId: string, entries: TimesheetE
     }
 
     const dates = [...new Set(entries.map((entry) => entry.date))]
-    for (const date of dates) {
-        await supabase.from('timesheets').delete().eq('employeeId', employeeId).eq('date', date)
+    if (dates.length > 0) {
+        await supabase.from('timesheets').delete().eq('employeeId', employeeId).in('date', dates)
     }
 
     const rows = entries

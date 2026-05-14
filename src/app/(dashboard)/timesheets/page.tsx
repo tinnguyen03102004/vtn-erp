@@ -115,7 +115,6 @@ export default async function TimesheetPage({
     return (
         <TimesheetView
             weekDates={weekDates}
-            monday={formatDate(monday)}
             timesheets={serializedTimesheets}
             projects={activeProjects}
             employeeId={currentEmployeeId}

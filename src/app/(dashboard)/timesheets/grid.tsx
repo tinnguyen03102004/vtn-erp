@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveWeekTimesheets } from '@/lib/actions/timesheets'
 import { useToast, ToastContainer } from '@/components/Toast'
@@ -17,7 +17,7 @@ interface Stats {
     myDays: number; avgHoursPerEmployee: number; belowTarget: number
 }
 interface Props {
-    weekDates: string[]; monday: string; timesheets: TimesheetEntry[]
+    weekDates: string[]; timesheets: TimesheetEntry[]
     projects: Project[]; employeeId?: string; isManager?: boolean
     prevWeek: string; nextWeek: string; isCurrentWeek: boolean; stats: Stats
 }
@@ -28,7 +28,7 @@ const EMP_COLORS = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#3B82F6', '#22C
 const TARGET_HOURS = 48
 
 export default function TimesheetView({
-    weekDates, monday: _monday, timesheets, projects, employeeId,
+    weekDates, timesheets, projects, employeeId,
     isManager, prevWeek, nextWeek, isCurrentWeek, stats,
 }: Props) {
     const router = useRouter()
@@ -36,10 +36,11 @@ export default function TimesheetView({
     const [saving, setSaving] = useState(false)
     const [activeTab, setActiveTab] = useState<'my' | 'team'>('my')
     const [teamSearch, setTeamSearch] = useState('')
+    const [isPending, startTransition] = useTransition()
 
     const dateLabels = weekDates.map(d => {
-        const dt = new Date(d)
-        return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}`
+        const [y, m, dd] = d.split('-').map(Number)
+        return `${String(dd).padStart(2, '0')}/${String(m).padStart(2, '0')}`
     })
 
     // Employee editable grid state
@@ -116,6 +117,20 @@ export default function TimesheetView({
         <>
             <ToastContainer toasts={toasts} />
 
+            {/* Loading overlay for week navigation */}
+            {isPending && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.5)',
+                    zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    backdropFilter: 'blur(2px)',
+                }}>
+                    <div className="card" style={{ padding: '20px 32px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 20, height: 20, border: '3px solid #E2E8F0', borderTopColor: '#1F3A5F', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+                        <span className="font-semibold text-sm">Đang tải dữ liệu...</span>
+                    </div>
+                </div>
+            )}
+
             {/* Page Header + Week Nav */}
             <div className="page-header">
                 <div className="page-header-left">
@@ -123,15 +138,15 @@ export default function TimesheetView({
                     <p className="page-subtitle">Quản lý chấm công theo dự án & giờ làm việc</p>
                 </div>
                 <div className="page-actions">
-                    <button className="btn btn-outline btn-sm" onClick={() => router.push(`/timesheets?week=${prevWeek}`)}>
+                    <button className="btn btn-outline btn-sm" disabled={isPending} onClick={() => startTransition(() => router.push(`/timesheets?week=${prevWeek}`))}>
                         ← Tuần trước
                     </button>
                     {!isCurrentWeek && (
-                        <button className="btn btn-ghost btn-sm" onClick={() => router.push('/timesheets')}>
+                        <button className="btn btn-ghost btn-sm" disabled={isPending} onClick={() => startTransition(() => router.push('/timesheets'))}>
                             Tuần hiện tại
                         </button>
                     )}
-                    <button className="btn btn-outline btn-sm" onClick={() => router.push(`/timesheets?week=${nextWeek}`)}>
+                    <button className="btn btn-outline btn-sm" disabled={isPending} onClick={() => startTransition(() => router.push(`/timesheets?week=${nextWeek}`))}>
                         Tuần sau →
                     </button>
                     {activeTab === 'my' && (
