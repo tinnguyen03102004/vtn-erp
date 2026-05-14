@@ -52,11 +52,11 @@ const navItems = [
         ],
     },
     {
-        section: 'Thực hiện',
+        section: 'Dự án',
         items: [
             {
                 href: '/projects',
-                label: 'Dự án',
+                label: 'Quản lý dự án',
                 icon: (
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polygon points="12 2 2 7 12 12 22 7 12 2" />
@@ -89,7 +89,7 @@ const navItems = [
                         <polyline points="9 16 11 18 15 14" />
                     </svg>
                 ),
-                roles: ['DIRECTOR', 'PROJECT_MANAGER', 'ARCHITECT', 'FINANCE'],
+                roles: ['PROJECT_MANAGER', 'ARCHITECT', 'FINANCE'],
             },
         ],
     },
@@ -117,10 +117,22 @@ const navItems = [
                 ),
                 roles: ['DIRECTOR', 'FINANCE', 'PROJECT_MANAGER'],
             },
+            {
+                href: '/payroll',
+                label: 'Bảng lương',
+                icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                        <path d="M12 14v3" /><path d="M8 14v1" /><path d="M16 14v1" />
+                    </svg>
+                ),
+                roles: ['DIRECTOR', 'FINANCE'],
+            },
         ],
     },
     {
-        section: 'Nhân sự & Báo cáo',
+        section: 'Nhân sự',
         items: [
             {
                 href: '/employees',
@@ -148,18 +160,11 @@ const navItems = [
                 ),
                 roles: ['DIRECTOR'],
             },
-            {
-                href: '/payroll',
-                label: 'Bảng lương',
-                icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="2" y="5" width="20" height="14" rx="2" />
-                        <line x1="2" y1="10" x2="22" y2="10" />
-                        <path d="M12 14v3" /><path d="M8 14v1" /><path d="M16 14v1" />
-                    </svg>
-                ),
-                roles: ['DIRECTOR', 'FINANCE'],
-            },
+        ],
+    },
+    {
+        section: 'Báo cáo',
+        items: [
             {
                 href: '/reports',
                 label: 'Báo cáo',
