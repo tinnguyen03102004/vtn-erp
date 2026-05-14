@@ -23,8 +23,10 @@ export async function getLeads() {
 
 export async function getLeadsByStage() {
     await requirePermission('crm.view')
-    const { data: stages } = await supabase.from('crm_stages').select('*').order('sequence')
-    const { data: leads } = await supabase.from('crm_leads').select('*')
+    const [{ data: stages }, { data: leads }] = await Promise.all([
+        supabase.from('crm_stages').select('*').order('sequence'),
+        supabase.from('crm_leads').select('*'),
+    ])
 
     return (stages || []).map((stage) => ({
         ...stage,

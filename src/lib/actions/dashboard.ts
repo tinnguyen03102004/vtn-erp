@@ -103,8 +103,12 @@ interface ProjectStatusPoint { name: string; value: number; color: string }
 interface ChartData { revenueData: RevenuePoint[]; projectStatusData: ProjectStatusPoint[] }
 
 async function fetchChartData(): Promise<ActionResult<ChartData>> {
-    const { data: payments, error: payErr } = await supabase.from('payments').select('amount, paymentDate').order('paymentDate')
+    const [{ data: payments, error: payErr }, { data: projects, error: projErr }] = await Promise.all([
+        supabase.from('payments').select('amount, paymentDate').order('paymentDate'),
+        supabase.from('projects').select('state'),
+    ])
     if (payErr) return fail(payErr.message)
+    if (projErr) return fail(projErr.message)
 
     const monthlyRevenue: Record<string, number> = {}
     for (const p of payments || []) {
@@ -114,9 +118,6 @@ async function fetchChartData(): Promise<ActionResult<ChartData>> {
     const revenueData = Object.entries(monthlyRevenue).slice(-6).map(([month, revenue]) => ({
         month, revenue: Math.round(revenue / 1000000),
     }))
-
-    const { data: projects, error: projErr } = await supabase.from('projects').select('state')
-    if (projErr) return fail(projErr.message)
 
     const statusCounts: Record<string, number> = {}
     for (const p of projects || []) { const s = p.state ?? 'DRAFT'; statusCounts[s] = (statusCounts[s] || 0) + 1 }

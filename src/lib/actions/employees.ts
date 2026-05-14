@@ -17,15 +17,11 @@ const db = supabase as any
 
 export async function getEmployees() {
     await requirePermission('hr.view')
-    const [{ data: employees }, { data: users }] = await Promise.all([
+    const [{ data: employees }, { data: users }, { data: hoursByEmployee }] = await Promise.all([
         supabase.from('employees').select('*'),
         supabase.from('users').select('id, name, email, role'),
+        supabase.from('timesheets').select('employeeId, hours'),
     ])
-
-    // Aggregate timesheet hours per employee in DB instead of fetching all rows
-    const { data: hoursByEmployee } = await supabase
-        .from('timesheets')
-        .select('employeeId, hours')
 
     // Build hours lookup: { employeeId: totalHours }
     const hoursMap: Record<string, number> = {}

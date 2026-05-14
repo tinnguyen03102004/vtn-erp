@@ -12,12 +12,10 @@ const log = createLogger({ module: 'finance' })
 
 export async function getInvoices() {
     await requirePermission('finance.view')
-    const { data: invoices } = await supabase
-        .from('invoices')
-        .select('*')
-        .order('createdAt', { ascending: false })
-
-    const { data: projects } = await supabase.from('projects').select('id, name')
+    const [{ data: invoices }, { data: projects }] = await Promise.all([
+        supabase.from('invoices').select('*').order('createdAt', { ascending: false }),
+        supabase.from('projects').select('id, name'),
+    ])
 
     return (invoices || []).map((inv) => ({
         ...inv,
@@ -94,8 +92,10 @@ export async function createPayment(formData: unknown): Promise<ActionResult<Rec
     if (error) return fail(error.message)
 
     // Check if invoice is fully paid
-    const { data: payments } = await supabase.from('payments').select('amount').eq('invoiceId', parsed.data.invoiceId)
-    const { data: invoice } = await supabase.from('invoices').select('amountTotal').eq('id', parsed.data.invoiceId).single()
+    const [{ data: payments }, { data: invoice }] = await Promise.all([
+        supabase.from('payments').select('amount').eq('invoiceId', parsed.data.invoiceId),
+        supabase.from('invoices').select('amountTotal').eq('id', parsed.data.invoiceId).single(),
+    ])
     const totalPaid = (payments || []).reduce((s: number, p: Record<string, unknown>) => s + Number(p.amount), 0)
     if (invoice && totalPaid >= Number(invoice.amountTotal)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

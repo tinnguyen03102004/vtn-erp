@@ -101,12 +101,10 @@ export async function getContracts() {
 // ── All orders ──
 export async function getOrders() {
     await requirePermission('sale.view')
-    const { data: orders } = await supabase
-        .from('sale_orders')
-        .select('*')
-        .order('createdAt', { ascending: false })
-
-    const { data: milestones } = await supabase.from('sale_milestones').select('orderId')
+    const [{ data: orders }, { data: milestones }] = await Promise.all([
+        supabase.from('sale_orders').select('*').order('createdAt', { ascending: false }),
+        supabase.from('sale_milestones').select('orderId'),
+    ])
 
     return (orders || []).map((order: Record<string, unknown>) => ({
         ...order,
@@ -121,22 +119,20 @@ export async function getOrder(id: string) {
     const { data: order } = await supabase.from('sale_orders').select('*').eq('id', id).single()
     if (!order) return null
 
-    const { data: lines } = await supabase.from('sale_order_lines').select('*').eq('orderId', id).order('sequence')
-    const { data: milestones } = await supabase.from('sale_milestones').select('*').eq('orderId', id).order('sequence')
+    const [{ data: lines }, { data: milestones }] = await Promise.all([
+        supabase.from('sale_order_lines').select('*').eq('orderId', id).order('sequence'),
+        supabase.from('sale_milestones').select('*').eq('orderId', id).order('sequence'),
+    ])
 
-    // If contract, fetch linked quotation
-    let quotation = null
-    if (order.quotationId) {
-        const { data } = await supabase.from('sale_orders').select('id, name, partnerName, totalAmount, state').eq('id', order.quotationId).single()
-        quotation = data
-    }
-
-    // If linked to a CRM lead, fetch lead info
-    let lead = null
-    if (order.leadId) {
-        const { data } = await supabase.from('crm_leads').select('id, name, partnerName, email, phone').eq('id', order.leadId).single()
-        lead = data
-    }
+    // Fetch optional linked entities in parallel
+    const [quotation, lead] = await Promise.all([
+        order.quotationId
+            ? supabase.from('sale_orders').select('id, name, partnerName, totalAmount, state').eq('id', order.quotationId).single().then(r => r.data)
+            : Promise.resolve(null),
+        order.leadId
+            ? supabase.from('crm_leads').select('id, name, partnerName, email, phone').eq('id', order.leadId).single().then(r => r.data)
+            : Promise.resolve(null),
+    ])
 
     return { ...order, lines: lines || [], milestones: milestones || [], quotation, lead }
 }
