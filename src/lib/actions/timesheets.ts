@@ -10,6 +10,83 @@ import type { Database } from '@/lib/database.types'
 
 const MANAGER_ROLES = ['DIRECTOR', 'ADMIN', 'PROJECT_MANAGER']
 
+export interface OverviewEmployee {
+    employeeId: string
+    name: string
+    department: string
+    totalHours: number
+    daysWorked: number
+    projects: string[]
+}
+
+export interface TimesheetOverviewData {
+    year: number
+    month: number
+    employees: OverviewEmployee[]
+    totalHours: number
+    totalEmployees: number
+    avgHoursPerEmployee: number
+    daysInMonth: number
+}
+
+export async function getTimesheetOverview(year: number, month: number): Promise<TimesheetOverviewData> {
+    await requireAuth()
+
+    // Date range for the month
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+    const [{ data: timesheets }, { data: employees }, { data: users }] = await Promise.all([
+        supabase.from('timesheets').select('employeeId, hours, date, projectId').gte('date', startDate).lte('date', endDate),
+        supabase.from('employees').select('id, userId, department'),
+        supabase.from('users').select('id, name'),
+    ])
+
+    const { data: projects } = await supabase.from('projects').select('id, name')
+
+    // Aggregate by employee
+    const empMap = new Map<string, { hours: number; dates: Set<string>; projectIds: Set<string> }>()
+    for (const t of (timesheets || [])) {
+        const key = t.employeeId
+        if (!key) continue
+        if (!empMap.has(key)) empMap.set(key, { hours: 0, dates: new Set(), projectIds: new Set() })
+        const entry = empMap.get(key)!
+        entry.hours += Number(t.hours || 0)
+        entry.dates.add(t.date)
+        if (t.projectId) entry.projectIds.add(t.projectId)
+    }
+
+    const overviewEmployees: OverviewEmployee[] = []
+    for (const [empId, agg] of empMap) {
+        const emp = (employees || []).find(e => e.id === empId)
+        const user = emp ? (users || []).find(u => u.id === emp.userId) : null
+        overviewEmployees.push({
+            employeeId: empId,
+            name: user?.name || '—',
+            department: (emp as Record<string, unknown>)?.department as string || '—',
+            totalHours: Math.round(agg.hours * 10) / 10,
+            daysWorked: agg.dates.size,
+            projects: Array.from(agg.projectIds).map(pid => (projects || []).find(p => p.id === pid)?.name || '—'),
+        })
+    }
+
+    // Sort by hours descending
+    overviewEmployees.sort((a, b) => b.totalHours - a.totalHours)
+
+    const totalHours = overviewEmployees.reduce((s, e) => s + e.totalHours, 0)
+
+    return {
+        year,
+        month,
+        employees: overviewEmployees,
+        totalHours: Math.round(totalHours * 10) / 10,
+        totalEmployees: overviewEmployees.length,
+        avgHoursPerEmployee: overviewEmployees.length > 0 ? Math.round(totalHours / overviewEmployees.length * 10) / 10 : 0,
+        daysInMonth: lastDay,
+    }
+}
+
 async function getCurrentEmployeeForUser(userId: string) {
     const { data: employee } = await supabase
         .from('employees')

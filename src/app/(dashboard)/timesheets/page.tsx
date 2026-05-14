@@ -1,9 +1,10 @@
-import { getTimesheets } from '@/lib/actions/timesheets'
+import { getTimesheets, getTimesheetOverview } from '@/lib/actions/timesheets'
 import { getActiveProjectOptions } from '@/lib/actions/projects'
 import { getCurrentEmployee } from '@/lib/actions/employees'
 import { requirePagePermission } from '@/lib/page-guard'
 import { getSessionFromCookies } from '@/lib/session'
 import TimesheetView from './grid'
+import TimesheetOverview from '@/components/TimesheetOverview'
 
 const MANAGER_ROLES = ['DIRECTOR', 'ADMIN', 'PROJECT_MANAGER']
 
@@ -41,13 +42,35 @@ const formatDate = (d: Date) =>
 export default async function TimesheetPage({
     searchParams,
 }: {
-    searchParams: Promise<{ week?: string }>
+    searchParams: Promise<{ week?: string; view?: string; year?: string; month?: string }>
 }) {
     await requirePagePermission('project.view')
     const user = await getSessionFromCookies()
     const isManager = user ? MANAGER_ROLES.includes(user.role) : false
     const params = await searchParams
 
+    // ── Route: Overview (Director/PM default) ──
+    const viewMode = params.view || (isManager ? 'overview' : 'week')
+
+    if (viewMode === 'overview' && isManager) {
+        const now = new Date()
+        const year = params.year ? Number(params.year) : now.getFullYear()
+        const month = params.month ? Number(params.month) : now.getMonth() + 1
+
+        const data = await getTimesheetOverview(year, month)
+
+        // Build available months for navigation (current year ± 1)
+        const availableMonths: { year: number; month: number }[] = []
+        for (let y = year - 1; y <= year + 1; y++) {
+            for (let m = 1; m <= 12; m++) {
+                availableMonths.push({ year: y, month: m })
+            }
+        }
+
+        return <TimesheetOverview data={data} availableMonths={availableMonths} />
+    }
+
+    // ── Route: Weekly Grid (NV default, or manager switches) ──
     const { monday, saturday, prevMonday, nextMonday } = getWeekRange(params.week)
 
     const [currentEmployee, activeProjects] = await Promise.all([
@@ -136,3 +159,4 @@ export default async function TimesheetPage({
         />
     )
 }
+
