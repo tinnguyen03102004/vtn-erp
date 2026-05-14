@@ -8,6 +8,8 @@ interface TimesheetEntry {
     id: string
     projectId: string
     projectName: string
+    employeeName: string
+    employeeId: string
     date: string
     hours: number
     description: string | null
@@ -25,15 +27,150 @@ interface Props {
     timesheets: TimesheetEntry[]
     projects: Project[]
     employeeId?: string
+    isManager?: boolean
 }
 
 const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
 const projectColors = ['#1F3A5F', '#C9A84C', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#14B8A6']
+const employeeColors = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#3B82F6', '#22C55E', '#EF4444', '#8B5CF6', '#F97316', '#06B6D4']
 
-export default function TimesheetGrid({ weekDates, monday: _monday, timesheets, projects, employeeId }: Props) {
+export default function TimesheetGrid({ weekDates, monday: _monday, timesheets, projects, employeeId, isManager }: Props) {
     const { toasts, addToast } = useToast()
     const [saving, setSaving] = useState(false)
 
+    const dateLabels = weekDates.map(d => {
+        const date = new Date(d)
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
+    })
+
+    // Manager team view
+    if (isManager) {
+        // Group timesheets by employee
+        const employeeMap = new Map<string, { name: string; entries: TimesheetEntry[] }>()
+        for (const t of timesheets) {
+            const key = t.employeeId || 'unknown'
+            if (!employeeMap.has(key)) {
+                employeeMap.set(key, { name: t.employeeName || '-', entries: [] })
+            }
+            employeeMap.get(key)!.entries.push(t)
+        }
+
+        const employeeList = Array.from(employeeMap.entries()).map(([id, data]) => {
+            const dailyHours = weekDates.map(date =>
+                data.entries.filter(t => t.date === date).reduce((s, t) => s + t.hours, 0)
+            )
+            const weekTotal = dailyHours.reduce((s, h) => s + h, 0)
+            return { id, name: data.name, dailyHours, weekTotal, entries: data.entries }
+        }).sort((a, b) => b.weekTotal - a.weekTotal)
+
+        const grandTotal = employeeList.reduce((s, e) => s + e.weekTotal, 0)
+        const dailyGrandTotals = weekDates.map((_, di) =>
+            employeeList.reduce((s, e) => s + e.dailyHours[di], 0)
+        )
+
+        return (
+            <>
+                <ToastContainer toasts={toasts} />
+                <div className="page-header">
+                    <div className="page-header-left">
+                        <h1 className="page-title">Timesheet — Tổng quan đội nhóm</h1>
+                        <p className="page-subtitle">
+                            Tuần {dateLabels[0]} – {dateLabels[5]} — {employeeList.length} nhân viên — Tổng: {grandTotal}h
+                        </p>
+                    </div>
+                </div>
+
+                <div className="card" style={{ marginBottom: 20, padding: '16px 24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#4A5E78' }}>Tổng giờ đội nhóm</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: grandTotal >= employeeList.length * 40 ? '#22C55E' : '#F59E0B' }}>
+                            {grandTotal}h / {employeeList.length * 48}h ({employeeList.length > 0 ? Math.round(grandTotal / (employeeList.length * 48) * 100) : 0}%)
+                        </span>
+                    </div>
+                    <div className="progress" style={{ height: 10 }}>
+                        <div className="progress-bar" style={{ width: `${employeeList.length > 0 ? Math.min(100, grandTotal / (employeeList.length * 48) * 100) : 0}%` }} />
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table" style={{ minWidth: 700 }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ width: 220 }}>Nhân viên</th>
+                                    {dayLabels.map((day, i) => (
+                                        <th key={day} style={{ textAlign: 'center', width: 90 }}>
+                                            <div style={{ fontWeight: 700 }}>{day}</div>
+                                            <div style={{ fontWeight: 400, color: '#8FA3BF', fontSize: 11 }}>{dateLabels[i]}</div>
+                                        </th>
+                                    ))}
+                                    <th style={{ textAlign: 'right' }}>Tổng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {employeeList.map((emp, idx) => {
+                                    const color = employeeColors[idx % employeeColors.length]
+                                    return (
+                                        <tr key={emp.id}>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <div style={{
+                                                        width: 28, height: 28, borderRadius: '50%',
+                                                        background: color + '20', color, display: 'flex',
+                                                        alignItems: 'center', justifyContent: 'center',
+                                                        fontSize: 11, fontWeight: 700, flexShrink: 0
+                                                    }}>
+                                                        {emp.name.split(' ').pop()?.charAt(0) ?? '?'}
+                                                    </div>
+                                                    <span style={{ fontWeight: 600, fontSize: 13 }}>{emp.name}</span>
+                                                </div>
+                                            </td>
+                                            {emp.dailyHours.map((h, di) => (
+                                                <td key={di} style={{
+                                                    textAlign: 'center', fontWeight: h > 0 ? 700 : 400,
+                                                    color: h >= 8 ? '#22C55E' : h > 0 ? '#C9A84C' : '#CBD5E1',
+                                                    background: h > 0 ? (h >= 8 ? '#F0FDF4' : '#FFFBEB') : 'transparent',
+                                                    fontSize: 13,
+                                                }}>
+                                                    {h > 0 ? `${h}h` : '—'}
+                                                </td>
+                                            ))}
+                                            <td style={{
+                                                textAlign: 'right', fontWeight: 700,
+                                                color: emp.weekTotal >= 40 ? '#22C55E' : emp.weekTotal >= 32 ? '#C9A84C' : '#EF4444',
+                                                fontSize: 14,
+                                            }}>
+                                                {emp.weekTotal}h
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                                {employeeList.length === 0 && (
+                                    <tr><td colSpan={8} style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>Chưa có dữ liệu timesheet</td></tr>
+                                )}
+                            </tbody>
+                            <tfoot>
+                                <tr style={{ background: '#F8F9FB' }}>
+                                    <td style={{ fontWeight: 700, fontSize: 13, color: '#4A5E78' }}>Tổng ngày</td>
+                                    {dailyGrandTotals.map((total, i) => (
+                                        <td key={i} style={{
+                                            textAlign: 'center', fontWeight: 700,
+                                            color: total > 0 ? '#1F3A5F' : '#CBD5E1',
+                                        }}>
+                                            {total > 0 ? `${total}h` : '—'}
+                                        </td>
+                                    ))}
+                                    <td style={{ textAlign: 'right', fontWeight: 800, color: '#1F3A5F', fontSize: 15 }}>{grandTotal}h</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </>
+        )
+    }
+
+    // Regular employee view (editable grid)
     const initialEntries = useMemo(() => {
         const map: Record<string, Record<string, number>> = {}
         const projectIds = new Set(timesheets.map(t => t.projectId))
@@ -47,6 +184,7 @@ export default function TimesheetGrid({ weekDates, monday: _monday, timesheets, 
             })
         })
         return map
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timesheets, projects, weekDates])
 
     const [entries, setEntries] = useState(initialEntries)
@@ -63,11 +201,6 @@ export default function TimesheetGrid({ weekDates, monday: _monday, timesheets, 
     const dailyTotals = dayLabels.map((_, di) =>
         Object.values(entries).reduce((s, proj) => s + (proj[String(di)] || 0), 0)
     )
-
-    const dateLabels = weekDates.map(d => {
-        const date = new Date(d)
-        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
-    })
 
     async function handleSave() {
         if (!employeeId) { addToast('Không tìm thấy nhân viên', 'error'); return }

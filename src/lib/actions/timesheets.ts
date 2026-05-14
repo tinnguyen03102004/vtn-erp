@@ -8,6 +8,8 @@ import { logAudit } from '@/lib/audit'
 import type { TimesheetEntry } from '@/lib/types'
 import type { Database } from '@/lib/database.types'
 
+const MANAGER_ROLES = ['DIRECTOR', 'ADMIN', 'PROJECT_MANAGER']
+
 async function getCurrentEmployeeForUser(userId: string) {
     const { data: employee } = await supabase
         .from('employees')
@@ -20,11 +22,23 @@ async function getCurrentEmployeeForUser(userId: string) {
 
 export async function getTimesheets(filters?: { employeeId?: string; projectId?: string; startDate?: string; endDate?: string }) {
     const user = await requireAuth()
+    const isManager = MANAGER_ROLES.includes(user.role)
     const currentEmployee = await getCurrentEmployeeForUser(user.id)
-    if (!currentEmployee) return []
-    if (filters?.employeeId && filters.employeeId !== currentEmployee.id) return []
 
-    let query = supabase.from('timesheets').select('*').eq('employeeId', currentEmployee.id).order('date', { ascending: false })
+    // Non-managers must have an employee record and can only see their own
+    if (!isManager) {
+        if (!currentEmployee) return []
+        if (filters?.employeeId && filters.employeeId !== currentEmployee.id) return []
+    }
+
+    let query = supabase.from('timesheets').select('*').order('date', { ascending: false })
+
+    // Managers can filter by specific employee; non-managers always filter to self
+    if (isManager && filters?.employeeId) {
+        query = query.eq('employeeId', filters.employeeId)
+    } else if (!isManager && currentEmployee) {
+        query = query.eq('employeeId', currentEmployee.id)
+    }
 
     if (filters?.projectId) query = query.eq('projectId', filters.projectId)
     if (filters?.startDate) query = query.gte('date', filters.startDate)
@@ -32,11 +46,18 @@ export async function getTimesheets(filters?: { employeeId?: string; projectId?:
 
     const { data } = await query
     const { data: projects } = await supabase.from('projects').select('id, name')
+    const { data: employees } = await supabase.from('employees').select('id, userId')
+    const { data: users } = await supabase.from('users').select('id, name')
 
-    return (data || []).map((timesheet) => ({
-        ...timesheet,
-        project: (projects || []).find((project) => project.id === timesheet.projectId) || null,
-    }))
+    return (data || []).map((timesheet) => {
+        const emp = (employees || []).find((e) => e.id === timesheet.employeeId)
+        const owner = emp ? (users || []).find((u) => u.id === emp.userId) : null
+        return {
+            ...timesheet,
+            project: (projects || []).find((project) => project.id === timesheet.projectId) || null,
+            employeeName: owner?.name ?? '-',
+        }
+    })
 }
 
 export async function saveWeekTimesheets(employeeId: string, entries: TimesheetEntry[]): Promise<ActionResult<void>> {
@@ -90,14 +111,18 @@ export async function saveWeekTimesheets(employeeId: string, entries: TimesheetE
 
 export async function getTimesheetsWithDetails() {
     const user = await requireAuth()
+    const isManager = MANAGER_ROLES.includes(user.role)
     const currentEmployee = await getCurrentEmployeeForUser(user.id)
-    if (!currentEmployee) return []
 
-    const { data: timesheets } = await supabase
-        .from('timesheets')
-        .select('*')
-        .eq('employeeId', currentEmployee.id)
-        .order('date', { ascending: false })
+    let timesheetsQuery = supabase.from('timesheets').select('*').order('date', { ascending: false })
+
+    // Non-managers only see their own timesheets
+    if (!isManager) {
+        if (!currentEmployee) return []
+        timesheetsQuery = timesheetsQuery.eq('employeeId', currentEmployee.id)
+    }
+
+    const { data: timesheets } = await timesheetsQuery
 
     const { data: employees } = await supabase.from('employees').select('id, userId')
     const { data: users } = await supabase.from('users').select('id, name')
