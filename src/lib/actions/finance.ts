@@ -13,7 +13,7 @@ const log = createLogger({ module: 'finance' })
 export async function getInvoices() {
     await requirePermission('finance.view')
     const [{ data: invoices }, { data: projects }] = await Promise.all([
-        supabase.from('invoices').select('*').order('createdAt', { ascending: false }),
+        supabase.from('invoices').select('id, name, partnerName, state, invoiceDate, dueDate, amountTotal, projectId, createdAt').order('createdAt', { ascending: false }),
         supabase.from('projects').select('id, name'),
     ])
 
