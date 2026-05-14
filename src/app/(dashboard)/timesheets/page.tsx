@@ -13,11 +13,9 @@ export default async function TimesheetPage() {
     const isManager = user ? MANAGER_ROLES.includes(user.role) : false
 
     const today = new Date()
-    const dayOfWeek = today.getDay()
-    const monday = new Date(today)
-    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
-    const saturday = new Date(monday)
-    saturday.setDate(monday.getDate() + 5)
+    const dayOfWeek = today.getUTCDay()
+    const monday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)))
+    const saturday = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + 5))
 
     const [currentEmployee, activeProjects] = await Promise.all([
         getCurrentEmployee(),
@@ -25,10 +23,12 @@ export default async function TimesheetPage() {
     ])
     const currentEmployeeId = currentEmployee?.id
 
+    const formatDate = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+
     // Managers see all timesheets; regular employees only see their own
     const timesheetFilters: { employeeId?: string; startDate?: string; endDate?: string } = {
-        startDate: monday.toISOString().split('T')[0],
-        endDate: saturday.toISOString().split('T')[0],
+        startDate: formatDate(monday),
+        endDate: formatDate(saturday),
     }
     if (!isManager && currentEmployeeId) {
         timesheetFilters.employeeId = currentEmployeeId
@@ -37,9 +37,8 @@ export default async function TimesheetPage() {
 
     const weekDates: string[] = []
     for (let i = 0; i < 6; i++) {
-        const d = new Date(monday)
-        d.setDate(monday.getDate() + i)
-        weekDates.push(d.toISOString().split('T')[0])
+        const d = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + i))
+        weekDates.push(formatDate(d))
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
