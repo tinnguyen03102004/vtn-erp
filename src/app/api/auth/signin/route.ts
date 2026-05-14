@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserForAuth } from '@/lib/server-supabase'
 import bcrypt from 'bcryptjs'
 import { createSession, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/session'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+    // Brute-force protection: 5 login attempts per minute per IP
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const rl = checkRateLimit(`login:${ip}`, { limit: 5, windowSeconds: 60 })
+    if (!rl.allowed) return rateLimitResponse(rl)
     try {
         const body = await req.json()
         const { email, password } = body
