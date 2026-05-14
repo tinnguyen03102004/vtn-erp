@@ -48,7 +48,7 @@ export default async function TimesheetPage() {
         projectName: t.project?.name ?? '',
         employeeName: t.employeeName ?? '',
         employeeId: t.employeeId ?? '',
-        date: t.date instanceof Date ? t.date.toISOString().split('T')[0] : String(t.date),
+        date: t.date instanceof Date ? t.date.toISOString().split('T')[0] : String(t.date).split('T')[0],
         hours: t.hours,
         description: t.description,
     }))
