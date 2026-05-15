@@ -47,9 +47,13 @@ interface TeamMember {
     employeeId: string
     name: string
     department: string
+    position: string
     totalHours: number
     phase: string | null
     monthlyHours: Record<string, number>
+    hourlyRate: number
+    laborCost: number
+    monthlyCost: Record<string, number>
 }
 
 interface ProjectData {
@@ -66,6 +70,8 @@ interface ProjectData {
     timesheets?: ProjectTimesheet[]
     invoices?: ProjectInvoice[]
     teamMembers?: TeamMember[]
+    totalLaborCost?: number
+    laborCostByMonth?: Record<string, number>
     [key: string]: unknown
 }
 
@@ -135,6 +141,10 @@ export default function ProjectDetail({
     const doneCount = tasks.filter((task: ProjectTask) => task.state === 'DONE').length
     const progress = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0
     const teamMembers = project.teamMembers || []
+    const totalLaborCost = (project.totalLaborCost as number) || 0
+    const laborCostByMonth = (project.laborCostByMonth as Record<string, number>) || {}
+    const budgetNum = Number(project.budget ?? 0)
+    const budgetPct = budgetNum > 0 ? ((totalLaborCost / budgetNum) * 100).toFixed(1) : '—'
 
     // Get monthly trend months
     const allMonths = new Set<string>()
@@ -271,7 +281,6 @@ export default function ProjectDetail({
         }
     }
 
-    const maxMemberHours = teamMembers.length > 0 ? Math.max(...teamMembers.map(m => m.totalHours)) : 1
 
     return (
         <>
@@ -310,13 +319,14 @@ export default function ProjectDetail({
                     { label: 'Tiến độ', value: `${progress}%`, icon: '📊', color: '#6366F1' },
                     { label: 'Tasks', value: `${doneCount}/${tasks.length}`, icon: '✅', color: '#22C55E' },
                     { label: 'Giờ công', value: `${Math.round(totalHours)}h`, icon: '⏱️', color: '#F59E0B' },
-                    { label: 'Nhân sự', value: `${teamMembers.length}`, icon: '👥', color: '#3B82F6' },
+                    { label: 'Chi phí nhân công', value: formatCurrency(totalLaborCost), icon: '💰', color: '#EF4444', sub: budgetNum > 0 ? `${budgetPct}% budget` : undefined },
                 ].map((kpi) => (
                     <div key={kpi.label} className="kpi-card" style={{ padding: 16 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <div>
                                 <div className="kpi-label">{kpi.label}</div>
                                 <div className="kpi-value" style={{ fontSize: 22, marginTop: 4, color: kpi.color }}>{kpi.value}</div>
+                                {'sub' in kpi && kpi.sub && <div style={{ fontSize: 11, color: '#8FA3BF', marginTop: 2 }}>{kpi.sub}</div>}
                             </div>
                             <div style={{ fontSize: 28 }}>{kpi.icon}</div>
                         </div>
@@ -343,22 +353,26 @@ export default function ProjectDetail({
                             <thead>
                                 <tr>
                                     <th>Nhân viên</th>
-                                    <th>Phòng ban</th>
+                                    <th>Chức vụ</th>
                                     <th>Phase</th>
+                                    <th style={{ textAlign: 'right' }}>Đơn giá/h</th>
                                     <th style={{ textAlign: 'right' }}>Tổng giờ</th>
                                     {months.map(m => (
                                         <th key={m} style={{ textAlign: 'center', fontSize: 11 }}>
                                             T{parseInt(m.split('-')[1])}
                                         </th>
                                     ))}
-                                    <th style={{ width: 120 }}>Phân bổ</th>
+                                    <th style={{ textAlign: 'right' }}>Chi phí</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {teamMembers.map((member) => (
                                     <tr key={member.employeeId}>
-                                        <td style={{ fontWeight: 600, color: '#1F3A5F' }}>{member.name}</td>
-                                        <td style={{ color: '#4A5E78' }}>{member.department}</td>
+                                        <td>
+                                            <div style={{ fontWeight: 600, color: '#1F3A5F' }}>{member.name}</div>
+                                            <div style={{ fontSize: 11, color: '#8FA3BF' }}>{member.department}</div>
+                                        </td>
+                                        <td style={{ color: '#4A5E78', fontSize: 12 }}>{member.position}</td>
                                         <td>
                                             {member.phase ? (
                                                 <span style={{
@@ -370,49 +384,63 @@ export default function ProjectDetail({
                                                 </span>
                                             ) : <span style={{ color: '#CBD5E1' }}>—</span>}
                                         </td>
+                                        <td style={{ textAlign: 'right', color: '#8FA3BF', fontSize: 12 }}>
+                                            {member.hourlyRate > 0 ? formatCurrency(member.hourlyRate) : '—'}
+                                        </td>
                                         <td style={{ textAlign: 'right', fontWeight: 700, color: '#1F3A5F' }}>
                                             {member.totalHours}h
                                         </td>
                                         {months.map(m => {
                                             const h = member.monthlyHours[m] || 0
                                             return (
-                                                <td key={m} style={{ textAlign: 'center', color: h > 0 ? '#4A5E78' : '#CBD5E1', fontWeight: h > 0 ? 600 : 400 }}>
+                                                <td key={m} style={{ textAlign: 'center', color: h > 0 ? '#4A5E78' : '#CBD5E1', fontWeight: h > 0 ? 600 : 400, fontSize: 12 }}>
                                                     {h > 0 ? `${Math.round(h)}` : '—'}
                                                 </td>
                                             )
                                         })}
-                                        <td>
-                                            <div style={{
-                                                height: 6, borderRadius: 3,
-                                                background: '#E2E8F0',
-                                                overflow: 'hidden',
-                                            }}>
-                                                <div style={{
-                                                    height: '100%',
-                                                    width: `${Math.round(member.totalHours / maxMemberHours * 100)}%`,
-                                                    background: 'linear-gradient(90deg, #6366F1, #818CF8)',
-                                                    borderRadius: 3,
-                                                    transition: 'width 0.3s ease',
-                                                }} />
-                                            </div>
+                                        <td style={{ textAlign: 'right', fontWeight: 700, color: member.laborCost > 0 ? '#EF4444' : '#CBD5E1' }}>
+                                            {member.laborCost > 0 ? formatCurrency(member.laborCost) : '—'}
                                         </td>
                                     </tr>
                                 ))}
                                 <tr style={{ background: '#F8F9FB', fontWeight: 700 }}>
                                     <td colSpan={3} style={{ color: '#1F3A5F' }}>Tổng</td>
+                                    <td />
                                     <td style={{ textAlign: 'right', color: '#6366F1' }}>
                                         {Math.round(totalHours)}h
                                     </td>
                                     {months.map(m => {
                                         const monthTotal = teamMembers.reduce((s, mem) => s + (mem.monthlyHours[m] || 0), 0)
                                         return (
-                                            <td key={m} style={{ textAlign: 'center', color: '#6366F1' }}>
+                                            <td key={m} style={{ textAlign: 'center', color: '#6366F1', fontSize: 12 }}>
                                                 {Math.round(monthTotal)}
                                             </td>
                                         )
                                     })}
+                                    <td style={{ textAlign: 'right', color: '#EF4444', fontSize: 14 }}>
+                                        {formatCurrency(totalLaborCost)}
+                                    </td>
+                                </tr>
+                                {/* Monthly cost breakdown row */}
+                                <tr style={{ background: '#FEF2F2' }}>
+                                    <td colSpan={3} style={{ color: '#EF4444', fontWeight: 600, fontSize: 12 }}>Chi phí/tháng</td>
+                                    <td />
+                                    <td />
+                                    {months.map(m => (
+                                        <td key={m} style={{ textAlign: 'center', color: '#EF4444', fontWeight: 600, fontSize: 11 }}>
+                                            {laborCostByMonth[m] ? `${(laborCostByMonth[m] / 1_000_000).toFixed(1)}M` : '—'}
+                                        </td>
+                                    ))}
                                     <td />
                                 </tr>
+                                {budgetNum > 0 && (
+                                    <tr style={{ background: '#FFFBEB' }}>
+                                        <td colSpan={3} style={{ color: '#D97706', fontWeight: 600, fontSize: 12 }}>
+                                            📊 Budget: {formatCurrency(budgetNum)} | Đã dùng: {budgetPct}%
+                                        </td>
+                                        <td colSpan={months.length + 2} />
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

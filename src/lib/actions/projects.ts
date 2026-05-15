@@ -74,15 +74,30 @@ export async function getProject(id: string) {
         supabase.from('project_tasks').select('*').eq('projectId', id),
         supabase.from('invoices').select('*').eq('projectId', id),
         supabase.from('users').select('id, name, email').eq('id', project.managerId ?? '').single(),
-        supabase.from('employees').select('id, userId, department'),
+        supabase.from('employees').select('id, userId, department, position'),
         supabase.from('users').select('id, name'),
     ])
+    // Fetch billing rates — separate query since table was added via migration
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: billingRates } = await (supabase.from('employee_billing_rates' as any).select('*') as any)
     // Fetch timesheets separately — 'phase' column was added via migration, not in generated types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: timesheetRows } = await (supabase.from('timesheets').select('*').eq('projectId', id) as any)
 
     // Build team members with timesheet breakdown
     const ts = timesheetRows || []
+    // Build billing rate lookup: employeeId → hourlyRate (project-specific rate > default rate)
+    const rateMap = new Map<string, number>()
+    for (const r of (billingRates || [])) {
+        if (!r.employeeId) continue
+        // Project-specific rate takes precedence over default (null projectId)
+        if (r.projectId === id) {
+            rateMap.set(r.employeeId, Number(r.hourlyRate || 0))
+        } else if (!r.projectId && !rateMap.has(r.employeeId)) {
+            rateMap.set(r.employeeId, Number(r.hourlyRate || 0))
+        }
+    }
+
     const empMap = new Map<string, { hours: number; phase: string | null; monthlyHours: Map<string, number> }>()
     for (const t of ts) {
         if (!t.employeeId) continue
@@ -99,15 +114,35 @@ export async function getProject(id: string) {
     const teamMembers = Array.from(empMap.entries()).map(([empId, data]) => {
         const emp = employees.find(e => e.id === empId)
         const user = emp ? users.find(u => u.id === emp.userId) : null
+        const hourlyRate = rateMap.get(empId) || 0
+        const totalHours = Math.round(data.hours)
+        const laborCost = Math.round(data.hours * hourlyRate)
+        // Monthly cost breakdown
+        const monthlyCost: Record<string, number> = {}
+        for (const [month, hours] of data.monthlyHours.entries()) {
+            monthlyCost[month] = Math.round(hours * hourlyRate)
+        }
         return {
             employeeId: empId,
             name: (user?.name as string) || '—',
             department: (emp?.department as string) || '—',
-            totalHours: Math.round(data.hours),
+            position: (emp?.position as string) || '—',
+            totalHours,
             phase: data.phase,
             monthlyHours: Object.fromEntries(data.monthlyHours),
+            hourlyRate,
+            laborCost,
+            monthlyCost,
         }
-    }).sort((a, b) => b.totalHours - a.totalHours)
+    }).sort((a, b) => b.laborCost - a.laborCost)
+
+    const totalLaborCost = teamMembers.reduce((sum, m) => sum + m.laborCost, 0)
+    const laborCostByMonth: Record<string, number> = {}
+    for (const m of teamMembers) {
+        for (const [month, cost] of Object.entries(m.monthlyCost)) {
+            laborCostByMonth[month] = (laborCostByMonth[month] || 0) + cost
+        }
+    }
 
     return {
         ...project,
@@ -116,6 +151,8 @@ export async function getProject(id: string) {
         invoices: invoicesRes.data || [],
         timesheets: ts,
         teamMembers,
+        totalLaborCost,
+        laborCostByMonth,
         manager: managerRes.data,
     }
 }
