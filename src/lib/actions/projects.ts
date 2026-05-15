@@ -23,20 +23,45 @@ export async function getActiveProjectOptions() {
 
 export async function getProjects() {
     await requirePermission('project.view')
-    const [{ data: projects }, { data: phases }, { data: users }] = await Promise.all([
+    const [{ data: projects }, { data: phases }, { data: users }, { data: timesheets }, { data: employees }] = await Promise.all([
         supabase
             .from('projects')
             .select('id, code, name, state, partnerName, managerId, budget, createdAt')
             .order('createdAt', { ascending: false }),
         supabase.from('project_phases').select('id, projectId, state'),
         supabase.from('users').select('id, name'),
+        supabase.from('timesheets').select('projectId, employeeId, hours'),
+        supabase.from('employees').select('id, userId'),
     ])
 
-    return (projects || []).map((p) => ({
-        ...p,
-        phases: (phases || []).filter((ph) => ph.projectId === p.id),
-        manager: (users || []).find((u) => u.id === p.managerId) || null,
-    }))
+    // Aggregate timesheet stats per project
+    const tsStats = new Map<string, { hours: number; members: Set<string> }>()
+    for (const t of (timesheets || [])) {
+        if (!t.projectId) continue
+        if (!tsStats.has(t.projectId)) tsStats.set(t.projectId, { hours: 0, members: new Set() })
+        const s = tsStats.get(t.projectId)!
+        s.hours += Number(t.hours || 0)
+        if (t.employeeId) s.members.add(t.employeeId)
+    }
+
+    // Map employeeId → user name
+    const empUserMap = new Map<string, string>()
+    for (const emp of (employees || [])) {
+        const user = (users || []).find(u => u.id === emp.userId)
+        if (user) empUserMap.set(emp.id, user.name as string)
+    }
+
+    return (projects || []).map((p) => {
+        const stats = tsStats.get(p.id)
+        return {
+            ...p,
+            phases: (phases || []).filter((ph) => ph.projectId === p.id),
+            manager: (users || []).find((u) => u.id === p.managerId) || null,
+            timesheetHours: stats ? Math.round(stats.hours) : 0,
+            teamCount: stats ? stats.members.size : 0,
+            teamNames: stats ? Array.from(stats.members).map(eid => empUserMap.get(eid) || '').filter(Boolean).slice(0, 4) : [],
+        }
+    })
 }
 
 export async function getProject(id: string) {
@@ -44,20 +69,52 @@ export async function getProject(id: string) {
     const { data: project } = await supabase.from('projects').select('*').eq('id', id).single()
     if (!project) return null
 
-    const [phasesRes, tasksRes, invoicesRes, timesheetsRes, managerRes] = await Promise.all([
+    const [phasesRes, tasksRes, invoicesRes, timesheetsRes, managerRes, employeesRes, usersRes] = await Promise.all([
         supabase.from('project_phases').select('*').eq('projectId', id).order('sequence'),
         supabase.from('project_tasks').select('*').eq('projectId', id),
         supabase.from('invoices').select('*').eq('projectId', id),
-        supabase.from('timesheets').select('*').eq('projectId', id),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase.from('timesheets').select('employeeId, hours, date, phase' as any).eq('projectId', id) as any,
         supabase.from('users').select('id, name, email').eq('id', project.managerId ?? '').single(),
+        supabase.from('employees').select('id, userId, department'),
+        supabase.from('users').select('id, name'),
     ])
+
+    // Build team members with timesheet breakdown
+    const ts = timesheetsRes.data || []
+    const empMap = new Map<string, { hours: number; phase: string | null; monthlyHours: Map<string, number> }>()
+    for (const t of ts) {
+        if (!t.employeeId) continue
+        if (!empMap.has(t.employeeId)) empMap.set(t.employeeId, { hours: 0, phase: null, monthlyHours: new Map() })
+        const entry = empMap.get(t.employeeId)!
+        entry.hours += Number(t.hours || 0)
+        if (t.phase) entry.phase = t.phase as string
+        const monthKey = String(t.date).substring(0, 7) // YYYY-MM
+        entry.monthlyHours.set(monthKey, (entry.monthlyHours.get(monthKey) || 0) + Number(t.hours || 0))
+    }
+
+    const employees = employeesRes.data || []
+    const users = usersRes.data || []
+    const teamMembers = Array.from(empMap.entries()).map(([empId, data]) => {
+        const emp = employees.find(e => e.id === empId)
+        const user = emp ? users.find(u => u.id === emp.userId) : null
+        return {
+            employeeId: empId,
+            name: (user?.name as string) || '—',
+            department: (emp?.department as string) || '—',
+            totalHours: Math.round(data.hours),
+            phase: data.phase,
+            monthlyHours: Object.fromEntries(data.monthlyHours),
+        }
+    }).sort((a, b) => b.totalHours - a.totalHours)
 
     return {
         ...project,
         phases: phasesRes.data || [],
         tasks: tasksRes.data || [],
         invoices: invoicesRes.data || [],
-        timesheets: timesheetsRes.data || [],
+        timesheets: ts,
+        teamMembers,
         manager: managerRes.data,
     }
 }

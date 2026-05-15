@@ -43,6 +43,15 @@ interface ProjectInvoice {
     invoiceDate?: string | null
 }
 
+interface TeamMember {
+    employeeId: string
+    name: string
+    department: string
+    totalHours: number
+    phase: string | null
+    monthlyHours: Record<string, number>
+}
+
 interface ProjectData {
     id: string
     name: string
@@ -56,6 +65,7 @@ interface ProjectData {
     tasks?: ProjectTask[]
     timesheets?: ProjectTimesheet[]
     invoices?: ProjectInvoice[]
+    teamMembers?: TeamMember[]
     [key: string]: unknown
 }
 
@@ -68,35 +78,42 @@ const stateColors: Record<string, string> = {
 }
 
 const stateLabels: Record<string, string> = {
-    DRAFT: 'Nhap',
-    ACTIVE: 'Dang thuc hien',
-    PAUSED: 'Tam dung',
-    DONE: 'Hoan thanh',
-    CANCELLED: 'Da huy',
+    DRAFT: 'Nháp',
+    ACTIVE: 'Đang thực hiện',
+    PAUSED: 'Tạm dừng',
+    DONE: 'Hoàn thành',
+    CANCELLED: 'Đã huỷ',
 }
 
 const stateFlow: Record<string, { next: string; label: string }[]> = {
-    DRAFT: [{ next: 'ACTIVE', label: 'Bat dau' }],
+    DRAFT: [{ next: 'ACTIVE', label: 'Bắt đầu' }],
     ACTIVE: [
-        { next: 'PAUSED', label: 'Tam dung' },
-        { next: 'DONE', label: 'Hoan thanh' },
+        { next: 'PAUSED', label: 'Tạm dừng' },
+        { next: 'DONE', label: 'Hoàn thành' },
     ],
-    PAUSED: [{ next: 'ACTIVE', label: 'Tiep tuc' }],
+    PAUSED: [{ next: 'ACTIVE', label: 'Tiếp tục' }],
     DONE: [],
-    CANCELLED: [{ next: 'DRAFT', label: 'Mo lai' }],
+    CANCELLED: [{ next: 'DRAFT', label: 'Mở lại' }],
 }
 
 const phaseLabels: Record<string, string> = {
-    TODO: 'Cho',
-    IN_PROGRESS: 'Dang lam',
+    TODO: 'Chờ',
+    IN_PROGRESS: 'Đang làm',
     DONE: 'Xong',
 }
 
 const taskLabels: Record<string, string> = {
-    TODO: 'Cho',
-    IN_PROGRESS: 'Dang lam',
+    TODO: 'Chờ',
+    IN_PROGRESS: 'Đang làm',
     REVIEW: 'Review',
     DONE: 'Xong',
+}
+
+const phaseNameMap: Record<string, string> = {
+    CD: 'Construction Document',
+    BD: 'Basic Design',
+    DD: 'Design Development',
+    SV: 'Supervision',
 }
 
 export default function ProjectDetail({
@@ -117,20 +134,28 @@ export default function ProjectDetail({
     const totalHours = (project.timesheets || []).reduce((sum: number, timesheet: ProjectTimesheet) => sum + Number(timesheet.hours || 0), 0)
     const doneCount = tasks.filter((task: ProjectTask) => task.state === 'DONE').length
     const progress = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0
+    const teamMembers = project.teamMembers || []
+
+    // Get monthly trend months
+    const allMonths = new Set<string>()
+    for (const m of teamMembers) {
+        for (const key of Object.keys(m.monthlyHours)) allMonths.add(key)
+    }
+    const months = Array.from(allMonths).sort()
 
     async function handleState(nextState: string) {
         try {
             const result = await updateProjectState(project.id, nextState)
             if ('success' in result && !result.success) {
-                addToast(result.error || 'Loi', 'error')
+                addToast(result.error || 'Lỗi', 'error')
                 return
             }
 
             const updated = 'data' in result ? result.data : result
             setProject((current: ProjectData) => ({ ...current, ...updated }))
-            addToast(`Da chuyen sang "${stateLabels[nextState]}"`)
+            addToast(`Đã chuyển sang "${stateLabels[nextState]}"`)
         } catch (error: unknown) {
-            addToast(error instanceof Error ? error.message : 'Loi', 'error')
+            addToast(error instanceof Error ? error.message : 'Lỗi', 'error')
         }
     }
 
@@ -147,16 +172,16 @@ export default function ProjectDetail({
             })
 
             if ('success' in result && !result.success) {
-                addToast(result.error || 'Loi', 'error')
+                addToast(result.error || 'Lỗi', 'error')
                 return
             }
 
             const phase = 'data' in result ? result.data : result
             setPhases((current: ProjectPhase[]) => [...current, phase as unknown as ProjectPhase])
             setShowAddPhase(false)
-            addToast(`Da them phase "${name}"`)
+            addToast(`Đã thêm phase "${name}"`)
         } catch (error: unknown) {
-            addToast(error instanceof Error ? error.message : 'Loi', 'error')
+            addToast(error instanceof Error ? error.message : 'Lỗi', 'error')
         }
     }
 
@@ -164,7 +189,7 @@ export default function ProjectDetail({
         try {
             const result = await updatePhase(phaseId, { state })
             if ('success' in result && !result.success) {
-                addToast(result.error || 'Loi', 'error')
+                addToast(result.error || 'Lỗi', 'error')
                 return
             }
 
@@ -172,22 +197,22 @@ export default function ProjectDetail({
             setPhases((current: ProjectPhase[]) => current.map((phase) => (
                 phase.id === phaseId ? { ...phase, ...updated } : phase
             )))
-            addToast(`Phase -> ${phaseLabels[state]}`)
+            addToast(`Phase → ${phaseLabels[state]}`)
         } catch (error: unknown) {
-            addToast(error instanceof Error ? error.message : 'Loi', 'error')
+            addToast(error instanceof Error ? error.message : 'Lỗi', 'error')
         }
     }
 
     async function handleDeletePhase(phaseId: string) {
-        if (!confirm('Xoa phase va tat ca tasks trong do?')) return
+        if (!confirm('Xoá phase và tất cả tasks trong đó?')) return
 
         try {
             await deletePhase(phaseId)
             setPhases((current: ProjectPhase[]) => current.filter((phase) => phase.id !== phaseId))
             setTasks((current: ProjectTask[]) => current.filter((task) => task.phaseId !== phaseId))
-            addToast('Da xoa phase')
+            addToast('Đã xoá phase')
         } catch (error: unknown) {
-            addToast(error instanceof Error ? error.message : 'Loi', 'error')
+            addToast(error instanceof Error ? error.message : 'Lỗi', 'error')
         }
     }
 
@@ -206,16 +231,16 @@ export default function ProjectDetail({
             })
 
             if ('success' in result && !result.success) {
-                addToast(result.error || 'Loi', 'error')
+                addToast(result.error || 'Lỗi', 'error')
                 return
             }
 
             const task = 'data' in result ? result.data : result
             setTasks((current: ProjectTask[]) => [...current, task as unknown as ProjectTask])
             setShowAddTask(null)
-            addToast(`Da them task "${name}"`)
+            addToast(`Đã thêm task "${name}"`)
         } catch (error: unknown) {
-            addToast(error instanceof Error ? error.message : 'Loi', 'error')
+            addToast(error instanceof Error ? error.message : 'Lỗi', 'error')
         }
     }
 
@@ -223,7 +248,7 @@ export default function ProjectDetail({
         try {
             const result = await updateTask(taskId, { state })
             if ('success' in result && !result.success) {
-                addToast(result.error || 'Loi', 'error')
+                addToast(result.error || 'Lỗi', 'error')
                 return
             }
 
@@ -232,7 +257,7 @@ export default function ProjectDetail({
                 task.id === taskId ? { ...task, ...updated } : task
             )))
         } catch (error: unknown) {
-            addToast(error instanceof Error ? error.message : 'Loi', 'error')
+            addToast(error instanceof Error ? error.message : 'Lỗi', 'error')
         }
     }
 
@@ -240,18 +265,20 @@ export default function ProjectDetail({
         try {
             await deleteTask(taskId)
             setTasks((current: ProjectTask[]) => current.filter((task) => task.id !== taskId))
-            addToast('Da xoa task')
+            addToast('Đã xoá task')
         } catch (error: unknown) {
-            addToast(error instanceof Error ? error.message : 'Loi', 'error')
+            addToast(error instanceof Error ? error.message : 'Lỗi', 'error')
         }
     }
+
+    const maxMemberHours = teamMembers.length > 0 ? Math.max(...teamMembers.map(m => m.totalHours)) : 1
 
     return (
         <>
             <ToastContainer toasts={toasts} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 13, color: '#8FA3BF' }}>
-                <Link href="/projects" style={{ color: '#8FA3BF', textDecoration: 'none' }}>Du an</Link>
+                <Link href="/projects" style={{ color: '#8FA3BF', textDecoration: 'none' }}>Dự án</Link>
                 <span>&rsaquo;</span>
                 <span style={{ color: '#0F1C2E', fontWeight: 600 }}>{project.name}</span>
             </div>
@@ -280,26 +307,122 @@ export default function ProjectDetail({
 
             <div className="grid-4" style={{ marginBottom: 20 }}>
                 {[
-                    { label: 'Tien do', value: `${progress}%`, icon: '1' },
-                    { label: 'Tasks', value: `${doneCount}/${tasks.length}`, icon: '2' },
-                    { label: 'Gio cong', value: `${totalHours}h`, icon: '3' },
-                    { label: 'Hoa don', value: `${(project.invoices || []).length}`, icon: '4' },
+                    { label: 'Tiến độ', value: `${progress}%`, icon: '📊', color: '#6366F1' },
+                    { label: 'Tasks', value: `${doneCount}/${tasks.length}`, icon: '✅', color: '#22C55E' },
+                    { label: 'Giờ công', value: `${Math.round(totalHours)}h`, icon: '⏱️', color: '#F59E0B' },
+                    { label: 'Nhân sự', value: `${teamMembers.length}`, icon: '👥', color: '#3B82F6' },
                 ].map((kpi) => (
                     <div key={kpi.label} className="kpi-card" style={{ padding: 16 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <div>
                                 <div className="kpi-label">{kpi.label}</div>
-                                <div className="kpi-value" style={{ fontSize: 22, marginTop: 4 }}>{kpi.value}</div>
+                                <div className="kpi-value" style={{ fontSize: 22, marginTop: 4, color: kpi.color }}>{kpi.value}</div>
                             </div>
-                            <div style={{ fontSize: 24 }}>{kpi.icon}</div>
+                            <div style={{ fontSize: 28 }}>{kpi.icon}</div>
                         </div>
                     </div>
                 ))}
             </div>
 
+            {/* Team Members & Timesheet Section */}
             <div className="card" style={{ padding: 20, marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <div style={{ fontWeight: 700, fontSize: 16 }}>Giai doan va Cong viec</div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#1F3A5F' }}>👥 Nhân sự & Giờ công</div>
+                    <Link href="/timesheets" style={{ fontSize: 12, color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>
+                        Xem Timesheet →
+                    </Link>
+                </div>
+
+                {teamMembers.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>
+                        Chưa có dữ liệu giờ công cho dự án này
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table" style={{ fontSize: 13 }}>
+                            <thead>
+                                <tr>
+                                    <th>Nhân viên</th>
+                                    <th>Phòng ban</th>
+                                    <th>Phase</th>
+                                    <th style={{ textAlign: 'right' }}>Tổng giờ</th>
+                                    {months.map(m => (
+                                        <th key={m} style={{ textAlign: 'center', fontSize: 11 }}>
+                                            T{parseInt(m.split('-')[1])}
+                                        </th>
+                                    ))}
+                                    <th style={{ width: 120 }}>Phân bổ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {teamMembers.map((member) => (
+                                    <tr key={member.employeeId}>
+                                        <td style={{ fontWeight: 600, color: '#1F3A5F' }}>{member.name}</td>
+                                        <td style={{ color: '#4A5E78' }}>{member.department}</td>
+                                        <td>
+                                            {member.phase ? (
+                                                <span style={{
+                                                    fontSize: 11, fontWeight: 600,
+                                                    padding: '2px 8px', borderRadius: 10,
+                                                    background: '#6366F115', color: '#6366F1',
+                                                }}>
+                                                    {member.phase} {phaseNameMap[member.phase] ? `• ${phaseNameMap[member.phase]}` : ''}
+                                                </span>
+                                            ) : <span style={{ color: '#CBD5E1' }}>—</span>}
+                                        </td>
+                                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#1F3A5F' }}>
+                                            {member.totalHours}h
+                                        </td>
+                                        {months.map(m => {
+                                            const h = member.monthlyHours[m] || 0
+                                            return (
+                                                <td key={m} style={{ textAlign: 'center', color: h > 0 ? '#4A5E78' : '#CBD5E1', fontWeight: h > 0 ? 600 : 400 }}>
+                                                    {h > 0 ? `${Math.round(h)}` : '—'}
+                                                </td>
+                                            )
+                                        })}
+                                        <td>
+                                            <div style={{
+                                                height: 6, borderRadius: 3,
+                                                background: '#E2E8F0',
+                                                overflow: 'hidden',
+                                            }}>
+                                                <div style={{
+                                                    height: '100%',
+                                                    width: `${Math.round(member.totalHours / maxMemberHours * 100)}%`,
+                                                    background: 'linear-gradient(90deg, #6366F1, #818CF8)',
+                                                    borderRadius: 3,
+                                                    transition: 'width 0.3s ease',
+                                                }} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                <tr style={{ background: '#F8F9FB', fontWeight: 700 }}>
+                                    <td colSpan={3} style={{ color: '#1F3A5F' }}>Tổng</td>
+                                    <td style={{ textAlign: 'right', color: '#6366F1' }}>
+                                        {Math.round(totalHours)}h
+                                    </td>
+                                    {months.map(m => {
+                                        const monthTotal = teamMembers.reduce((s, mem) => s + (mem.monthlyHours[m] || 0), 0)
+                                        return (
+                                            <td key={m} style={{ textAlign: 'center', color: '#6366F1' }}>
+                                                {Math.round(monthTotal)}
+                                            </td>
+                                        )
+                                    })}
+                                    <td />
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Phases & Tasks */}
+            <div className="card" style={{ padding: 20, marginBottom: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#1F3A5F' }}>📋 Giai đoạn & Công việc</div>
                     {canEditProject && (
                         <button className="btn btn-ghost btn-sm" onClick={() => setShowAddPhase(true)}>+ Phase</button>
                     )}
@@ -307,7 +430,7 @@ export default function ProjectDetail({
 
                 {phases.length === 0 && !showAddPhase && (
                     <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 32 }}>
-                        {canEditProject ? 'Chua co phase. Nhan &quot;+ Phase&quot; de them.' : 'Chua co phase.'}
+                        {canEditProject ? 'Chưa có phase. Nhấn "+ Phase" để thêm.' : 'Chưa có phase.'}
                     </div>
                 )}
 
@@ -325,8 +448,8 @@ export default function ProjectDetail({
                                             onChange={(event) => handlePhaseState(phase.id, event.target.value)}
                                             style={{ fontSize: 11, border: '1px solid #CBD5E1', borderRadius: 6, padding: '2px 6px', cursor: 'pointer' }}
                                         >
-                                            <option value="TODO">Cho</option>
-                                            <option value="IN_PROGRESS">Dang lam</option>
+                                            <option value="TODO">Chờ</option>
+                                            <option value="IN_PROGRESS">Đang làm</option>
                                             <option value="DONE">Xong</option>
                                         </select>
                                     ) : (
@@ -341,7 +464,7 @@ export default function ProjectDetail({
                                             style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#EF4444', fontSize: 12 }}
                                             onClick={() => handleDeletePhase(phase.id)}
                                         >
-                                            x
+                                            ✕
                                         </button>
                                     </div>
                                 )}
@@ -386,8 +509,8 @@ export default function ProjectDetail({
                                                         onChange={(event) => handleTaskState(task.id, event.target.value)}
                                                         style={{ fontSize: 11, border: '1px solid #E2E8F0', borderRadius: 4, padding: '1px 4px' }}
                                                     >
-                                                        <option value="TODO">Cho</option>
-                                                        <option value="IN_PROGRESS">Dang lam</option>
+                                                        <option value="TODO">Chờ</option>
+                                                        <option value="IN_PROGRESS">Đang làm</option>
                                                         <option value="REVIEW">Review</option>
                                                         <option value="DONE">Xong</option>
                                                     </select>
@@ -395,7 +518,7 @@ export default function ProjectDetail({
                                                         style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#CBD5E1', fontSize: 12 }}
                                                         onClick={() => handleDeleteTask(task.id)}
                                                     >
-                                                        x
+                                                        ✕
                                                     </button>
                                                 </>
                                             ) : (
@@ -408,9 +531,9 @@ export default function ProjectDetail({
                                 {canEditProject && showAddTask === phase.id && (
                                     <form action={handleAddTask} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                                         <input type="hidden" name="phaseId" value={phase.id} />
-                                        <input className="form-input" name="name" placeholder="Ten task..." autoFocus style={{ flex: 1, fontSize: 13 }} />
-                                        <button className="btn btn-primary btn-sm" type="submit">Them</button>
-                                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowAddTask(null)}>Huy</button>
+                                        <input className="form-input" name="name" placeholder="Tên task..." autoFocus style={{ flex: 1, fontSize: 13 }} />
+                                        <button className="btn btn-primary btn-sm" type="submit">Thêm</button>
+                                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowAddTask(null)}>Huỷ</button>
                                     </form>
                                 )}
                             </div>
@@ -420,25 +543,26 @@ export default function ProjectDetail({
 
                 {canEditProject && showAddPhase && (
                     <form action={handleAddPhase} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <input className="form-input" name="name" placeholder="Ten phase..." autoFocus style={{ flex: 1 }} />
-                        <button className="btn btn-primary btn-sm" type="submit">Them</button>
-                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowAddPhase(false)}>Huy</button>
+                        <input className="form-input" name="name" placeholder="Tên phase..." autoFocus style={{ flex: 1 }} />
+                        <button className="btn btn-primary btn-sm" type="submit">Thêm</button>
+                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowAddPhase(false)}>Huỷ</button>
                     </form>
                 )}
             </div>
 
+            {/* Invoices */}
             <div className="card" style={{ padding: 20 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Hoa don lien quan</div>
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14, color: '#1F3A5F' }}>💰 Hoá đơn liên quan</div>
                 {(project.invoices || []).length === 0 ? (
-                    <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>Chua co hoa don</div>
+                    <div style={{ textAlign: 'center', color: '#8FA3BF', padding: 24 }}>Chưa có hoá đơn</div>
                 ) : (
                     <table className="data-table" style={{ fontSize: 13 }}>
                         <thead>
                             <tr>
-                                <th>Ma</th>
-                                <th>Trang thai</th>
-                                <th style={{ textAlign: 'right' }}>So tien</th>
-                                <th>Ngay</th>
+                                <th>Mã</th>
+                                <th>Trạng thái</th>
+                                <th style={{ textAlign: 'right' }}>Số tiền</th>
+                                <th>Ngày</th>
                             </tr>
                         </thead>
                         <tbody>

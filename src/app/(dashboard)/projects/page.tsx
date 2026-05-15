@@ -74,6 +74,8 @@ export default async function ProjectsPage() {
                                 <th>Quản lý</th>
                                 <th>Trạng thái</th>
                                 <th>Phases</th>
+                                <th>Giờ công</th>
+                                <th>Nhân sự</th>
                                 <th>Budget</th>
                                 <th></th>
                             </tr>
@@ -98,6 +100,21 @@ export default async function ProjectsPage() {
                                                 </div>
                                                 <span style={{ fontSize: 12, fontWeight: 700, color: '#4A5E78' }}>{donePhases}/{totalPhases}</span>
                                             </div>
+                                        </td>
+                                        <td style={{ fontWeight: 700, color: project.timesheetHours > 0 ? '#6366F1' : '#CBD5E1', fontSize: 13 }}>
+                                            {project.timesheetHours > 0 ? `${project.timesheetHours}h` : '—'}
+                                        </td>
+                                        <td>
+                                            {project.teamCount > 0 ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    <span style={{ fontWeight: 700, color: '#1F3A5F', fontSize: 13 }}>{project.teamCount}</span>
+                                                    <span style={{ fontSize: 11, color: '#8FA3BF', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                                                        {project.teamNames.join(', ')}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: '#CBD5E1' }}>—</span>
+                                            )}
                                         </td>
                                         <td style={{ fontWeight: 700, color: '#1F3A5F' }}>{formatCurrency(Number(project.budget ?? 0))}</td>
                                         <td>
