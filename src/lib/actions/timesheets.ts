@@ -403,3 +403,203 @@ export async function syncFromAttendance(periodId: string): Promise<ActionResult
 
     return ok({ synced, skipped })
 }
+
+// ── Phase 2: Approval Workflow ──
+// NOTE: TimesheetStatus type, STATUS_COLORS, STATUS_LABELS are defined here
+// but types cannot be exported from 'use server' modules.
+// Consumer components should define their own type or import from a shared module.
+
+type TimesheetStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
+
+/**
+ * Submit all DRAFT timesheets for an employee in a given month.
+ * Employee submits their own timesheets for PM review.
+ */
+export async function submitTimesheets(employeeId: string, year: number, month: number): Promise<ActionResult<{ count: number }>> {
+    const user = await requireAuth()
+    const currentEmployee = await getCurrentEmployeeForUser(user.id)
+    if (!currentEmployee || currentEmployee.id !== employeeId) {
+        return fail('Bạn chỉ có thể gửi timesheet của mình')
+    }
+
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+        .from('timesheets')
+        .update({ status: 'SUBMITTED', submittedAt: new Date().toISOString() })
+        .eq('employeeId', employeeId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .in('status', ['DRAFT', null])
+        .select('id')
+
+    if (error) return fail(error.message)
+
+    await logAudit({
+        userId: user.id,
+        action: 'update',
+        entity: 'timesheet',
+        entityId: employeeId,
+        details: `Gửi duyệt ${(data || []).length} timesheet entries (${month}/${year})`,
+    })
+
+    return ok({ count: (data || []).length })
+}
+
+/**
+ * Approve all SUBMITTED timesheets for an employee in a given month.
+ * Only managers can approve.
+ */
+export async function approveTimesheets(employeeId: string, year: number, month: number): Promise<ActionResult<{ count: number }>> {
+    const user = await requireAuth()
+    if (!MANAGER_ROLES.includes(user.role)) {
+        return fail('Chỉ quản lý mới có thể duyệt timesheet')
+    }
+
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+        .from('timesheets')
+        .update({
+            status: 'APPROVED',
+            approvedBy: user.id,
+            approvedAt: new Date().toISOString(),
+        })
+        .eq('employeeId', employeeId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .eq('status', 'SUBMITTED')
+        .select('id')
+
+    if (error) return fail(error.message)
+
+    await logAudit({
+        userId: user.id,
+        action: 'update',
+        entity: 'timesheet',
+        entityId: employeeId,
+        details: `Duyệt ${(data || []).length} timesheet entries (${month}/${year})`,
+    })
+
+    return ok({ count: (data || []).length })
+}
+
+/**
+ * Reject SUBMITTED timesheets back to DRAFT.
+ */
+export async function rejectTimesheets(employeeId: string, year: number, month: number): Promise<ActionResult<{ count: number }>> {
+    const user = await requireAuth()
+    if (!MANAGER_ROLES.includes(user.role)) {
+        return fail('Chỉ quản lý mới có thể từ chối timesheet')
+    }
+
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+        .from('timesheets')
+        .update({ status: 'REJECTED' })
+        .eq('employeeId', employeeId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .eq('status', 'SUBMITTED')
+        .select('id')
+
+    if (error) return fail(error.message)
+
+    await logAudit({
+        userId: user.id,
+        action: 'update',
+        entity: 'timesheet',
+        entityId: employeeId,
+        details: `Từ chối ${(data || []).length} timesheet entries (${month}/${year})`,
+    })
+
+    return ok({ count: (data || []).length })
+}
+
+export interface ApprovalSummary {
+    employeeId: string
+    name: string
+    department: string
+    totalHours: number
+    draftCount: number
+    submittedCount: number
+    approvedCount: number
+    rejectedCount: number
+    status: TimesheetStatus
+}
+
+/**
+ * Get approval summary for all employees in a month.
+ * Used by managers in the overview page.
+ */
+export async function getApprovalSummary(year: number, month: number): Promise<ApprovalSummary[]> {
+    await requireAuth()
+
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: timesheets } = await (supabase as any)
+        .from('timesheets')
+        .select('employeeId, hours, status')
+        .gte('date', startDate)
+        .lte('date', endDate)
+
+    const { data: employees } = await supabase.from('employees').select('id, userId, department')
+    const { data: users } = await supabase.from('users').select('id, name')
+
+    const empMap = new Map<string, {
+        hours: number; draft: number; submitted: number; approved: number; rejected: number
+    }>()
+
+    for (const t of (timesheets || [])) {
+        if (!t.employeeId) continue
+        if (!empMap.has(t.employeeId)) empMap.set(t.employeeId, { hours: 0, draft: 0, submitted: 0, approved: 0, rejected: 0 })
+        const entry = empMap.get(t.employeeId)!
+        entry.hours += Number(t.hours || 0)
+        const status = (t.status || 'DRAFT') as TimesheetStatus
+        if (status === 'DRAFT' || !t.status) entry.draft++
+        else if (status === 'SUBMITTED') entry.submitted++
+        else if (status === 'APPROVED') entry.approved++
+        else if (status === 'REJECTED') entry.rejected++
+    }
+
+    const result: ApprovalSummary[] = []
+    for (const [empId, agg] of empMap) {
+        const emp = (employees || []).find(e => e.id === empId)
+        const user = emp ? (users || []).find(u => u.id === emp.userId) : null
+        // Determine overall status
+        let status: TimesheetStatus = 'DRAFT'
+        if (agg.approved > 0 && agg.submitted === 0 && agg.draft === 0) status = 'APPROVED'
+        else if (agg.submitted > 0) status = 'SUBMITTED'
+        else if (agg.rejected > 0) status = 'REJECTED'
+
+        result.push({
+            employeeId: empId,
+            name: user?.name || '—',
+            department: (emp as Record<string, unknown>)?.department as string || '—',
+            totalHours: Math.round(agg.hours * 10) / 10,
+            draftCount: agg.draft,
+            submittedCount: agg.submitted,
+            approvedCount: agg.approved,
+            rejectedCount: agg.rejected,
+            status,
+        })
+    }
+
+    return result.sort((a, b) => {
+        const order = { SUBMITTED: 0, DRAFT: 1, REJECTED: 2, APPROVED: 3 }
+        return (order[a.status] ?? 9) - (order[b.status] ?? 9)
+    })
+}

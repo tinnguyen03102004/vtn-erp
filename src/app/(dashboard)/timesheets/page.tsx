@@ -1,4 +1,4 @@
-import { getTimesheets, getTimesheetOverview } from '@/lib/actions/timesheets'
+import { getTimesheets, getTimesheetOverview, getApprovalSummary } from '@/lib/actions/timesheets'
 import { getActiveProjectOptions } from '@/lib/actions/projects'
 import { getCurrentEmployee } from '@/lib/actions/employees'
 import { requirePagePermission } from '@/lib/page-guard'
@@ -57,7 +57,10 @@ export default async function TimesheetPage({
         const year = params.year ? Number(params.year) : now.getFullYear()
         const month = params.month ? Number(params.month) : now.getMonth() + 1
 
-        const data = await getTimesheetOverview(year, month)
+        const [data, approvalData] = await Promise.all([
+            getTimesheetOverview(year, month),
+            getApprovalSummary(year, month),
+        ])
 
         // Build available months for navigation (current year ± 1)
         const availableMonths: { year: number; month: number }[] = []
@@ -67,7 +70,7 @@ export default async function TimesheetPage({
             }
         }
 
-        return <TimesheetOverview data={data} availableMonths={availableMonths} />
+        return <TimesheetOverview data={data} availableMonths={availableMonths} approvalData={approvalData} />
     }
 
     // ── Route: Weekly Grid (NV default, or manager switches) ──
