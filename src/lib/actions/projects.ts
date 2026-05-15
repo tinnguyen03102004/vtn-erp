@@ -69,19 +69,20 @@ export async function getProject(id: string) {
     const { data: project } = await supabase.from('projects').select('*').eq('id', id).single()
     if (!project) return null
 
-    const [phasesRes, tasksRes, invoicesRes, timesheetsRes, managerRes, employeesRes, usersRes] = await Promise.all([
+    const [phasesRes, tasksRes, invoicesRes, managerRes, employeesRes, usersRes] = await Promise.all([
         supabase.from('project_phases').select('*').eq('projectId', id).order('sequence'),
         supabase.from('project_tasks').select('*').eq('projectId', id),
         supabase.from('invoices').select('*').eq('projectId', id),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        supabase.from('timesheets').select('employeeId, hours, date, phase' as any).eq('projectId', id) as any,
         supabase.from('users').select('id, name, email').eq('id', project.managerId ?? '').single(),
         supabase.from('employees').select('id, userId, department'),
         supabase.from('users').select('id, name'),
     ])
+    // Fetch timesheets separately — 'phase' column was added via migration, not in generated types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: timesheetRows } = await (supabase.from('timesheets').select('*').eq('projectId', id) as any)
 
     // Build team members with timesheet breakdown
-    const ts = timesheetsRes.data || []
+    const ts = timesheetRows || []
     const empMap = new Map<string, { hours: number; phase: string | null; monthlyHours: Map<string, number> }>()
     for (const t of ts) {
         if (!t.employeeId) continue
