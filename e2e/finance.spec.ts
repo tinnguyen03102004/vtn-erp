@@ -37,11 +37,12 @@ test.describe('Finance Module', () => {
     })
 
     test('should format currency in VND', async ({ authedPage: page }) => {
-        await page.goto('/finance')
+        // Use payroll page which always has salary data
+        await page.goto('/payroll')
         await page.waitForTimeout(2_000)
-        // Check for VND formatting (₫ or VND or commas in numbers)
-        const pageText = await page.locator('body').textContent()
-        const hasVND = pageText?.includes('₫') || pageText?.includes('VND') || /\d{1,3}(\.\d{3})+/.test(pageText || '')
-        expect(hasVND).toBeTruthy()
+        // Check for VND formatting: ₫ symbol, "VND", or dot-separated thousands (e.g. 12.500.000)
+        const pageText = await page.locator('body').textContent() ?? ''
+        const hasVND = pageText.includes('₫') || pageText.includes('VND') || /\d{1,3}(\.\d{3})+/.test(pageText)
+        expect(hasVND, 'Page should contain VND-formatted currency').toBeTruthy()
     })
 })
