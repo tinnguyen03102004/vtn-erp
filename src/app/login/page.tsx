@@ -9,6 +9,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [isRedirecting, setIsRedirecting] = useState(false)
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -23,6 +24,7 @@ export default function LoginPage() {
                 })
                 const data = await res.json()
                 if (data.ok) {
+                    setIsRedirecting(true)
                     router.push('/dashboard')
                     router.refresh()
                 } else {
@@ -36,6 +38,14 @@ export default function LoginPage() {
 
     return (
         <div className="login-page">
+            {isRedirecting && (
+                <div className="login-redirect-overlay">
+                    <div className="login-redirect-content">
+                        <span className="login-spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
+                        <p>Đang đăng nhập...</p>
+                    </div>
+                </div>
+            )}
             <div className="login-left">
                 <div className="login-brand">
                     <div className="login-logo">
@@ -108,7 +118,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             className="btn btn-primary btn-lg"
-                            disabled={isPending}
+                            disabled={isPending || isRedirecting}
                             style={{ width: '100%', marginTop: 8 }}
                         >
                             {isPending ? (
@@ -334,6 +344,35 @@ export default function LoginPage() {
         .login-demo-btn:hover {
           background: var(--color-surface-2);
           transform: translateY(-1px);
+        }
+        .login-redirect-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(255,255,255,0.85);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          animation: fadeIn 0.2s ease;
+        }
+        .login-redirect-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          color: var(--color-primary);
+          font-weight: 600;
+          font-size: 15px;
+        }
+        .login-redirect-content .login-spinner {
+          display: block;
+          border: 3px solid var(--color-border);
+          border-top-color: var(--color-primary);
+          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          animation: spin 0.7s linear infinite;
         }
         @media (max-width: 768px) {
           .login-left { display: none; }

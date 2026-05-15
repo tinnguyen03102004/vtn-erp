@@ -75,27 +75,25 @@ export const getSessionFromCookies = cache(async (): Promise<SessionUser | null>
 })
 
 async function getSessionByToken(token: string): Promise<SessionUser | null> {
+    // Single query: fetch session with joined user data via foreign key
     const { data: session, error } = await supabase
         .from('app_sessions')
-        .select('userId, expiresAt')
+        .select('userId, expiresAt, users!app_sessions_userId_fkey(id, name, email, role, isActive)')
         .eq('token', token)
         .single()
 
     if (error || !session) return null
 
     if (new Date(session.expiresAt) < new Date()) {
-        await supabase.from('app_sessions').delete().eq('token', token)
+        void supabase.from('app_sessions').delete().eq('token', token)
         return null
     }
 
-    const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id, name, email, role, isActive')
-        .eq('id', session.userId)
-        .single()
+    // users comes back as object (single FK) or null
+    const user = session.users as unknown as { id: string; name: string | null; email: string; role: string; isActive: boolean } | null
+    if (!user || !user.isActive) return null
 
-    if (userError || !user || !user.isActive) return null
-
+    // Fire-and-forget: update last active timestamp
     void supabase
         .from('app_sessions')
         .update({ lastActiveAt: new Date().toISOString() })
