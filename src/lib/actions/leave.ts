@@ -64,9 +64,9 @@ export async function getLeaveTypes(): Promise<LeaveType[]> {
     return (data || []).map((t: Record<string, unknown>) => ({
         id: t.id as string,
         name: t.name as string,
-        description: t.description as string | null,
-        maxDaysPerYear: Number(t.maxDaysPerYear || t.max_days_per_year || 0),
-        isPaid: Boolean(t.isPaid ?? t.is_paid ?? true),
+        description: (t.description as string) || null,
+        maxDaysPerYear: Number(t.maxDaysPerYear || 0),
+        isPaid: Boolean(t.isPaid ?? true),
     }))
 }
 
@@ -93,15 +93,17 @@ export async function getLeaveBalances(employeeId?: string, year?: number): Prom
 
     return (balances || []).map((b: Record<string, unknown>) => {
         const lt = leaveTypes.find(t => t.id === b.leaveTypeId)
+        const entitled = Number(b.entitled || 0) + Number(b.carryOver || 0)
+        const used = Number(b.used || 0)
         return {
             id: b.id as string,
             employeeId: b.employeeId as string,
             leaveTypeId: b.leaveTypeId as string,
             leaveTypeName: lt?.name || '—',
             year: Number(b.year),
-            totalDays: Number(b.totalDays || 0),
-            usedDays: Number(b.usedDays || 0),
-            remainingDays: Number(b.totalDays || 0) - Number(b.usedDays || 0),
+            totalDays: entitled,
+            usedDays: used,
+            remainingDays: entitled - used,
         }
     })
 }
@@ -253,7 +255,7 @@ export async function approveLeaveRequest(requestId: string): Promise<ActionResu
     const year = new Date(request.startDate).getFullYear()
     const { data: balance } = await db
         .from('leave_balances')
-        .select('id, usedDays')
+        .select('id, used')
         .eq('employeeId', request.employeeId)
         .eq('leaveTypeId', request.leaveTypeId)
         .eq('year', year)
@@ -261,7 +263,7 @@ export async function approveLeaveRequest(requestId: string): Promise<ActionResu
 
     if (balance) {
         await db.from('leave_balances').update({
-            usedDays: Number(balance.usedDays || 0) + Number(request.totalDays),
+            used: Number(balance.used || 0) + Number(request.totalDays),
         }).eq('id', balance.id)
     }
 
@@ -340,15 +342,17 @@ export async function getLeaveOverview(year: number): Promise<Array<{
             .filter((b: Record<string, unknown>) => b.employeeId === emp.id)
             .map((b: Record<string, unknown>) => {
                 const lt = leaveTypes.find(t => t.id === b.leaveTypeId)
+                const entitled = Number(b.entitled || 0) + Number(b.carryOver || 0)
+                const used = Number(b.used || 0)
                 return {
                     id: b.id as string,
                     employeeId: b.employeeId as string,
                     leaveTypeId: b.leaveTypeId as string,
                     leaveTypeName: lt?.name || '—',
                     year: Number(b.year),
-                    totalDays: Number(b.totalDays || 0),
-                    usedDays: Number(b.usedDays || 0),
-                    remainingDays: Number(b.totalDays || 0) - Number(b.usedDays || 0),
+                    totalDays: entitled,
+                    usedDays: used,
+                    remainingDays: entitled - used,
                 }
             })
 
