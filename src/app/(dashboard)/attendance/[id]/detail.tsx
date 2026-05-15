@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { updatePeriodState, reviewAttendanceRecord } from '@/lib/actions/attendance'
+import { syncFromAttendance } from '@/lib/actions/timesheets'
 import { useToast, ToastContainer } from '@/components/Toast'
 
 interface Employee {
@@ -63,6 +64,7 @@ export default function PeriodDetail({
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
     const [recordStates, setRecordStates] = useState<Record<string, string>>({})
     const [loading, setLoading] = useState(false)
+    const [syncing, setSyncing] = useState(false)
 
     const employeeRecords = selectedEmployee
         ? records.filter(r => r.employeeId === selectedEmployee)
@@ -80,6 +82,17 @@ export default function PeriodDetail({
             addToast(`✅ Đã chuyển sang ${newState === 'LOCKED' ? 'Đã khóa' : newState === 'REVIEW' ? 'Đang review' : 'Nháp'}`)
         }
         setLoading(false)
+    }
+
+    async function handleSyncToTimesheet() {
+        setSyncing(true)
+        const result = await syncFromAttendance(period.id)
+        if (!result.success) {
+            addToast(result.error || 'Đồng bộ thất bại', 'error')
+        } else {
+            addToast(`✅ Đồng bộ thành công: ${result.data.synced} mới, ${result.data.skipped} bỏ qua`)
+        }
+        setSyncing(false)
     }
 
     async function handleReview(recordId: string, action: 'APPROVED' | 'REJECTED') {
@@ -138,6 +151,20 @@ export default function PeriodDetail({
                             background: '#22C55E15', color: '#22C55E',
                             padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600,
                         }}>🔒 Đã khóa</span>
+                    )}
+                    {(currentState === 'REVIEW' || currentState === 'LOCKED') && (
+                        <button
+                            className="btn btn-sm"
+                            style={{
+                                background: syncing ? '#CBD5E1' : '#6366F115',
+                                color: syncing ? '#94A3B8' : '#6366F1',
+                                border: 'none', fontWeight: 600,
+                            }}
+                            onClick={handleSyncToTimesheet}
+                            disabled={syncing}
+                        >
+                            {syncing ? '⏳ Đang đồng bộ...' : '📋 Đồng bộ → Timesheet'}
+                        </button>
                     )}
                 </div>
             </div>

@@ -295,3 +295,111 @@ export async function deleteTimesheet(id: string): Promise<ActionResult<void>> {
     await logAudit({ userId: user.id, action: 'delete', entity: 'timesheet', entityId: id })
     return ok(undefined as void)
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any
+
+/**
+ * Sync attendance records → timesheet entries.
+ * For each employee workday in the attendance period, creates an "unassigned" timesheet
+ * entry if no timesheet entries exist for that employee+date combo.
+ * Employees can then allocate hours to specific projects manually.
+ */
+export async function syncFromAttendance(periodId: string): Promise<ActionResult<{ synced: number; skipped: number }>> {
+    const user = await requireAuth()
+    if (!MANAGER_ROLES.includes(user.role)) {
+        return fail('Chỉ quản lý mới có thể đồng bộ chấm công → timesheet')
+    }
+
+    // Get attendance records for this period
+    const { data: attendanceRecords } = await db
+        .from('attendance_records')
+        .select('employeeId, date, workHours, state')
+        .eq('periodId', periodId)
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+        return fail('Không có dữ liệu chấm công trong kỳ này')
+    }
+
+    // Get employee → userId mapping
+    const { data: employees } = await supabase.from('employees').select('id, userId')
+    const empUserMap = new Map<string, string>()
+    for (const emp of (employees || [])) {
+        empUserMap.set(emp.id, emp.userId)
+    }
+
+    // Get existing timesheet dates per employee to avoid duplicates
+    const dates = [...new Set(attendanceRecords.map((r: Record<string, unknown>) => r.date as string))]
+    const empIds = [...new Set(attendanceRecords.map((r: Record<string, unknown>) => r.employeeId as string))]
+
+    const { data: existingTimesheets } = await supabase
+        .from('timesheets')
+        .select('employeeId, date')
+        .in('employeeId', empIds as string[])
+        .in('date', dates as string[])
+
+    // Build a set of existing employee+date combos
+    const existingKeys = new Set(
+        (existingTimesheets || []).map(t => `${t.employeeId}|${t.date}`)
+    )
+
+    // Create new timesheet entries for workdays not yet in timesheets
+    let synced = 0
+    let skipped = 0
+    const rowsToInsert: Array<Record<string, unknown>> = []
+
+    for (const record of attendanceRecords) {
+        const empId = record.employeeId as string
+        const date = record.date as string
+        const hours = Number(record.workHours || 0)
+        const state = record.state as string
+
+        // Skip non-work days and rejected records
+        if (hours <= 0 || state === 'REJECTED') {
+            skipped++
+            continue
+        }
+
+        const key = `${empId}|${date}`
+        if (existingKeys.has(key)) {
+            skipped++
+            continue
+        }
+
+        const userId = empUserMap.get(empId)
+        if (!userId) {
+            skipped++
+            continue
+        }
+
+        rowsToInsert.push({
+            id: `ts-sync-${empId}-${date}`,
+            userId,
+            employeeId: empId,
+            projectId: null,
+            date,
+            hours,
+            description: 'Tự động từ chấm công — chưa phân bổ dự án',
+            phase: null,
+            source: 'ATTENDANCE_SYNC',
+        })
+        existingKeys.add(key)
+        synced++
+    }
+
+    // Batch insert
+    for (let i = 0; i < rowsToInsert.length; i += 50) {
+        const batch = rowsToInsert.slice(i, i + 50)
+        await db.from('timesheets').insert(batch)
+    }
+
+    await logAudit({
+        userId: user.id,
+        action: 'create',
+        entity: 'timesheet',
+        entityId: periodId,
+        details: `Đồng bộ chấm công → timesheet: ${synced} mới, ${skipped} bỏ qua`,
+    })
+
+    return ok({ synced, skipped })
+}
