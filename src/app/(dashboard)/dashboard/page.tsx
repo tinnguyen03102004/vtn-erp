@@ -67,7 +67,7 @@ export default async function DashboardPage() {
     const canViewFinance = hasPermission(user.role, 'finance.view')
     const canViewHr = hasPermission(user.role, 'hr.view')
     const canEditSales = hasPermission(user.role, 'sale.edit')
-    const canViewReports = canViewCrm && canViewProjects && canViewFinance && canViewHr
+
 
     const [kpisResult, projectsResult, leadsResult, chartResult] = await Promise.all([
         getDashboardKPIs(),
@@ -162,7 +162,7 @@ export default async function DashboardPage() {
         canViewFinance ? { href: '/finance/invoices', label: 'Xuất hóa đơn', icon: '💳', color: '#FFF7ED' } : null,
         canViewFinance ? { href: '/payroll', label: 'Bảng lương', icon: '💰', color: '#F5F3FF' } : null,
         canViewProjects ? { href: '/timesheets', label: 'Log timesheet', icon: '⏱️', color: '#EFF6FF' } : null,
-        canViewReports ? { href: '/reports', label: 'Xem báo cáo', icon: '📊', color: '#F5F3FF' } : null,
+
     ]
     const quickActions = quickActionCandidates.filter((action): action is QuickAction => action !== null)
 
@@ -174,15 +174,7 @@ export default async function DashboardPage() {
                     <p className="page-subtitle">Tổng quan hoạt động Cty TNHH Võ Trọng Nghĩa</p>
                 </div>
                 <div className="page-actions">
-                    {canViewReports && (
-                        <button className="btn btn-outline btn-sm">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-                                <rect x="6" y="14" width="12" height="8" />
-                            </svg>
-                            Xuất báo cáo
-                        </button>
-                    )}
+
                     {canEditProjects && (
                         <Link href="/projects" className="btn btn-primary btn-sm">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

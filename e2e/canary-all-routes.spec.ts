@@ -21,8 +21,6 @@ const ALL_SIDEBAR_ROUTES = [
     { path: '/payroll', label: 'Bảng lương' },
     { path: '/employees', label: 'Nhân viên' },
     { path: '/attendance', label: 'Quản lý chấm công' },
-    { path: '/reports', label: 'Báo cáo' },
-    { path: '/audit', label: 'Nhật ký hoạt động' },
     { path: '/settings', label: 'Cài đặt' },
 ]
 

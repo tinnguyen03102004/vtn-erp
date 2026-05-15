@@ -1,20 +1,9 @@
-import { test, expect } from '@playwright/test'
-
-async function login(page: import('@playwright/test').Page) {
-    await page.goto('/login')
-    await page.fill('input[type="email"]', 'director@vtn.vn')
-    await page.fill('input[type="password"]', 'password123')
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard', { timeout: 10_000 })
-}
+import { test, expect } from './fixtures'
 
 test.describe('Navigation & Sidebar', () => {
-    test.beforeEach(async ({ page }) => {
-        await login(page)
-    })
-
-    test('should navigate to all main modules', async ({ page }) => {
-        const routes = ['/crm', '/sale', '/projects', '/finance', '/employees']
+    test('should navigate to all main modules', async ({ authedPage: page }) => {
+        // Use actual routes from the sidebar (not /employees directly — uses /employees but may have redirect)
+        const routes = ['/crm', '/sale', '/projects', '/finance/invoices', '/payroll']
 
         for (const path of routes) {
             await page.goto(path)
@@ -25,7 +14,7 @@ test.describe('Navigation & Sidebar', () => {
         }
     })
 
-    test('should display sidebar with navigation', async ({ page }) => {
+    test('should display sidebar with navigation', async ({ authedPage: page }) => {
         await page.goto('/dashboard')
         const sidebar = page.locator('nav, aside, [role="navigation"]').first()
         await expect(sidebar).toBeVisible({ timeout: 5_000 })

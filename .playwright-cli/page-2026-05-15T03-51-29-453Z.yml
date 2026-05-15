@@ -1,0 +1,59 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - img [ref=e6]
+          - text: VTN
+        - paragraph [ref=e9]: Architects
+      - generic [ref=e10]:
+        - heading "Hệ thống quản lý văn phòng kiến trúc" [level=1] [ref=e11]:
+          - text: Hệ thống quản lý
+          - text: văn phòng kiến trúc
+        - paragraph [ref=e12]: Quản lý toàn bộ vòng đời dự án từ lead đến nghiệm thu — CRM, hợp đồng, dự án, hóa đơn và timesheet trong một nền tảng duy nhất.
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - img [ref=e15]
+            - text: CRM & Báo giá
+          - generic [ref=e17]:
+            - img [ref=e18]
+            - text: Quản lý Dự án
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - text: Hóa đơn & Thanh toán
+          - generic [ref=e23]:
+            - img [ref=e24]
+            - text: Timesheet
+    - generic [ref=e27]:
+      - generic [ref=e28]:
+        - heading "Đăng nhập" [level=2] [ref=e29]
+        - paragraph [ref=e30]: Nhập thông tin tài khoản của bạn
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]: Email
+          - textbox "email@vtn.vn" [active] [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]: Mật khẩu
+          - textbox "••••••••" [ref=e37]
+        - button "Đăng nhập" [ref=e38] [cursor=pointer]:
+          - img [ref=e39]
+          - text: Đăng nhập
+      - generic [ref=e42]:
+        - paragraph [ref=e43]: "Tài khoản demo:"
+        - paragraph [ref=e44]:
+          - text: "Demo password:"
+          - strong [ref=e45]: password123
+        - generic [ref=e46]:
+          - button "Giám đốc hang@vtn.vn" [ref=e47] [cursor=pointer]:
+            - generic [ref=e48]: Giám đốc
+            - generic [ref=e49]: hang@vtn.vn
+          - button "Quản lý DA pm@vtn.vn" [ref=e50] [cursor=pointer]:
+            - generic [ref=e51]: Quản lý DA
+            - generic [ref=e52]: pm@vtn.vn
+          - button "Kiến trúc sư tung@vtn.vn" [ref=e53] [cursor=pointer]:
+            - generic [ref=e54]: Kiến trúc sư
+            - generic [ref=e55]: tung@vtn.vn
+          - button "Kế toán quyen@vtn.vn" [ref=e56] [cursor=pointer]:
+            - generic [ref=e57]: Kế toán
+            - generic [ref=e58]: quyen@vtn.vn
+  - alert [ref=e59]

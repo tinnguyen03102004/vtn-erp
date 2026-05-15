@@ -79,14 +79,14 @@ export default function NewSalePage() {
         try {
             const result = await createOrder({
                 partnerName: partnerName.trim(),
-                partnerEmail: partnerEmail || null,
-                partnerPhone: partnerPhone || null,
-                partnerAddress: partnerAddress || null,
-                partnerTaxCode: partnerTaxCode || null,
+                partnerEmail: partnerEmail || undefined,
+                partnerPhone: partnerPhone || undefined,
+                partnerAddress: partnerAddress || undefined,
+                partnerTaxCode: partnerTaxCode || undefined,
                 totalAmount,
                 discountPercent,
                 vatRate,
-                validityDate: validityDate || null,
+                validityDate: validityDate || undefined,
                 leadId: selectedLeadId || null,
                 notes: notes || null,
             })

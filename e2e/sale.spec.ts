@@ -1,5 +1,13 @@
 import { test, expect } from './fixtures'
 
+function getContractTab(page: import('@playwright/test').Page) {
+    return page.locator('main button').filter({ hasText: /\(\d+\)/ }).nth(1)
+}
+
+function getQuotationTab(page: import('@playwright/test').Page) {
+    return page.locator('main button').filter({ hasText: /\(\d+\)/ }).nth(0)
+}
+
 test.describe('Sales Module - Listing', () => {
     test('should display sale page with tabs and KPIs', async ({ authedPage: page }) => {
         await page.goto('/sale')
@@ -23,14 +31,14 @@ test.describe('Sales Module - Listing', () => {
         await page.waitForLoadState('networkidle')
 
         // Click contract tab
-        const contractTab = page.locator('button').filter({ hasText: /[Hh].*[Dd]/ }).first()
+        const contractTab = getContractTab(page)
         await contractTab.click()
 
         // Contract table should appear (look for contract-specific headers)
         await expect(page.locator('th').filter({ hasText: /Milestone/ }).first()).toBeVisible({ timeout: 5_000 })
 
         // Switch back to quotation tab
-        const quotationTab = page.locator('button').filter({ hasText: /[Bb].*[Gg]/ }).first()
+        const quotationTab = getQuotationTab(page)
         await quotationTab.click()
 
         // Quotation-specific header
@@ -57,39 +65,50 @@ test.describe('Sales Module - Create Quotation', () => {
         await page.waitForLoadState('networkidle')
 
         // Try to save without filling customer name
-        const saveBtn = page.locator('button').filter({ hasText: /[Ll].*[Nn]/ }).first()
-        if (await saveBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-            await saveBtn.click()
-            // Expect error message
-            await expect(page.locator('div').filter({ hasText: /[Vv]ui/ })).toBeVisible({ timeout: 5_000 })
-        }
+        const saveBtn = page.locator('.page-actions button.btn-primary')
+        await expect(saveBtn).toBeVisible({ timeout: 5_000 })
+        await saveBtn.click()
+
+        // Expect error message
+        await expect(page.locator('main').getByText(/Vui|lÃ²ng|khÃ¡ch hÃ ng/i)).toBeVisible({ timeout: 5_000 })
     })
 
     test('should create a new quotation', async ({ authedPage: page }) => {
         await page.goto('/sale/new')
         await page.waitForLoadState('networkidle')
 
-        // Fill customer info
-        const nameInput = page.locator('.form-input').first()
-        await nameInput.fill('E2E Test Customer ' + Date.now())
+        const customerName = 'E2E Test Customer ' + Date.now()
 
-        // Fill line item price (2nd line: unit price)
+        // Fill customer info
+        const nameInput = page.locator('input.form-input').first()
+        await nameInput.fill(customerName)
+
+        // Fill first line item unit price. Numeric inputs are qty, unit price, discount, ...
         const priceInputs = page.locator('input[type="number"]')
-        // Find a unitPrice input and set value
-        const unitPriceInput = priceInputs.nth(2) // 3rd number input = first unitPrice
+        const unitPriceInput = priceInputs.nth(1)
         await unitPriceInput.fill('50000000') // 50M VND
 
-        // Wait for total to update
-        await page.waitForTimeout(500)
+        await expect(page.locator('main').getByText(/50\.000\.000|50000000/).first()).toBeVisible({ timeout: 5_000 })
 
         // Click save draft button
-        const saveBtn = page.locator('button').filter({ hasText: /[Ll].*[Nn]/ }).first()
-        if (await saveBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-            await saveBtn.click()
+        const saveBtn = page.locator('.page-actions button.btn-primary')
+        await expect(saveBtn).toBeVisible({ timeout: 5_000 })
+        await saveBtn.click()
 
-            // Should redirect back to sale listing
-            await page.waitForURL('/sale', { timeout: 15_000 })
-        }
+        // Should redirect back to sale listing
+        await page.waitForURL('/sale', { timeout: 15_000 })
+
+        const createdRow = page.locator('table.data-table tbody tr').filter({ hasText: customerName })
+        await expect(createdRow).toBeVisible({ timeout: 10_000 })
+        await createdRow.locator('a').filter({ hasText: /Xem/ }).click()
+        await expect(page).toHaveURL(/\/sale\//, { timeout: 10_000 })
+
+        page.once('dialog', async (dialog) => {
+            await dialog.accept()
+        })
+        await page.locator('.page-actions button').filter({ hasText: /X.*a/i }).last().click()
+        await page.waitForURL('/sale', { timeout: 10_000 })
+        await expect(page.locator('table.data-table tbody tr').filter({ hasText: customerName })).toHaveCount(0)
     })
 })
 
@@ -137,7 +156,7 @@ test.describe('Sales Module - Contract Tab', () => {
         await page.waitForLoadState('networkidle')
 
         // Switch to contract tab
-        const contractTab = page.locator('button').filter({ hasText: /[Hh].*[Dd]/ }).first()
+        const contractTab = getContractTab(page)
         await contractTab.click()
 
         // Contract KPI cards should be visible
@@ -152,9 +171,9 @@ test.describe('Sales Module - Contract Tab', () => {
         await page.waitForLoadState('networkidle')
 
         // Switch to contract tab
-        const contractTab = page.locator('button').filter({ hasText: /[Hh].*[Dd]/ }).first()
+        const contractTab = getContractTab(page)
         await contractTab.click()
-        await page.waitForTimeout(500)
+        await expect(page.locator('table.data-table').first()).toBeVisible({ timeout: 5_000 })
 
         // Click first contract view link
         const viewLink = page.locator('table.data-table a').filter({ hasText: /Xem/ }).first()

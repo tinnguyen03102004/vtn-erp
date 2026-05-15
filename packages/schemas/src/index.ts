@@ -46,6 +46,7 @@ export const orderLineSchema = z.object({
 })
 
 export const milestoneSchema = z.object({
+    orderId: z.string().min(1).optional(),
     name: z.string().min(1, 'Tên mốc là bắt buộc'),
     percent: z.coerce.number().min(0).max(100, '% phải từ 0-100'),
     amount: z.coerce.number().min(0).optional(),

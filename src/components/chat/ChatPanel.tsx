@@ -246,13 +246,18 @@ export default function ChatPanel() {
                             <p style={S.headerSub}>Trợ lý thông minh — Cty TNHH Võ Trọng Nghĩa</p>
                         </div>
                         <div style={{ display: 'flex', gap: 4 }}>
-                            <button onClick={clearHistory} style={S.headerBtn} title="Xóa lịch sử">
+                            <button onClick={clearHistory} style={S.headerBtn} title="Xóa lịch sử" aria-label="Xóa lịch sử">
                                 <Trash2 size={16} />
                             </button>
-                            <button onClick={() => setIsExpanded(!isExpanded)} style={S.headerBtn} title={isExpanded ? 'Thu nhỏ' : 'Mở rộng'}>
+                            <button
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                style={S.headerBtn}
+                                title={isExpanded ? 'Thu nhỏ' : 'Mở rộng'}
+                                aria-label={isExpanded ? 'Thu nhỏ' : 'Mở rộng'}
+                            >
                                 {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                             </button>
-                            <button onClick={() => setIsOpen(false)} style={S.headerBtn} title="\u0110óng">
+                            <button onClick={() => setIsOpen(false)} style={S.headerBtn} title="Đóng" aria-label="Đóng">
                                 <X size={16} />
                             </button>
                         </div>

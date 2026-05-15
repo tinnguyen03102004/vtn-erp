@@ -20,7 +20,7 @@ test.describe('Authentication', () => {
 
     test('should login with valid credentials and redirect to dashboard', async ({ page }) => {
         await page.goto('/login')
-        await page.fill('input[type="email"]', 'director@vtn.vn')
+        await page.fill('input[type="email"]', 'hang@vtn.vn')
         await page.fill('input[type="password"]', 'password123')
         await page.click('button[type="submit"]')
 
@@ -36,9 +36,9 @@ test.describe('Authentication', () => {
     test('should fill demo account on button click', async ({ page }) => {
         await page.goto('/login')
         // Click Director demo button
-        await page.click('.login-demo-btn >> text=Director')
+        await page.locator('.login-demo-btn').filter({ hasText: 'hang@vtn.vn' }).click()
 
         const emailInput = page.locator('input[type="email"]')
-        await expect(emailInput).toHaveValue('director@vtn.vn')
+        await expect(emailInput).toHaveValue('hang@vtn.vn')
     })
 })
