@@ -116,6 +116,8 @@ class ServerQueryBuilder {
     private filters: Filter[] = []
     private ordering: Array<{ column: string; ascending: boolean }> = []
     private limitValue?: number
+    private rangeFrom?: number
+    private rangeTo?: number
     private expectSingle = false
     private countExact = false
     private returning = false
@@ -246,6 +248,12 @@ class ServerQueryBuilder {
         return this
     }
 
+    range(from: number, to: number) {
+        this.rangeFrom = from
+        this.rangeTo = to
+        return this
+    }
+
     single() {
         this.expectSingle = true
         return this
@@ -297,7 +305,12 @@ class ServerQueryBuilder {
                     return this.buildResponse(safe, null, this.countExact ? 1 : null)
                 }
 
-                const queryArgs: Record<string, unknown> = { where, orderBy, take: this.limitValue }
+                // Support range(from, to) pagination → Prisma skip/take
+                const take = this.rangeFrom !== undefined && this.rangeTo !== undefined
+                    ? this.rangeTo - this.rangeFrom + 1
+                    : this.limitValue
+                const skip = this.rangeFrom !== undefined ? this.rangeFrom : undefined
+                const queryArgs: Record<string, unknown> = { where, orderBy, take, skip }
                 if (selectProj) queryArgs.select = selectProj
                 const records = await delegate.findMany(queryArgs)
                 const count = this.countExact ? Number(await delegate.count({ where })) : null

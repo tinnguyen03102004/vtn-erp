@@ -30,7 +30,8 @@ export async function getAuditLogs(filters?: {
     const limit = filters?.limit ?? 50
     const offset = (page - 1) * limit
 
-    let query = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = supabase
         .from('audit_logs')
         .select('id, userId, action, entity, entityId, details, metadata, createdAt', { count: 'exact' })
 
