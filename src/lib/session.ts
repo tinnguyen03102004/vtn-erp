@@ -74,7 +74,46 @@ export const getSessionFromCookies = cache(async (): Promise<SessionUser | null>
     return getSessionByToken(token)
 })
 
+// ─── In-memory session cache (Phase 2 perf optimization) ──────────────────
+// Avoids 2 DB round-trips per request for session verification.
+// TTL: 60s, Max entries: 100, Invalidated on logout/delete.
+const SESSION_CACHE_TTL_MS = 60_000
+const SESSION_CACHE_MAX_SIZE = 100
+const sessionCache = new Map<string, { user: SessionUser; expiresAt: number }>()
+
+function getCachedSession(token: string): SessionUser | null {
+    const cached = sessionCache.get(token)
+    if (!cached) return null
+    if (Date.now() > cached.expiresAt) {
+        sessionCache.delete(token)
+        return null
+    }
+    return cached.user
+}
+
+function setCachedSession(token: string, user: SessionUser): void {
+    // Simple LRU: evict oldest entries when at capacity
+    if (sessionCache.size >= SESSION_CACHE_MAX_SIZE) {
+        const firstKey = sessionCache.keys().next().value
+        if (firstKey) sessionCache.delete(firstKey)
+    }
+    sessionCache.set(token, { user, expiresAt: Date.now() + SESSION_CACHE_TTL_MS })
+}
+
+/** Invalidate cache for a specific token (called on logout) */
+export function invalidateSessionCache(token?: string): void {
+    if (token) {
+        sessionCache.delete(token)
+    } else {
+        sessionCache.clear()
+    }
+}
+
 async function getSessionByToken(token: string): Promise<SessionUser | null> {
+    // Check in-memory cache first (saves ~300ms on cache hit)
+    const cached = getCachedSession(token)
+    if (cached) return cached
+
     // Step 1: Fetch session
     const { data: session, error } = await supabase
         .from('app_sessions')
@@ -106,22 +145,29 @@ async function getSessionByToken(token: string): Promise<SessionUser | null> {
     const { data: user, error: userError } = userResult
     if (userError || !user || !user.isActive) return null
 
-    return {
+    const sessionUser: SessionUser = {
         id: user.id,
         name: user.name || '',
         email: user.email,
         role: user.role,
     }
+
+    // Cache the resolved user for subsequent requests
+    setCachedSession(token, sessionUser)
+
+    return sessionUser
 }
 
 export async function deleteSession(cookieValue: string): Promise<void> {
     const token = verifyAndExtractToken(cookieValue)
     if (token) {
+        invalidateSessionCache(token)
         await supabase.from('app_sessions').delete().eq('token', token)
     }
 }
 
 export async function deleteAllUserSessions(userId: string): Promise<void> {
+    invalidateSessionCache() // Clear entire cache since we don't track tokens by userId
     await supabase.from('app_sessions').delete().eq('userId', userId)
 }
 
