@@ -4,6 +4,9 @@ import bcrypt from 'bcryptjs'
 import { createSession, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/session'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
+export const preferredRegion = 'sin1'
+
+
 export async function POST(req: NextRequest) {
     // Brute-force protection: 5 login attempts per minute per IP
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
